@@ -40,9 +40,6 @@ way. **Default: do not mix Ryan Kobary / Glitch fiction material into this repo.
 This repo (`DigitalDustLibrary`) = blog only:
 - `Content_Ecosystem_Structure.md` — the source-of-truth doc for how all the pieces
   (LinkedIn, blog, Glitch, Ryan Kobary, haykbaroyan.com) fit together.
-- `Chapters/` — blog article drafts, one subfolder per article/topic (e.g.
-  `Childfree`, `History Of AI`, `Lying flat`, `Year 1984`), each containing a `.docx`
-  draft plus any reference images.
 
 Stays in the parent `Digital Dust Library` folder, not this repo (Glitch/Ryan Kobary
 material and unrelated assets):
