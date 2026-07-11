@@ -6,3 +6,9 @@ build/
 .env
 .env.*
 !.env.example
+
+Content_Ecosystem_Structure.md
+docs/superpowers/specs/
+Functional_Overview_for_Design.md
+.gitignore
+docs/superpowers/plans/2026-07-11-blog-admin-monorepo-scaffold.md
