@@ -9,7 +9,7 @@
 		<a href="/" class="font-label text-xs tracking-widest text-ink/70 uppercase hover:text-ink">
 			← All columns
 		</a>
-		<a href="/" class="font-label text-sm font-bold tracking-tight uppercase">
+		<a href="/" class="font-brand text-sm font-bold tracking-tight uppercase">
 			Digital Dust <span class="text-accent-red">Library</span>
 		</a>
 		<ShareLinks url={shareUrl} />

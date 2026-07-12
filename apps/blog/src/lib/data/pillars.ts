@@ -6,29 +6,36 @@ export const pillars: Pillar[] = [
 	{ slug: 'software-dev', label: 'Software Dev', index: 3, accent: 'blue' }
 ];
 
-type AccentClasses = { dot: string; text: string; border: string; bg: string };
+type AccentClasses = {
+	dot: string;
+	text: string;
+	border: string;
+	bg: string;
+	groupHoverText: string;
+};
 
-// Full literal class strings only — Tailwind's scanner can't see dynamically
-// interpolated class names, so each variant is spelled out here rather than built
-// from a template string.
+
 export const pillarAccentClasses: Record<PillarAccent, AccentClasses> = {
 	red: {
 		dot: 'bg-accent-red',
 		text: 'text-accent-red',
 		border: 'border-accent-red',
-		bg: 'bg-accent-red'
+		bg: 'bg-accent-red',
+		groupHoverText: 'group-hover:text-accent-red'
 	},
 	green: {
 		dot: 'bg-accent-green',
 		text: 'text-accent-green',
 		border: 'border-accent-green',
-		bg: 'bg-accent-green'
+		bg: 'bg-accent-green',
+		groupHoverText: 'group-hover:text-accent-green'
 	},
 	blue: {
 		dot: 'bg-accent-blue',
 		text: 'text-accent-blue',
 		border: 'border-accent-blue',
-		bg: 'bg-accent-blue'
+		bg: 'bg-accent-blue',
+		groupHoverText: 'group-hover:text-accent-blue'
 	}
 };
 

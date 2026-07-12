@@ -7,7 +7,7 @@
 
 <a
 	href="/articles/{post.slug}"
-	class="relative block overflow-hidden rounded-md bg-ink p-6 text-paper"
+	class="relative block overflow-hidden rounded-none bg-ink p-6 text-paper transition-colors hover:bg-ink/90"
 >
 	<span class="font-label text-xs tracking-widest text-paper/60 uppercase">Featured</span>
 	<span
