@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { getAuthorByHandle, pillars } from '$lib/data';
+	import { getAuthorByHandle, getPillarBySlug } from '$lib/data';
 	import PostTeaserRow from '$lib/components/home/PostTeaserRow.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	function accentFor(pillarSlug: string) {
-		return pillars.find((pillar) => pillar.slug === pillarSlug)?.accent ?? 'red';
+		return getPillarBySlug(pillarSlug)?.accent ?? 'red';
 	}
 </script>
 

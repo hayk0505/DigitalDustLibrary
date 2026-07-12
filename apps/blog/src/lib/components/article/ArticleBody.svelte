@@ -1,5 +1,8 @@
 <script lang="ts">
-	// html always comes from our own mock data, never user input, so @html is safe here.
+	// html is our own mock data today, never user input — but once a real API/CMS
+	// backend supplies author-authored content here, this needs sanitization
+	// (e.g. DOMPurify) before @html renders it. Do not remove this note when
+	// wiring up the real data layer.
 	let { html }: { html: string } = $props();
 </script>
 

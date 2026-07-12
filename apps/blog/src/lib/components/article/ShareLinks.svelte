@@ -12,6 +12,7 @@
 		href={linkedInHref}
 		target="_blank"
 		rel="noopener noreferrer"
+		aria-label="Share on LinkedIn"
 		class="rounded border border-ink/20 px-2 py-1 hover:border-ink"
 	>
 		in

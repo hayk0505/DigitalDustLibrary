@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { pillarAccentClasses, pillars, type Author, type Post } from '$lib/data';
+	import { pillarAccentClasses, getPillarBySlug, type Author, type Post } from '$lib/data';
 	import { formatDispatchDate } from '$lib/utils/format-date';
 	import AuthorByline from '$lib/components/shared/AuthorByline.svelte';
 	import PillarDot from '$lib/components/shared/PillarDot.svelte';
 
 	let { post, author }: { post: Post; author: Author } = $props();
 
-	const pillar = $derived(pillars.find((candidate) => candidate.slug === post.pillarSlug));
+	const pillar = $derived(getPillarBySlug(post.pillarSlug));
 </script>
 
 {#if pillar}

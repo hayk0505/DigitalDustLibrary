@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { pillars } from '$lib/data';
+	import { getPillarBySlug } from '$lib/data';
 	import Avatar from '$lib/components/shared/Avatar.svelte';
 	import PostTeaserRow from '$lib/components/home/PostTeaserRow.svelte';
 	import type { PageData } from './$types';
@@ -7,7 +7,7 @@
 	let { data }: { data: PageData } = $props();
 
 	function accentFor(pillarSlug: string) {
-		return pillars.find((pillar) => pillar.slug === pillarSlug)?.accent ?? 'red';
+		return getPillarBySlug(pillarSlug)?.accent ?? 'red';
 	}
 </script>
 
