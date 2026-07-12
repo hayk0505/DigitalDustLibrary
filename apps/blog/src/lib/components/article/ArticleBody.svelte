@@ -4,6 +4,7 @@
 </script>
 
 <div class="article-body prose prose-neutral mt-8 max-w-none">
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- html is our own mock data, never user input; see comment in <script> -->
 	{@html html}
 </div>
 
