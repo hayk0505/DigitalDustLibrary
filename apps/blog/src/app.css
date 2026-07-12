@@ -1,0 +1,24 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+@import '@fontsource/fraunces/400.css';
+@import '@fontsource/fraunces/400-italic.css';
+@import '@fontsource/fraunces/700.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+@theme {
+	--color-accent-red: #dc2626;
+	--color-accent-green: #059669;
+	--color-accent-blue: #2563eb;
+	--color-ink: #1c1a17;
+	--color-paper: #f4f1ea;
+	--font-display: 'Fraunces', ui-serif, serif;
+	--font-label: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+body {
+	background-color: var(--color-paper);
+	color: var(--color-ink);
+	font-family: var(--font-display);
+}
