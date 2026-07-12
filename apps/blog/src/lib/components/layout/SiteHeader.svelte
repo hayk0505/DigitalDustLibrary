@@ -15,7 +15,10 @@
 		<nav class="flex items-center gap-6 font-label text-xs tracking-widest uppercase">
 			<a href="/archive" class="hover:text-accent-red">Archive</a>
 			<a href="/become-an-author" class="hover:text-accent-red">Become an author</a>
-			<a href={ADMIN_URL} class="rounded border border-ink px-3 py-1.5 hover:bg-ink hover:text-paper">
+			<a
+				href={ADMIN_URL}
+				class="rounded border border-ink px-3 py-1.5 hover:bg-ink hover:text-paper"
+			>
 				Log in
 			</a>
 		</nav>
