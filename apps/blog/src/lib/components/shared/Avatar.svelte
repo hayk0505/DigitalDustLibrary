@@ -7,7 +7,7 @@
 		size = 'md'
 	}: { name: string; colorClass: string; size?: 'sm' | 'md' } = $props();
 
-	const sizeClasses = size === 'sm' ? 'h-6 w-6 text-[10px]' : 'h-8 w-8 text-xs';
+	const sizeClasses = $derived(size === 'sm' ? 'h-6 w-6 text-[10px]' : 'h-8 w-8 text-xs');
 </script>
 
 <span
