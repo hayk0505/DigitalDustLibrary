@@ -1,32 +1,34 @@
-# React + TypeScript + Vite
+# Digital Dust Library — Admin
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Authoring/moderation panel for Digital Dust Library. React 19 + TanStack Router/Query
++ Tailwind v4 + shadcn/ui. See `Admin_Panel_Build_Spec.md` (repo root) for the full
+functional spec and `docs/superpowers/specs/2026-07-13-admin-panel-phase1-design.md`
+for what's implemented so far.
 
-Currently, two official plugins are available:
+## Running locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+pnpm --filter admin dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+This phase runs entirely against a mocked backend (MSW) — `apps/api` doesn't exist
+yet. Mocks are enabled via `VITE_ENABLE_MOCKS=true` in `.env.development`.
+
+## Mock accounts
+
+| Email | Password | Role |
+|---|---|---|
+| `author@dd.local` | `password` | Author |
+| `editor@dd.local` | `password` | Editor |
+| `owner@dd.local` | `password` | Owner |
+
+All three roles currently see the same screens (Dashboard, My Posts, Post Editor,
+Media Library) — Editor/Owner-only screens (Review Queue, Applications, Categories,
+Users & Roles, Settings) land in a later phase.
+
+## Testing
+
+```bash
+pnpm --filter admin test        # run once
+pnpm --filter admin test:watch  # watch mode
+```
