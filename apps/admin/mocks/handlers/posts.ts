@@ -29,7 +29,7 @@ export const postHandlers = [
       metaDescription: body.metaDescription ?? '',
       featuredImageId: body.featuredImageId ?? null,
       pillar: body.pillar ?? 'tech',
-      status: 'draft',
+      status: body.status ?? 'draft',
       authorId: userId ?? 'user-author',
       updatedAt: new Date().toISOString(),
       latestReviewNote: null,
