@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
@@ -44,6 +45,19 @@ export function TipTapEditor({ value, onChange }: { value: string; onChange: (ht
     content: value,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
   })
+
+  // Keep the editor in sync with external `value` changes that happen after
+  // mount (e.g. an async post fetch resolving post-construction on a cold
+  // navigation). Skip when `value` already matches the editor's own content,
+  // since that's the echo of our own `onUpdate` firing from user typing —
+  // re-applying it here would fight the user's cursor/selection every keystroke.
+  useEffect(() => {
+    if (!editor) return
+    const current = editor.getHTML()
+    if (value !== current) {
+      editor.commands.setContent(value, { emitUpdate: false })
+    }
+  }, [value, editor])
 
   if (!editor) return null
 
