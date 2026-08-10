@@ -13,9 +13,13 @@ rationale before adding content here.
 
 ## Status
 
-Pre-launch. The public blog and admin panel are both in active development; the
-`.NET` API they'll both call doesn't exist yet, so the admin panel currently runs
-against a mocked backend (MSW).
+Pre-launch. The public blog and admin panel are both in active development.
+`apps/api` (.NET 10 + PostgreSQL) now exists as a scaffold covering auth, posts,
+and media — matching `apps/admin`'s Phase 1 exactly — but hasn't been built/tested
+against a real .NET SDK yet, and doesn't yet cover Categories, Author
+Applications, Users & Roles, or Statistics. The admin panel still defaults to a
+mocked backend (MSW) for now; see `apps/api/README.md` for how to point it at
+the real API instead.
 
 ## Structure
 
@@ -23,11 +27,19 @@ against a mocked backend (MSW).
 apps/
   blog/    SvelteKit public-facing blog (Svelte 5, Tailwind CSS 4)
   admin/   React authoring/moderation panel (React 19, TanStack Router/Query, shadcn/ui)
+  api/     ASP.NET Core (.NET 10) Web API + PostgreSQL 18 — scaffolded, partial (see apps/api/README.md)
 ```
 
-`apps/api` (ASP.NET Core Web API + PostgreSQL) is planned but not yet scaffolded —
-see the tech stack notes in [CLAUDE.md](CLAUDE.md) for the intended shape
-(auth, multi-author workflow, etc.).
+Local dev for the full stack (API + Postgres) runs via Docker Compose, kept
+separate from Turborepo (which stays scoped to the JS/TS apps):
+
+```bash
+docker compose -f docker-compose.dev.yml up
+```
+
+See the tech stack notes in [CLAUDE.md](CLAUDE.md) for the intended full shape
+(auth, multi-author workflow, etc.) and [Admin_Panel_Build_Spec.md](Admin_Panel_Build_Spec.md)
+for the screen-by-screen contract this API is built against.
 
 ## Getting started
 

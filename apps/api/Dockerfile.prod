@@ -1,0 +1,50 @@
+# Production image — multi-stage build, runtime-only final layer.
+# Counterpart to ./Dockerfile, which is dev-only (dotnet watch against a bind
+# mount, see its own header comment). This one is what CI builds and pushes
+# to ghcr.io on every deploy (see ../../.github/workflows/deploy.yml).
+#
+# Two-stage: `build` has the full SDK (needed to restore/publish), `final`
+# only has the ASP.NET runtime — smaller image, smaller attack surface, no
+# source code or SDK left lying around in what actually runs on the droplet.
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Restore separately first so this layer caches even when source changes.
+COPY DigitalDustLibrary.Api.csproj ./
+RUN dotnet restore
+
+COPY . .
+RUN dotnet publish -c Release -o /app --no-restore
+
+# --- EF Core migrations bundle -------------------------------------------
+# A self-contained executable that applies pending migrations without needing
+# the SDK or dotnet-ef tool on the droplet itself (the final runtime image
+# below deliberately doesn't have either). CI runs this bundle over SSH as
+# its own deploy step, separate from starting the app — matches the existing
+# code comment in Program.cs: "run `dotnet ef database update` as an explicit
+# deploy step instead" of auto-migrating on every boot.
+RUN dotnet tool install --global dotnet-ef --version 10.* \
+    && export PATH="$PATH:/root/.dotnet/tools" \
+    && dotnet ef migrations bundle --configuration Release --self-contained \
+       --runtime linux-x64 --output /app/efbundle --no-build -c AppDbContext \
+       --project DigitalDustLibrary.Api.csproj
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+WORKDIR /app
+
+COPY --from=build /app .
+
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+# Runs as the image's non-root default user (aspnet base images run as `app`
+# since .NET 8+) rather than root — one less thing that needs locking down.
+#
+# CMD, not ENTRYPOINT — deliberate. `docker compose run --rm api /app/efbundle`
+# (see docker-compose.prod.yml / deploy.yml) needs to fully replace the
+# default command to run the migrations bundle instead of the app. With
+# ENTRYPOINT, Docker appends overrides as extra args instead of replacing it,
+# which would try (and fail) to run `dotnet DigitalDustLibrary.Api.dll /app/efbundle`.
+CMD ["dotnet", "DigitalDustLibrary.Api.dll"]

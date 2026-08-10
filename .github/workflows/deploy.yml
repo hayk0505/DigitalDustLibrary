@@ -1,0 +1,120 @@
+# Deploys apps/api + apps/admin to the DigitalOcean droplet on every push to
+# main. apps/blog is NOT part of this workflow — it deploys separately to
+# Cloudflare Workers (see apps/blog's own wrangler config); different target,
+# different pipeline, no reason to couple them.
+#
+# No standing SSH access is used for this — the DEPLOY_SSH_KEY secret below
+# is a dedicated, deploy-only key (see docs/deployment.md for how it's set
+# up), scoped to a non-root user that can only touch this project's own
+# directory and Docker containers. Nobody needs to sit with an open SSH
+# session to ship a change; this workflow is the only thing that connects,
+# and only for the seconds it takes to deploy.
+#
+# Required repo secrets (see docs/deployment.md "GitHub secrets" section):
+#   DROPLET_HOST, DEPLOY_USER, DEPLOY_SSH_KEY
+
+name: Deploy digitaldustlibrary
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-digitaldustlibrary
+  cancel-in-progress: false
+  # Never cancel a deploy mid-flight (could leave the droplet half-updated) —
+  # queue instead, don't cancel-in-progress.
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- API: build + push image -----------------------------------
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          # GITHUB_TOKEN is enough for ghcr.io — no separate registry account
+          # needed, and it's scoped to this repo automatically.
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: apps/api
+          file: apps/api/Dockerfile.prod
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/digitaldustlibrary-api:latest
+            ghcr.io/${{ github.repository_owner }}/digitaldustlibrary-api:${{ github.sha }}
+          # :sha tag exists so a bad deploy can be rolled back to a known-good
+          # image by re-pointing the droplet's compose file, without needing
+          # to rebuild.
+
+      # --- Admin: build static bundle ---------------------------------
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo run build --filter=admin
+
+      # --- Ship both to the droplet ------------------------------------
+      - name: Copy compose file
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: "docker-compose.prod.yml"
+          target: "~/digitaldustlibrary/"
+
+      - name: Copy admin static build
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: "apps/admin/dist/*"
+          target: "~/digitaldustlibrary/admin-static-new/"
+          strip_components: 3
+          # Strips "apps/admin/dist" off each source path so files land
+          # directly in admin-static-new/, not admin-static-new/apps/admin/dist/.
+
+      # --- Migrate, then restart ----------------------------------------
+      - name: Migrate database and restart containers
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            cd ~/digitaldustlibrary
+
+            # Swap in the new admin build atomically — Caddy is serving from
+            # admin-static/ the whole time this runs, so there's no window
+            # where it's half-written.
+            rm -rf admin-static-old
+            [ -d admin-static ] && mv admin-static admin-static-old || true
+            mv admin-static-new admin-static
+            rm -rf admin-static-old
+
+            docker compose -f docker-compose.prod.yml pull api
+
+            # Applies any pending EF Core migrations. The bundle is baked
+            # into the image itself (see apps/api/Dockerfile.prod) and reads
+            # its connection string from the same environment as the api
+            # service — see docker-compose.prod.yml's `environment:` block,
+            # sourced from the droplet-only .env file. `run --rm` gives it
+            # that environment without actually starting the app.
+            docker compose -f docker-compose.prod.yml run --rm api /app/efbundle
+
+            docker compose -f docker-compose.prod.yml up -d
+            docker image prune -f

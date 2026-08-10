@@ -1,0 +1,84 @@
+# Production stack for this project only — postgres + api. Deliberately does
+# NOT include a Caddy service: Caddy is shared, always-on infra for the whole
+# droplet (routes every project by hostname), so it lives in its own stack
+# outside any single project's repo — see docs/deployment.md. This stack only
+# joins that shared Caddy via the external `caddy_net` network below so Caddy
+# can reach the `api` container by name; it never binds ports to the host
+# itself, keeping this project's blast radius contained to its own stack
+# (same isolation principle as every other project on the droplet).
+#
+# apps/admin isn't a service here either — it's a static build (`dist/`)
+# rsynced straight onto the host by CI and served directly by Caddy's
+# file_server, not containerized. Same pattern already decided for React+Vite
+# frontends generally: skip the extra container for something that's just
+# static files.
+#
+# Usage (run from the droplet, not locally):
+#   docker compose -f docker-compose.prod.yml run --rm api /app/efbundle --connection "$CONNECTION_STRING"
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Secrets come from a sibling `.env` file that lives ONLY on the droplet —
+# never committed, never passed through CI/GitHub Actions. Created once by
+# hand during initial server setup (see docs/deployment.md). Expected keys:
+#   POSTGRES_PASSWORD
+#   CONNECTIONSTRINGS__DEFAULT
+#   JWT__SIGNINGKEY
+#   RESEND__APIKEY
+#   CORS__ALLOWEDORIGINS__0   (blog's real Cloudflare origin, e.g. https://digitaldustlibrary.com)
+#   CORS__ALLOWEDORIGINS__1   (admin's origin, https://admin.digitaldustlibrary.com)
+# The double-underscore names are .NET's convention for binding nested config
+# keys from environment variables (ConnectionStrings:Default -> CONNECTIONSTRINGS__DEFAULT,
+# array items via a trailing index).
+
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: digitaldustlibrary
+      POSTGRES_USER: digitaldustlibrary
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U digitaldustlibrary -d digitaldustlibrary"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    # No `ports:` — only reachable from the `api` service on this stack's own
+    # internal network. Never exposed to the host or the internet.
+
+  api:
+    image: ghcr.io/${GHCR_OWNER}/digitaldustlibrary-api:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Default: ${CONNECTIONSTRINGS__DEFAULT}
+      Jwt__SigningKey: ${JWT__SIGNINGKEY}
+      Resend__ApiKey: ${RESEND__APIKEY}
+      Cors__AllowedOrigins__0: ${CORS__ALLOWEDORIGINS__0}
+      Cors__AllowedOrigins__1: ${CORS__ALLOWEDORIGINS__1}
+    volumes:
+      - api_uploads:/app/wwwroot/uploads
+      # Named volume, not a bind mount — uploaded media (see MediaEndpoints.cs)
+      # needs to survive container recreation on every deploy.
+    networks:
+      - default
+      - caddy_net
+    # No `ports:` either — Caddy reaches this container by its service name
+    # (`api`) over caddy_net, never bound to the host directly.
+
+networks:
+  caddy_net:
+    external: true
+    # Created once by the shared Caddy stack (docs/deployment.md), not by
+    # this project. `external: true` tells Compose "join it, don't own it" —
+    # `docker compose down` on this stack won't try to delete it.
+
+volumes:
+  postgres_data:
+  api_uploads:
