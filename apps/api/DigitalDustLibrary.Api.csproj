@@ -6,6 +6,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <InvariantGlobalization>true</InvariantGlobalization>
     <UserSecretsId>digitaldustlibrary-api</UserSecretsId>
+    <!-- Needed for `dotnet ef migrations bundle --self-contained --runtime linux-x64`
+         in Dockerfile.prod — self-contained builds need this RID declared so
+         restore actually pulls the linux-x64 runtime packages. Matches the
+         container's own platform (Linux), so this is the right RID regardless
+         of what OS the build runs on. -->
+    <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
