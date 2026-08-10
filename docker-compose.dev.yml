@@ -1,0 +1,61 @@
+# Local dev only — mirrors the production shape (API + Postgres, per CLAUDE.md's
+# hosting plan) without needing the .NET SDK installed on the host. Chosen over a
+# `package.json` wrapper around `dotnet watch` so Turborepo stays scoped to the
+# JS/TS apps (blog, admin) and doesn't try to orchestrate a different language's
+# tooling — see the "tanstack vs wrapper" discussion in project history.
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up
+#
+# The API hot-reloads via `dotnet watch` (see apps/api/Dockerfile) against the
+# bind-mounted source, same as editing any other file in this repo.
+
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: digitaldustlibrary
+      POSTGRES_USER: digitaldustlibrary
+      POSTGRES_PASSWORD: devpassword
+    ports:
+      - "5432:5432" # exposed to host too, so a DB client (or `dotnet run` outside
+        # Docker, with Host=localhost instead of Host=postgres) can still connect.
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      # NOT /var/lib/postgresql/data — the official image changed its expected
+      # layout at Postgres 18+ (it now manages its own versioned subdirectory
+      # under /var/lib/postgresql itself, pg_ctlcluster-style). Mounting at the
+      # old /data path makes the image think there's incompatible legacy data
+      # there and refuse to start.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U digitaldustlibrary -d digitaldustlibrary"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+      # start_period is a grace period for first-time initdb on a fresh
+      # volume — without it, the healthcheck can fail out before Postgres
+      # finishes setting itself up, especially on the very first run.
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+    volumes:
+      - ./apps/api:/src
+      # Anonymous volumes so the container's own bin/obj (built for Linux)
+      # aren't clobbered by the host bind mount above (which may be Windows).
+      - /src/bin
+      - /src/obj
+
+volumes:
+  postgres_data:

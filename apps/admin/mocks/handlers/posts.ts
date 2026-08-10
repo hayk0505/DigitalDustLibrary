@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { posts } from '../fixtures/posts'
-import { decodeMockToken } from '../fixtures/users'
+import { decodeMockToken, findUserById } from '../fixtures/users'
 import type { Post } from '@/lib/types'
 
 function currentUserId(request: Request): string | null {
@@ -18,7 +18,7 @@ export const postHandlers = [
   }),
 
   http.post('/api/posts', async ({ request }) => {
-    const userId = currentUserId(request)
+    const userId = currentUserId(request) ?? 'user-author'
     const body = (await request.json()) as Partial<Post>
     const created: Post = {
       id: `post-${posts.length + 1}`,
@@ -30,8 +30,10 @@ export const postHandlers = [
       featuredImageId: body.featuredImageId ?? null,
       pillar: body.pillar ?? 'tech',
       status: body.status ?? 'draft',
-      authorId: userId ?? 'user-author',
+      authorId: userId,
+      authorName: findUserById(userId)?.name ?? '',
       updatedAt: new Date().toISOString(),
+      publishedAt: null,
       latestReviewNote: null,
     }
     posts.push(created)

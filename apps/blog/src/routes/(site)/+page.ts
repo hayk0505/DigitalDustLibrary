@@ -1,11 +1,14 @@
-import { getPostsByPillar, pillars } from '$lib/data';
+import { fetchPosts } from '$lib/api';
+import { pillars } from '$lib/data';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = () => {
+export const load: PageLoad = async ({ fetch }) => {
+	const posts = await fetchPosts(fetch);
+
 	const columns = pillars.map((pillar) => ({
 		pillar,
-		posts: getPostsByPillar(pillar.slug)
+		posts: posts.filter((post) => post.pillarSlug === pillar.slug)
 	}));
 
-	return { columns };
+	return { columns, totalCount: posts.length };
 };

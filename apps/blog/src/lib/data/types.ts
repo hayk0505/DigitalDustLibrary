@@ -10,19 +10,20 @@ export type Pillar = {
 export type Author = {
 	handle: string;
 	name: string;
-	role: string;
-	avatarColor: string;
 };
 
 export type Post = {
 	slug: string;
 	title: string;
 	excerpt: string;
+	bodyHtml: string;
+	seoTitle: string;
+	metaDescription: string;
+	featuredImageUrl: string | null;
 	pillarSlug: string;
 	authorHandle: string;
+	authorName: string;
 	publishedAt: string;
 	readingMinutes: number;
 	dispatchNumber: number;
-	featured: boolean;
-	body: string;
 };

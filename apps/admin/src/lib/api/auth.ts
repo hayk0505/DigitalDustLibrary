@@ -7,3 +7,7 @@ export function login(email: string, password: string): Promise<AuthResponse> {
     body: JSON.stringify({ email, password }),
   })
 }
+
+export function logout(): Promise<void> {
+  return apiFetch<void>('/auth/logout', { method: 'POST' })
+}

@@ -2,8 +2,8 @@ import type { Pillar, PillarAccent } from './types';
 
 export const pillars: Pillar[] = [
 	{ slug: 'tech', label: 'Tech', index: 1, accent: 'red' },
-	{ slug: 'social-psych', label: 'Social · Psych', index: 2, accent: 'green' },
-	{ slug: 'software-dev', label: 'Software Dev', index: 3, accent: 'blue' }
+	{ slug: 'social_psych', label: 'Social · Psych', index: 2, accent: 'green' },
+	{ slug: 'software_dev', label: 'Software Dev', index: 3, accent: 'blue' }
 ];
 
 type AccentClasses = {

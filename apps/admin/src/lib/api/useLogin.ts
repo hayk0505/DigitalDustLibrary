@@ -8,5 +8,6 @@ export function useLogin() {
     onSuccess: (data) => {
       setAuthState({ accessToken: data.accessToken, user: data.user })
     },
+    meta: { skipErrorToast: true },
   })
 }

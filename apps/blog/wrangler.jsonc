@@ -1,0 +1,10 @@
+{
+	"name": "digital-dust-library-blog",
+	"main": ".svelte-kit/cloudflare/_worker.js",
+	"compatibility_flags": ["nodejs_als"],
+	"compatibility_date": "2026-08-08",
+	"assets": {
+		"binding": "ASSETS",
+		"directory": ".svelte-kit/cloudflare"
+	}
+}

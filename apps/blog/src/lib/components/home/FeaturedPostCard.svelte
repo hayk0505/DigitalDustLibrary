@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { pillarAccentClasses, type Author, type PillarAccent, type Post } from '$lib/data';
+	import { pillarAccentClasses, type PillarAccent, type Post } from '$lib/data';
 	import AuthorByline from '../shared/AuthorByline.svelte';
 
-	let { post, author, accent }: { post: Post; author: Author; accent: PillarAccent } = $props();
+	let { post, accent }: { post: Post; accent: PillarAccent } = $props();
 </script>
 
 <a
@@ -20,7 +20,7 @@
 	<h3 class="mt-2 max-w-[80%] font-display text-xl font-bold">{post.title}</h3>
 	<p class="mt-2 text-sm text-paper/80">{post.excerpt}</p>
 	<div class="mt-4 flex items-center justify-between border-t border-paper/20 pt-4">
-		<AuthorByline {author} />
+		<AuthorByline author={{ name: post.authorName, handle: post.authorHandle }} />
 		<span class="font-label text-xs text-paper/60">{post.readingMinutes} min</span>
 	</div>
 </a>

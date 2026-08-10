@@ -29,7 +29,9 @@ export interface Post {
   pillar: Pillar
   status: PostStatus
   authorId: string
+  authorName: string
   updatedAt: string
+  publishedAt: string | null
   latestReviewNote: ReviewNote | null
 }
 
@@ -42,6 +44,46 @@ export interface MediaAsset {
   width: number
   height: number
   url: string
+}
+
+export interface Category {
+  id: string
+  name: string
+  slug: string
+  isPillar: boolean
+  isVisible: boolean
+  isDeleted: boolean
+  postCount: number
+}
+
+export interface ManagedUser {
+  id: string
+  name: string
+  email: string
+  role: Role
+  isActive: boolean
+  createdAt: string
+}
+
+export type ApplicationStatus = 'pending' | 'approved' | 'rejected'
+
+export interface AuthorApplication {
+  id: string
+  name: string
+  email: string
+  pitch: string
+  status: ApplicationStatus
+  submittedAt: string
+  reviewedAt: string | null
+}
+
+export interface SiteSettings {
+  id: string
+  siteTitle: string
+  tagline: string
+  defaultMetaDescription: string
+  linkedInUrl: string
+  xUrl: string
 }
 
 export interface AuthResponse {

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useLogin } from '@/lib/api/useLogin'
+import { ApiError } from '@/lib/api/client'
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -13,6 +14,10 @@ const loginSchema = z.object({
 })
 
 type LoginForm = z.infer<typeof loginSchema>
+
+export function loginErrorMessage(error: unknown): string {
+  return error instanceof ApiError ? error.message : 'Invalid email or password.'
+}
 
 export function Login() {
   const navigate = useNavigate()
@@ -44,7 +49,7 @@ export function Login() {
           {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
         </div>
 
-        {login.isError && <p className="text-sm text-destructive">Invalid email or password.</p>}
+        {login.isError && <p className="text-sm text-destructive">{loginErrorMessage(login.error)}</p>}
 
         <Button type="submit" className="w-full" disabled={login.isPending}>
           {login.isPending ? 'Signing in…' : 'Sign in'}

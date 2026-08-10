@@ -26,14 +26,14 @@ const SCREEN_ROLES: Record<Screen, Role[]> = {
   settings: ['owner'],
 }
 
+export function canAccessScreen(role: Role | null, screen: Screen): boolean {
+  if (!role) return false
+  return SCREEN_ROLES[screen].includes(role)
+}
+
 export function usePermissions() {
   const { user } = useAuth()
   const role = user?.role ?? null
 
-  function can(screen: Screen): boolean {
-    if (!role) return false
-    return SCREEN_ROLES[screen].includes(role)
-  }
-
-  return { role, can }
+  return { role, can: (screen: Screen) => canAccessScreen(role, screen) }
 }

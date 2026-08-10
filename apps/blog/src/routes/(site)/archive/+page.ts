@@ -1,6 +1,6 @@
-import { getAllPosts } from '$lib/data';
+import { fetchPosts } from '$lib/api';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = () => {
-	return { posts: getAllPosts() };
+export const load: PageLoad = async ({ fetch }) => {
+	return { posts: await fetchPosts(fetch) };
 };

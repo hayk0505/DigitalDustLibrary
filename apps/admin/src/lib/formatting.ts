@@ -16,3 +16,18 @@ export function formatRelativeTime(date: string | Date): string {
   const diffDays = Math.round(diffHours / 24)
   return `${diffDays}d ago`
 }
+
+export function estimateReadTime(bodyHtml: string): string {
+  const text = bodyHtml.replace(/<[^>]*>/g, ' ')
+  const words = text.trim().split(/\s+/).filter(Boolean).length
+  const minutes = Math.max(1, Math.round(words / 200))
+  return `${minutes} min read`
+}
+
+export function slugify(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}

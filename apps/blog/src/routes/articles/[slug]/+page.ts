@@ -1,19 +1,13 @@
-import { getAuthorByHandle, getPostBySlug } from '$lib/data';
+import { fetchPostBySlug } from '$lib/api';
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = ({ params }) => {
-	const post = getPostBySlug(params.slug);
+export const load: PageLoad = async ({ params, fetch }) => {
+	const post = await fetchPostBySlug(fetch, params.slug);
 
 	if (!post) {
 		error(404, 'Post not found');
 	}
 
-	const author = getAuthorByHandle(post.authorHandle);
-
-	if (!author) {
-		error(404, 'Author not found');
-	}
-
-	return { post, author };
+	return { post };
 };

@@ -12,7 +12,9 @@ export const posts: Post[] = [
     pillar: 'tech',
     status: 'draft',
     authorId: 'user-author',
+    authorName: 'Alex Rivera',
     updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    publishedAt: null,
     latestReviewNote: null,
   },
   {
@@ -26,7 +28,9 @@ export const posts: Post[] = [
     pillar: 'social_psych',
     status: 'pending_review',
     authorId: 'user-author',
+    authorName: 'Alex Rivera',
     updatedAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
+    publishedAt: null,
     latestReviewNote: null,
   },
   {
@@ -40,7 +44,9 @@ export const posts: Post[] = [
     pillar: 'software_dev',
     status: 'changes_requested',
     authorId: 'user-author',
+    authorName: 'Alex Rivera',
     updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+    publishedAt: null,
     latestReviewNote: {
       id: 'note-1',
       comment: 'Can you add a concrete before/after example in the second section?',
@@ -59,7 +65,9 @@ export const posts: Post[] = [
     pillar: 'social_psych',
     status: 'published',
     authorId: 'user-author',
+    authorName: 'Alex Rivera',
     updatedAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+    publishedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     latestReviewNote: null,
   },
 ]

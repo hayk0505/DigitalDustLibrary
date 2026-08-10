@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { pillarAccentClasses, type Author, type PillarAccent, type Post } from '$lib/data';
+	import { pillarAccentClasses, type PillarAccent, type Post } from '$lib/data';
 	import { formatDispatchDate } from '$lib/utils/format-date';
 	import AuthorByline from '../shared/AuthorByline.svelte';
 	import PillarDot from '../shared/PillarDot.svelte';
 
-	let { post, author, accent }: { post: Post; author: Author; accent: PillarAccent } = $props();
+	let { post, accent }: { post: Post; accent: PillarAccent } = $props();
 </script>
 
 <a
@@ -25,6 +25,6 @@
 	</h3>
 	<p class="mt-1 text-sm text-ink/70">{post.excerpt}</p>
 	<div class="mt-3">
-		<AuthorByline {author} />
+		<AuthorByline author={{ name: post.authorName, handle: post.authorHandle }} />
 	</div>
 </a>

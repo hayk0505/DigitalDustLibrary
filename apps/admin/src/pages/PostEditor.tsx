@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { usePosts, useCreatePost, useUpdatePost } from '@/lib/api/posts'
 import { useMedia } from '@/lib/api/media'
+import { useAuth } from '@/hooks/useAuth'
 import { TipTapEditor } from '@/components/shared/TipTapEditor'
 import { MediaLibrary } from './MediaLibrary'
 import { Input } from '@/components/ui/input'
@@ -27,6 +28,7 @@ type PostForm = z.infer<typeof postSchema>
 
 export function PostEditor({ postId }: { postId?: string }) {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { data: posts = [] } = usePosts({ mine: true })
   const existing = postId ? posts.find((p) => p.id === postId) : undefined
   const { data: mediaAssets = [] } = useMedia()
@@ -64,7 +66,7 @@ export function PostEditor({ postId }: { postId?: string }) {
 
   const featuredImage = mediaAssets.find((m) => m.id === featuredImageId)
 
-  function save(values: PostForm, status: 'draft' | 'pending_review') {
+  function save(values: PostForm, status: 'draft' | 'pending_review' | 'published') {
     const payload = { ...values, bodyHtml: body, featuredImageId, status }
     if (existing) {
       updatePost.mutate({ id: existing.id, ...payload }, { onSuccess: () => navigate({ to: '/posts' }) })
@@ -74,6 +76,7 @@ export function PostEditor({ postId }: { postId?: string }) {
   }
 
   const isSaving = createPost.isPending || updatePost.isPending
+  const canPublishDirectly = user?.role === 'editor' || user?.role === 'owner'
 
   return (
     <form className="mx-auto max-w-3xl space-y-6" onSubmit={(e) => e.preventDefault()}>
@@ -83,8 +86,12 @@ export function PostEditor({ postId }: { postId?: string }) {
           <Button type="button" variant="secondary" disabled={isSaving} onClick={handleSubmit((v) => save(v, 'draft'))}>
             Save draft
           </Button>
-          <Button type="button" disabled={isSaving} onClick={handleSubmit((v) => save(v, 'pending_review'))}>
-            Submit for review
+          <Button
+            type="button"
+            disabled={isSaving}
+            onClick={handleSubmit((v) => save(v, canPublishDirectly ? 'published' : 'pending_review'))}
+          >
+            {canPublishDirectly ? 'Publish' : 'Submit for review'}
           </Button>
         </div>
       </div>
