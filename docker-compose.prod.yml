@@ -26,9 +26,19 @@
 #   RESEND__APIKEY
 #   CORS__ALLOWEDORIGINS__0   (blog's real Cloudflare origin, e.g. https://digitaldustlibrary.com)
 #   CORS__ALLOWEDORIGINS__1   (admin's origin, https://admin.digitaldustlibrary.com)
+#   BOOTSTRAP__OWNEREMAIL     (optional — see below)
+#   BOOTSTRAP__OWNERPASSWORD  (optional — see below)
 # The double-underscore names are .NET's convention for binding nested config
 # keys from environment variables (ConnectionStrings:Default -> CONNECTIONSTRINGS__DEFAULT,
 # array items via a trailing index).
+#
+# BOOTSTRAP__OWNEREMAIL / BOOTSTRAP__OWNERPASSWORD create exactly one Owner
+# account on startup if the Users table is empty (see DbSeeder.BootstrapOwnerAsync)
+# — this is how the very first real login gets created, since there's no
+# public sign-up. Safe to leave set indefinitely (permanent no-op once any
+# user exists), but worth removing from .env after the first successful
+# login anyway so a real password isn't sitting in plaintext longer than
+# needed.
 
 services:
   postgres:
@@ -62,6 +72,8 @@ services:
       Resend__ApiKey: ${RESEND__APIKEY}
       Cors__AllowedOrigins__0: ${CORS__ALLOWEDORIGINS__0}
       Cors__AllowedOrigins__1: ${CORS__ALLOWEDORIGINS__1}
+      Bootstrap__OwnerEmail: ${BOOTSTRAP__OWNEREMAIL:-}
+      Bootstrap__OwnerPassword: ${BOOTSTRAP__OWNERPASSWORD:-}
     volumes:
       - api_uploads:/app/wwwroot/uploads
       # Named volume, not a bind mount — uploaded media (see MediaEndpoints.cs)

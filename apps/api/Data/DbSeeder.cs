@@ -40,4 +40,37 @@ public static class DbSeeder
 
         await db.SaveChangesAsync();
     }
+
+    /// <summary>
+    /// Production bootstrap — creates exactly one Owner account if the Users
+    /// table is completely empty and both email/password are provided (via
+    /// Bootstrap:OwnerEmail / Bootstrap:OwnerPassword config, i.e. the
+    /// BOOTSTRAP__OWNEREMAIL / BOOTSTRAP__OWNERPASSWORD env vars on the
+    /// droplet). Unlike SeedAsync above — which is Development-only and
+    /// seeds fixed, publicly-known demo credentials that must never touch a
+    /// real database — this is meant to run in every environment, since
+    /// there's no public sign-up and the author-application approval flow
+    /// itself requires an existing Owner, so something has to create the
+    /// very first real account. Safe to leave configured indefinitely: it's
+    /// a permanent no-op the instant any user exists. Still worth removing
+    /// the BOOTSTRAP_* values from the droplet's .env after the first login
+    /// though, just so a real password isn't sitting in a plaintext file
+    /// longer than it needs to be.
+    /// </summary>
+    public static async Task BootstrapOwnerAsync(AppDbContext db, string? email, string? password)
+    {
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            return;
+
+        if (await db.Users.AnyAsync())
+            return;
+
+        var hasher = new PasswordHasher<ApplicationUser>();
+        var handle = await SlugGenerator.GenerateUniqueAsync("Owner", h => db.Users.AnyAsync(u => u.Handle == h));
+        var owner = new ApplicationUser { Name = "Owner", Handle = handle, Email = email, Role = Role.Owner, PasswordHash = "" };
+        owner.PasswordHash = hasher.HashPassword(owner, password);
+        db.Users.Add(owner);
+
+        await db.SaveChangesAsync();
+    }
 }
