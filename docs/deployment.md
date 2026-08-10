@@ -274,6 +274,11 @@ docker compose -f docker-compose.prod.yml up -d
 
 Admin's previous static build isn't kept automatically — if a bad admin
 build ships, the fix is reverting the commit and letting CI redeploy, not a
-manual swap (`admin-static-old` gets deleted at the end of every deploy
-script run, deliberately, to avoid disk creeping up on the droplet over
-time).
+manual swap. The deploy script updates `admin-static/` in place (clears and
+repopulates the same directory) rather than swapping directories, since
+Caddy has it bind-mounted and a Linux bind mount doesn't follow a renamed-
+away directory — an earlier version of this script did an mv-based swap and
+silently broke admin's routing this way (files existed on disk, Caddy kept
+serving the stale pre-swap directory regardless). Worth knowing if `admin.*`
+ever 404s despite `admin-static/` looking correct on disk: check whether
+this in-place-update approach got changed back to a swap.

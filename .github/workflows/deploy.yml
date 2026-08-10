@@ -98,13 +98,21 @@ jobs:
             set -euo pipefail
             cd ~/digitaldustlibrary
 
-            # Swap in the new admin build atomically — Caddy is serving from
-            # admin-static/ the whole time this runs, so there's no window
-            # where it's half-written.
-            rm -rf admin-static-old
-            [ -d admin-static ] && mv admin-static admin-static-old || true
-            mv admin-static-new admin-static
-            rm -rf admin-static-old
+            # Update admin-static/ IN PLACE — never rename/replace the
+            # directory itself. Caddy has it bind-mounted (see the shared
+            # Caddy stack in docs/deployment.md), and a Linux bind mount
+            # stays attached to the original directory's data even if
+            # something new gets moved into place at the same path — renaming
+            # it away (as an mv-based swap would) orphans the mount, so Caddy
+            # would keep serving the old (possibly empty) content forever.
+            # Clearing and repopulating the same directory avoids that
+            # entirely, at the cost of a sub-second window where a request
+            # could hit a half-updated directory — an acceptable trade for a
+            # low-traffic personal project.
+            mkdir -p admin-static
+            find admin-static -mindepth 1 -delete
+            cp -a admin-static-new/. admin-static/
+            rm -rf admin-static-new
 
             docker compose -f docker-compose.prod.yml pull api
 
