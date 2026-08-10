@@ -12,13 +12,9 @@ obj/
 .claude/
 
 Content_Ecosystem_Structure.md
-docs/superpowers/specs/
+docs/superpowers/
 Functional_Overview_for_Design.md
 .gitignore
-docs/superpowers/plans/2026-07-11-blog-admin-monorepo-scaffold.md
 
 Admin_Panel_Build_Spec.md
 design-reference/admin-mockup.html
-
-docs/superpowers/plans/2026-07-13-admin-panel-phase1.md
-docs/superpowers/plans/2026-07-12-blog-homepage-article.md
