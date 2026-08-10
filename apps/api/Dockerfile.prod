@@ -27,8 +27,12 @@ RUN dotnet publish -c Release -o /app --no-restore
 RUN dotnet tool install --global dotnet-ef --version 10.* \
     && export PATH="$PATH:/root/.dotnet/tools" \
     && dotnet ef migrations bundle --configuration Release --self-contained \
-       --runtime linux-x64 --output /app/efbundle --no-build -c AppDbContext \
+       --runtime linux-x64 --output /app/efbundle -c AppDbContext \
        --project DigitalDustLibrary.Api.csproj
+# No --no-build here (removed after a first CI run failed on this step) —
+# --no-build assumes `dotnet publish` above left build output in exactly the
+# spot `dotnet ef` expects, which isn't guaranteed. Letting this bundle its
+# own build is a few seconds slower but doesn't depend on that assumption.
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
