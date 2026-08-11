@@ -1,4 +1,4 @@
-import { API_URL } from './config';
+import { API_URL, API_ORIGIN } from './config';
 import type { Author, Post } from './data/types';
 
 type ApiPost = {
@@ -58,4 +58,31 @@ export async function fetchAuthorByHandle(
 	if (response.status === 404) return null;
 	if (!response.ok) throw new Error(`Failed to fetch author: ${response.status}`);
 	return response.json();
+}
+
+export class ApplicationSubmitError extends Error {
+	status: number;
+	constructor(status: number, message: string) {
+		super(message);
+		this.status = status;
+	}
+}
+
+export async function submitAuthorApplication(
+	fetchFn: typeof fetch,
+	application: { name: string; email: string; pitch: string }
+): Promise<void> {
+	const response = await fetchFn(`${API_ORIGIN}/api/applications`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(application)
+	});
+	if (!response.ok) {
+		throw new ApplicationSubmitError(
+			response.status,
+			response.status === 429
+				? "You've submitted a few applications recently — try again in about an hour."
+				: 'Something went wrong. Please try again.'
+		);
+	}
 }

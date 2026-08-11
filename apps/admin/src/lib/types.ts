@@ -75,6 +75,12 @@ export interface AuthorApplication {
   status: ApplicationStatus
   submittedAt: string
   reviewedAt: string | null
+  devInviteUrl: string | null
+}
+
+export interface DirectAddAuthorResponse {
+  user: ManagedUser
+  devInviteUrl: string | null
 }
 
 export interface SiteSettings {

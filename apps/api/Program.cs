@@ -6,6 +6,7 @@ using DigitalDustLibrary.Api.Endpoints;
 using DigitalDustLibrary.Api.Services;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -122,6 +123,33 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+// --- Forwarded headers. In production this API sits behind Caddy on the
+// droplet (docker-compose.prod.yml / docs/deployment.md) and is never bound
+// to the host or reachable from the internet directly — the only path in is
+// through Caddy on the shared, external `caddy_net` Docker network. Without
+// this middleware, HttpContext.Connection.RemoteIpAddress is always Caddy's
+// container IP for every request, which silently turns the rate limiter
+// below (keyed on that IP) into one shared 5/hour bucket for every visitor
+// site-wide instead of 5/hour per visitor. KnownIPNetworks/KnownProxies are
+// cleared rather than pinned to a specific subnet because `caddy_net` is
+// external, shared infra (created by the separate Caddy stack in
+// docs/deployment.md) with no fixed CIDR this repo controls — trusting the
+// header unconditionally is safe specifically because nothing outside Caddy
+// can reach this container to forge it. Scoped to Production only: in dev
+// (docker-compose.dev.yml) this port is exposed directly to the host with no
+// reverse proxy in front, so trusting X-Forwarded-For there would let anyone
+// hitting the port directly spoof their rate-limit partition key.
+if (app.Environment.IsProduction())
+{
+    var forwardedHeadersOptions = new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor,
+    };
+    forwardedHeadersOptions.KnownIPNetworks.Clear();
+    forwardedHeadersOptions.KnownProxies.Clear();
+    app.UseForwardedHeaders(forwardedHeadersOptions);
+}
 
 // Serves uploaded media from wwwroot/uploads (see MediaEndpoints.cs). Uses an
 // explicit PhysicalFileProvider scoped to just this folder rather than the

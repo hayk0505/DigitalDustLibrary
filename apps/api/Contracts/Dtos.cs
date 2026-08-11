@@ -73,13 +73,17 @@ public record UpdateCategoryRequest(string? Name, string? Slug, bool? IsVisible,
 
 public record AuthorApplicationDto(
     Guid Id, string Name, string Email, string Pitch, ApplicationStatus Status,
-    DateTimeOffset SubmittedAt, DateTimeOffset? ReviewedAt);
+    DateTimeOffset SubmittedAt, DateTimeOffset? ReviewedAt, string? DevInviteUrl = null);
 
 public record CreateAuthorApplicationRequest(string Name, string Email, string Pitch);
+
+public record CreateDirectAuthorRequest(string Name, string Email);
 
 public record AcceptInviteRequest(string Token, string Password);
 
 public record ManagedUserDto(Guid Id, string Name, string Email, Role Role, bool IsActive, DateTimeOffset CreatedAt);
+
+public record DirectAddAuthorResponseDto(ManagedUserDto User, string? DevInviteUrl);
 
 public record UpdateUserRequest(Role? Role, bool? IsActive);
 

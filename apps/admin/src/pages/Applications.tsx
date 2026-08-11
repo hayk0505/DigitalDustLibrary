@@ -1,12 +1,17 @@
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { useState } from 'react'
-import { useApplications, useApproveApplication, useRejectApplication } from '@/lib/api/applications'
+import { useApplications, useApproveApplication, useDirectAddAuthor, useRejectApplication } from '@/lib/api/applications'
 import { getApplicationStatusColors } from '@/lib/status'
 import { formatRelativeTime } from '@/lib/formatting'
 import { Avatar } from '@/components/shared/Avatar'
 import { Card } from '@/components/shared/Card'
 import { FilterChips } from '@/components/shared/FilterChips'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import type { AuthorApplication } from '@/lib/types'
 
@@ -17,11 +22,74 @@ const STATUS_FILTERS = [
   { value: 'rejected', label: 'Rejected' },
 ]
 
+const addAuthorSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().min(1, 'Email is required').email('Enter a valid email'),
+})
+type AddAuthorForm = z.infer<typeof addAuthorSchema>
+
 function Pill({ bg, fg, label }: { bg: string; fg: string; label: string }) {
   return (
     <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-wide', bg, fg)}>
       {label}
     </span>
+  )
+}
+
+function AddAuthorDialog() {
+  const addAuthor = useDirectAddAuthor()
+  const [open, setOpen] = useState(false)
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<AddAuthorForm>({
+    resolver: zodResolver(addAuthorSchema),
+    defaultValues: { name: '', email: '' },
+  })
+
+  function onSubmit(values: AddAuthorForm) {
+    addAuthor.mutate(values, {
+      onSuccess: () => {
+        setOpen(false)
+        reset({ name: '', email: '' })
+      },
+    })
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next)
+        if (!next) reset({ name: '', email: '' })
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button>+ Add author</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogTitle>Add author</DialogTitle>
+        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" {...register('name')} />
+            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" {...register('email')} />
+            {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={addAuthor.isPending}>
+              {addAuthor.isPending ? 'Adding…' : 'Add author'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -142,11 +210,14 @@ export function Applications() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-2xl text-foreground">Applications</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Review author applications. Approving creates their account and emails an invite link; rejecting notifies them by email.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-heading text-2xl text-foreground">Applications</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Review author applications. Approving creates their account and emails an invite link; rejecting notifies them by email.
+          </p>
+        </div>
+        <AddAuthorDialog />
       </div>
 
       <FilterChips options={STATUS_FILTERS} value={statusFilter} onChange={setStatusFilter} />

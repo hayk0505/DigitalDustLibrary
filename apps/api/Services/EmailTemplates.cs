@@ -19,4 +19,13 @@ public static class EmailTemplates
         forward with your application at this time.</p>
         """
     );
+
+    public static (string Subject, string Html) Invited(string name, string inviteUrl) => (
+        "You've been invited to write for Digital Dust Library",
+        $"""
+        <p>Hi {name},</p>
+        <p>You've been invited to write for Digital Dust Library.</p>
+        <p><a href="{inviteUrl}">Set your password</a> to finish setting up your account.</p>
+        """
+    );
 }

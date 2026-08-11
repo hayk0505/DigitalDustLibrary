@@ -60,6 +60,11 @@ public static class ApplicationEndpoints
                 return Results.Json(
                     new { message = "This application has already been reviewed." }, statusCode: 409);
             }
+            if (await db.Users.AnyAsync(u => u.Email == application.Email))
+            {
+                return Results.Json(
+                    new { message = "A user with this email already exists." }, statusCode: 409);
+            }
 
             var handle = await SlugGenerator.GenerateUniqueAsync(application.Name, h => db.Users.AnyAsync(u => u.Handle == h));
             var hasher = new PasswordHasher<ApplicationUser>();
@@ -97,7 +102,8 @@ public static class ApplicationEndpoints
             var (subject, html) = EmailTemplates.Approved(application.Name, inviteUrl);
             await emailSender.SendAsync(application.Email, subject, html);
 
-            return Results.Ok(application.ToDto());
+            var devInviteUrl = emailSender is LoggingEmailSender ? inviteUrl : null;
+            return Results.Ok(application.ToDto() with { DevInviteUrl = devInviteUrl });
         })
         .RequireAuthorization("EditorOrOwner");
 
@@ -124,6 +130,57 @@ public static class ApplicationEndpoints
             await emailSender.SendAsync(application.Email, subject, html);
 
             return Results.Ok(application.ToDto());
+        })
+        .RequireAuthorization("EditorOrOwner");
+
+        // POST /api/applications/direct — Editor/Owner directly adds an
+        // Author account with no public application involved at all. Same
+        // account-creation path as approve() (inactive user + invite token
+        // + email), just triggered without an AuthorApplication row ever
+        // existing.
+        group.MapPost("/direct", async (
+            CreateDirectAuthorRequest request, AppDbContext db, IEmailSender emailSender,
+            IConfiguration configuration, ClaimsPrincipal user) =>
+        {
+            if (await db.Users.AnyAsync(u => u.Email == request.Email))
+            {
+                return Results.Json(
+                    new { message = "A user with this email already exists." }, statusCode: 409);
+            }
+
+            var handle = await SlugGenerator.GenerateUniqueAsync(request.Name, h => db.Users.AnyAsync(u => u.Handle == h));
+            var hasher = new PasswordHasher<ApplicationUser>();
+            var newUser = new ApplicationUser
+            {
+                Name = request.Name,
+                Handle = handle,
+                Email = request.Email,
+                Role = Role.Author,
+                IsActive = false,
+                PasswordHash = "",
+            };
+            newUser.PasswordHash = hasher.HashPassword(newUser, Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)));
+            db.Users.Add(newUser);
+
+            var rawToken = TokenService.GenerateRefreshTokenValue();
+            db.InviteTokens.Add(new InviteToken
+            {
+                UserId = newUser.Id,
+                TokenHash = TokenService.HashToken(rawToken),
+                ExpiresAt = DateTimeOffset.UtcNow.AddDays(InviteExpiryDays),
+            });
+
+            var callerId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier) ?? user.FindFirstValue("sub")!);
+            ActivityLogger.Log(db, callerId, $"added {newUser.Name} directly as an author");
+
+            await db.SaveChangesAsync();
+
+            var inviteUrl = $"{configuration["AdminFrontendUrl"]}/set-password?token={Uri.EscapeDataString(rawToken)}";
+            var (subject, html) = EmailTemplates.Invited(newUser.Name, inviteUrl);
+            await emailSender.SendAsync(newUser.Email, subject, html);
+
+            var devInviteUrl = emailSender is LoggingEmailSender ? inviteUrl : null;
+            return Results.Created($"/api/users/{newUser.Id}", new DirectAddAuthorResponseDto(newUser.ToManagedDto(), devInviteUrl));
         })
         .RequireAuthorization("EditorOrOwner");
     }

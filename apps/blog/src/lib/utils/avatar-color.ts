@@ -1,7 +1,3 @@
-// Deterministic hash of a seed (an author's handle) into one of a fixed
-// palette of Tailwind background classes — replaces the mock data's
-// per-author `avatarColor` field, which has no backend equivalent (the
-// public API only ever returns a handle/name, nothing presentational).
 const PALETTE = [
 	'bg-amber-500',
 	'bg-rose-500',

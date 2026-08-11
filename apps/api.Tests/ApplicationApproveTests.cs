@@ -27,6 +27,8 @@ public class ApplicationApproveTests(ApiFactory factory)
         var updated = await response.Content.ReadFromJsonAsync<AuthorApplicationDto>(AuthHelper.JsonOptions);
         Assert.Equal(ApplicationStatus.Approved, updated!.Status);
         Assert.NotNull(updated.ReviewedAt);
+        Assert.NotNull(updated.DevInviteUrl);
+        Assert.Contains("/set-password?token=", updated.DevInviteUrl);
 
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -39,6 +41,24 @@ public class ApplicationApproveTests(ApiFactory factory)
         var emailSender = (LoggingEmailSender)scope.ServiceProvider.GetRequiredService<IEmailSender>();
         var sentEmail = emailSender.Sent.Last(e => e.To == email);
         Assert.Contains("approved", sentEmail.Subject, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Approve_EmailAlreadyRegistered_Returns409AndDoesNotCrash()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = ApplicationTestHelpers.UniqueSuffix();
+        var application = await ApplicationTestHelpers.CreatePendingApplicationAsync(
+            factory, $"Duplicate Email {suffix}", AuthHelper.OwnerEmail, "Pitch");
+
+        var response = await editor.PostAsync($"/api/applications/{application.Id}/approve", null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Assert.Equal(1, await db.Users.CountAsync(u => u.Email == AuthHelper.OwnerEmail));
+        var unchanged = await db.AuthorApplications.SingleAsync(a => a.Id == application.Id);
+        Assert.Equal(ApplicationStatus.Pending, unchanged.Status);
     }
 
     [Fact]

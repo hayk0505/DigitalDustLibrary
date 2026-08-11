@@ -9,6 +9,7 @@ export const applications: AuthorApplication[] = [
     status: 'pending',
     submittedAt: '2026-08-08T14:00:00Z',
     reviewedAt: null,
+    devInviteUrl: null,
   },
   {
     id: 'app-2',
@@ -18,6 +19,7 @@ export const applications: AuthorApplication[] = [
     status: 'approved',
     submittedAt: '2026-08-01T09:30:00Z',
     reviewedAt: '2026-08-02T11:00:00Z',
+    devInviteUrl: null,
   },
   {
     id: 'app-3',
@@ -27,5 +29,6 @@ export const applications: AuthorApplication[] = [
     status: 'rejected',
     submittedAt: '2026-07-28T16:45:00Z',
     reviewedAt: '2026-07-29T10:15:00Z',
+    devInviteUrl: null,
   },
 ]

@@ -11,3 +11,10 @@ export function login(email: string, password: string): Promise<AuthResponse> {
 export function logout(): Promise<void> {
   return apiFetch<void>('/auth/logout', { method: 'POST' })
 }
+
+export function acceptInvite(token: string, password: string): Promise<AuthResponse> {
+  return apiFetch<AuthResponse>('/auth/accept-invite', {
+    method: 'POST',
+    body: JSON.stringify({ token, password }),
+  })
+}
