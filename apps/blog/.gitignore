@@ -18,6 +18,12 @@ Thumbs.db
 !.env.example
 !.env.test
 !.env.development
+!.env.production
+# .env.production only holds PUBLIC_API_URL — a non-secret, build-time value
+# that's inlined into the client bundle anyway (that's what SvelteKit's
+# PUBLIC_ prefix means: safe to expose). It needs to actually be committed,
+# not gitignored, or CI's checkout won't have it and `vite build` fails with
+# a "Missing export" error on $env/static/public — found this the hard way.
 
 # Vite
 vite.config.js.timestamp-*
