@@ -1,0 +1,56 @@
+# Deploys apps/blog to Cloudflare Workers on every push to main that touches
+# it. Deliberately separate from deploy.yml (api/admin -> the droplet) —
+# different target (Cloudflare, not a server you SSH into), different tool
+# (wrangler, not Docker), no reason to couple them into one workflow or make
+# a blog-only change wait on an unrelated API rebuild.
+#
+# Required repo secrets:
+#   CLOUDFLARE_API_TOKEN   Cloudflare dashboard -> My Profile (top right) ->
+#                          API Tokens -> Create Token -> use the
+#                          "Edit Cloudflare Workers" template. That template
+#                          grants exactly what's needed (Workers Scripts:Edit)
+#                          without handing out full account access.
+#   CLOUDFLARE_ACCOUNT_ID  Cloudflare dashboard -> Workers & Pages overview ->
+#                          shown in the right-hand sidebar. Needed because CI
+#                          has no interactive login to infer it from, unlike
+#                          running `wrangler deploy` by hand on your machine.
+
+name: Deploy blog
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/blog/**"
+      - "packages/**"
+      - ".github/workflows/deploy-blog.yml"
+      # Path-filtered so an api/admin-only change doesn't trigger a pointless
+      # blog redeploy (and vice versa — see the same filtering added to
+      # deploy.yml) — keeps GitHub Actions minutes usage proportional to what
+      # actually changed, not every push.
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-blog
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo run build --filter=blog
+
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/blog
+          command: deploy

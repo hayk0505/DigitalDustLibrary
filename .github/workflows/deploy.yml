@@ -18,6 +18,13 @@ name: Deploy digitaldustlibrary
 on:
   push:
     branches: [main]
+    paths:
+      - "apps/api/**"
+      - "apps/admin/**"
+      - "docker-compose.prod.yml"
+      - ".github/workflows/deploy.yml"
+      # Path-filtered so a blog-only change (see deploy-blog.yml) doesn't
+      # trigger a pointless api/admin rebuild+redeploy, and vice versa.
   workflow_dispatch: {}
 
 concurrency:
