@@ -21,10 +21,18 @@ on:
     paths:
       - "apps/api/**"
       - "apps/admin/**"
+      - "packages/**"
       - "docker-compose.prod.yml"
       - ".github/workflows/deploy.yml"
       # Path-filtered so a blog-only change (see deploy-blog.yml) doesn't
       # trigger a pointless api/admin rebuild+redeploy, and vice versa.
+      # packages/** is included here too, not just in deploy-blog.yml —
+      # apps/admin can depend on the shared packages (shared-types,
+      # shared-utils, validation) just as much as apps/blog can, so a change
+      # there needs to redeploy both, not just one. apps/api doesn't consume
+      # these TS packages (it's the .NET side these types get generated
+      # *from*), but it ships in the same workflow as admin, so this is the
+      # right place for the filter regardless.
   workflow_dispatch: {}
 
 concurrency:
