@@ -51,7 +51,7 @@ public static class ApplicationEndpoints
         // (inactive until the invite is redeemed) and emails the invite link.
         group.MapPost("/{id:guid}/approve", async (
             Guid id, AppDbContext db, IEmailSender emailSender, IConfiguration configuration,
-            ClaimsPrincipal user) =>
+            ClaimsPrincipal user, ILogger<Program> logger) =>
         {
             var application = await db.AuthorApplications.FindAsync(id);
             if (application is null) return Results.Json(new { message = "Not found" }, statusCode: 404);
@@ -100,16 +100,26 @@ public static class ApplicationEndpoints
 
             var inviteUrl = $"{configuration["AdminFrontendUrl"]}/set-password?token={Uri.EscapeDataString(rawToken)}";
             var (subject, html) = EmailTemplates.Approved(application.Name, inviteUrl);
-            await emailSender.SendAsync(application.Email, subject, html);
+            var emailSent = true;
+            try
+            {
+                await emailSender.SendAsync(application.Email, subject, html);
+            }
+            catch (Exception ex)
+            {
+                emailSent = false;
+                logger.LogError(ex, "Failed to send approval email to {Email}", application.Email);
+            }
 
-            var devInviteUrl = emailSender is LoggingEmailSender ? inviteUrl : null;
+            var devInviteUrl = (emailSender is LoggingEmailSender || !emailSent) ? inviteUrl : null;
             return Results.Ok(application.ToDto() with { DevInviteUrl = devInviteUrl });
         })
         .RequireAuthorization("EditorOrOwner");
 
         // POST /api/applications/{id}/reject
         group.MapPost("/{id:guid}/reject", async (
-            Guid id, AppDbContext db, IEmailSender emailSender, ClaimsPrincipal user) =>
+            Guid id, AppDbContext db, IEmailSender emailSender, ClaimsPrincipal user,
+            ILogger<Program> logger) =>
         {
             var application = await db.AuthorApplications.FindAsync(id);
             if (application is null) return Results.Json(new { message = "Not found" }, statusCode: 404);
@@ -127,7 +137,14 @@ public static class ApplicationEndpoints
             await db.SaveChangesAsync();
 
             var (subject, html) = EmailTemplates.Rejected(application.Name);
-            await emailSender.SendAsync(application.Email, subject, html);
+            try
+            {
+                await emailSender.SendAsync(application.Email, subject, html);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to send rejection email to {Email}", application.Email);
+            }
 
             return Results.Ok(application.ToDto());
         })
@@ -140,7 +157,7 @@ public static class ApplicationEndpoints
         // existing.
         group.MapPost("/direct", async (
             CreateDirectAuthorRequest request, AppDbContext db, IEmailSender emailSender,
-            IConfiguration configuration, ClaimsPrincipal user) =>
+            IConfiguration configuration, ClaimsPrincipal user, ILogger<Program> logger) =>
         {
             if (await db.Users.AnyAsync(u => u.Email == request.Email))
             {
@@ -177,9 +194,18 @@ public static class ApplicationEndpoints
 
             var inviteUrl = $"{configuration["AdminFrontendUrl"]}/set-password?token={Uri.EscapeDataString(rawToken)}";
             var (subject, html) = EmailTemplates.Invited(newUser.Name, inviteUrl);
-            await emailSender.SendAsync(newUser.Email, subject, html);
+            var emailSent = true;
+            try
+            {
+                await emailSender.SendAsync(newUser.Email, subject, html);
+            }
+            catch (Exception ex)
+            {
+                emailSent = false;
+                logger.LogError(ex, "Failed to send invite email to {Email}", newUser.Email);
+            }
 
-            var devInviteUrl = emailSender is LoggingEmailSender ? inviteUrl : null;
+            var devInviteUrl = (emailSender is LoggingEmailSender || !emailSent) ? inviteUrl : null;
             return Results.Created($"/api/users/{newUser.Id}", new DirectAddAuthorResponseDto(newUser.ToManagedDto(), devInviteUrl));
         })
         .RequireAuthorization("EditorOrOwner");
