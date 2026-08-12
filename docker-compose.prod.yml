@@ -23,7 +23,11 @@
 #   POSTGRES_PASSWORD
 #   CONNECTIONSTRINGS__DEFAULT
 #   JWT__SIGNINGKEY
-#   RESEND__APIKEY
+#   BREVO__APIKEY             (transactional email — see Services/EmailSender.cs;
+#                              takes priority over RESEND__APIKEY below if both are set)
+#   RESEND__APIKEY            (unused in this project's actual deployment — Brevo is
+#                              the real provider, see CLAUDE.md — but the fallback
+#                              path still works if this is ever set instead)
 #   CORS__ALLOWEDORIGINS__0   (blog's real Cloudflare origin, e.g. https://digitaldustlibrary.com)
 #   CORS__ALLOWEDORIGINS__1   (admin's origin, https://admin.digitaldustlibrary.com)
 #   BOOTSTRAP__OWNEREMAIL     (optional — see below)
@@ -69,7 +73,10 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__Default: ${CONNECTIONSTRINGS__DEFAULT}
       Jwt__SigningKey: ${JWT__SIGNINGKEY}
-      Resend__ApiKey: ${RESEND__APIKEY}
+      Brevo__ApiKey: ${BREVO__APIKEY:-}
+      Brevo__FromAddress: ${BREVO__FROMADDRESS:-onboarding@digitaldustlibrary.com}
+      Brevo__FromName: ${BREVO__FROMNAME:-Digital Dust Library}
+      Resend__ApiKey: ${RESEND__APIKEY:-}
       Cors__AllowedOrigins__0: ${CORS__ALLOWEDORIGINS__0}
       Cors__AllowedOrigins__1: ${CORS__ALLOWEDORIGINS__1}
       Bootstrap__OwnerEmail: ${BOOTSTRAP__OWNEREMAIL:-}

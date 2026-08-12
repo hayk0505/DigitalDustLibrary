@@ -71,12 +71,32 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 });
 
-// --- Email (Resend). Logs instead of sending when no API key is configured
-// (the default in dev) — see Services/EmailSender.cs.
+// --- Email. Brevo is the provider actually used in production (Resend's
+// free tier caps at 1 verified domain, already claimed by haykbaroyan.com —
+// see CLAUDE.md). Brevo:ApiKey takes priority if set; Resend is kept as a
+// fallback path (its SDK/registration still work, just unused in this
+// project's deployment) rather than ripped out, since apps/api.Tests and any
+// other consumer of IEmailSender don't care which one is behind it. Logs
+// instead of sending when neither key is configured (the default in dev) —
+// see Services/EmailSender.cs.
+var brevoOptions = builder.Configuration.GetSection(BrevoOptions.SectionName).Get<BrevoOptions>()
+    ?? new BrevoOptions();
+builder.Services.AddSingleton(brevoOptions);
 var resendOptions = builder.Configuration.GetSection(ResendOptions.SectionName).Get<ResendOptions>()
     ?? new ResendOptions();
 builder.Services.AddSingleton(resendOptions);
-if (!string.IsNullOrWhiteSpace(resendOptions.ApiKey))
+
+if (!string.IsNullOrWhiteSpace(brevoOptions.ApiKey))
+{
+    builder.Services.AddHttpClient<BrevoEmailSender>(client =>
+    {
+        client.BaseAddress = new Uri("https://api.brevo.com/");
+        client.DefaultRequestHeaders.Add("api-key", brevoOptions.ApiKey);
+        client.DefaultRequestHeaders.Add("accept", "application/json");
+    });
+    builder.Services.AddSingleton<IEmailSender>(sp => sp.GetRequiredService<BrevoEmailSender>());
+}
+else if (!string.IsNullOrWhiteSpace(resendOptions.ApiKey))
 {
     builder.Services.AddResend(options => options.ApiToken = resendOptions.ApiKey);
     builder.Services.AddSingleton<IEmailSender, ResendEmailSender>();

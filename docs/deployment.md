@@ -204,11 +204,23 @@ nano .env
 POSTGRES_PASSWORD=<generate a real one, e.g. openssl rand -base64 24>
 CONNECTIONSTRINGS__DEFAULT=Host=postgres;Port=5432;Database=digitaldustlibrary;Username=digitaldustlibrary;Password=<same password as above>
 JWT__SIGNINGKEY=<generate one, e.g. openssl rand -base64 48>
-RESEND__APIKEY=<from your Resend dashboard>
+BREVO__APIKEY=<from your Brevo dashboard — Settings > SMTP & API > API Keys>
+BREVO__FROMADDRESS=onboarding@digitaldustlibrary.com
+BREVO__FROMNAME=Digital Dust Library
 CORS__ALLOWEDORIGINS__0=https://digitaldustlibrary.com
 CORS__ALLOWEDORIGINS__1=https://admin.digitaldustlibrary.com
 GHCR_OWNER=<your github username/org, lowercase>
 ```
+
+Brevo is the actual transactional email provider for this project — Resend's
+free tier caps at one verified domain, already used by haykbaroyan.com, so
+this repo uses Brevo instead (300 emails/day free, no domain cap). The
+`digitaldustlibrary.com` sending domain needs to be verified in Brevo first
+(Settings → Senders, Domains & Dedicated IPs → Domains → Add a domain → add
+the DNS records it gives you to Cloudflare, DNS-only not proxied → Verify)
+before `BREVO__APIKEY` will actually deliver anything. `RESEND__APIKEY` is
+still supported as a fallback (see `Services/EmailSender.cs` — Brevo wins if
+both are set) but isn't set on the droplet.
 
 This file is never committed and never touches CI — it's the one thing
 that's set up by hand, once, directly on the droplet. Everything else is
