@@ -39,6 +39,31 @@ public class ApplicationDirectAddTests(ApiFactory factory)
         Assert.Contains("invited", sentEmail.Subject, StringComparison.OrdinalIgnoreCase);
     }
 
+    // Regression test: a name submitted with accidental leading/trailing
+    // whitespace (e.g. "Seda ") used to get stored verbatim, which silently
+    // broke the admin's delete-user confirmation dialog later (its "type
+    // the exact name to confirm" gate required an exact match against the
+    // untrimmed stored value, which nobody could see or type).
+    [Fact]
+    public async Task DirectAdd_NameWithSurroundingWhitespace_IsTrimmedBeforeStorage()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = ApplicationTestHelpers.UniqueSuffix();
+        var email = $"trim-{suffix}@example.com";
+
+        var response = await editor.PostAsJsonAsync(
+            "/api/applications/direct", new CreateDirectAuthorRequest($"  Untrimmed {suffix}  ", email));
+
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadFromJsonAsync<DirectAddAuthorResponseDto>(AuthHelper.JsonOptions);
+        Assert.Equal($"Untrimmed {suffix}", body!.User.Name);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var createdUser = await db.Users.SingleAsync(u => u.Email == email);
+        Assert.Equal($"Untrimmed {suffix}", createdUser.Name);
+    }
+
     [Fact]
     public async Task DirectAdd_ResponseIncludesDevInviteUrl_WhenLoggingSenderActive()
     {

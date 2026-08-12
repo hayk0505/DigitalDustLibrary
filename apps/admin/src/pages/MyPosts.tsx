@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
+import { useAuth } from '@/hooks/useAuth'
 import { usePosts } from '@/lib/api/posts'
 import { FilterChips } from '@/components/shared/FilterChips'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -16,14 +17,20 @@ const FILTERS: { value: PostStatus | 'all'; label: string }[] = [
 ]
 
 export function MyPosts() {
+  const { user } = useAuth()
+  // Author sees only their own drafts/submissions; Editor/Owner have review
+  // authority over everyone's posts, so this screen shows the full catalog
+  // for them instead — same "mine" vs. unfiltered split already used by
+  // ReviewQueue and the reviewer Dashboard, just applied to this screen too.
+  const isReviewer = user?.role === 'editor' || user?.role === 'owner'
   const [filter, setFilter] = useState<PostStatus | 'all'>('all')
-  const { data: posts = [], isLoading } = usePosts({ mine: true })
+  const { data: posts = [], isLoading } = usePosts({ mine: !isReviewer })
   const filtered = filter === 'all' ? posts : posts.filter((p) => p.status === filter)
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-2xl text-foreground">My Posts</h1>
+        <h1 className="font-heading text-2xl text-foreground">{isReviewer ? 'All Posts' : 'My Posts'}</h1>
         <Link to="/posts/new" className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground">
           New post
         </Link>
@@ -41,7 +48,11 @@ export function MyPosts() {
                 <p className="truncate text-sm text-foreground">{post.title}</p>
                 <div className="mt-1 flex items-center gap-2">
                   <PillarTag pillar={post.pillar} />
-                  <span className="text-xs text-muted-foreground">Updated {formatRelativeTime(post.updatedAt)}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {isReviewer
+                      ? `${post.authorName} · ${formatRelativeTime(post.updatedAt)}`
+                      : `Updated ${formatRelativeTime(post.updatedAt)}`}
+                  </span>
                 </div>
               </div>
               <StatusBadge status={post.status} />

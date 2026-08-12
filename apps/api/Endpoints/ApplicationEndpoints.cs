@@ -23,7 +23,7 @@ public static class ApplicationEndpoints
         {
             var application = new AuthorApplication
             {
-                Name = request.Name,
+                Name = request.Name.Trim(),
                 Email = request.Email,
                 Pitch = request.Pitch,
             };
@@ -66,11 +66,15 @@ public static class ApplicationEndpoints
                     new { message = "A user with this email already exists." }, statusCode: 409);
             }
 
-            var handle = await SlugGenerator.GenerateUniqueAsync(application.Name, h => db.Users.AnyAsync(u => u.Handle == h));
+            // .Trim() here too, not just at submission: covers any
+            // AuthorApplication rows that predate that trim (submitted with
+            // untrimmed whitespace before this fix existed).
+            var trimmedName = application.Name.Trim();
+            var handle = await SlugGenerator.GenerateUniqueAsync(trimmedName, h => db.Users.AnyAsync(u => u.Handle == h));
             var hasher = new PasswordHasher<ApplicationUser>();
             var newUser = new ApplicationUser
             {
-                Name = application.Name,
+                Name = trimmedName,
                 Handle = handle,
                 Email = application.Email,
                 Role = Role.Author,
@@ -94,12 +98,12 @@ public static class ApplicationEndpoints
             application.Status = ApplicationStatus.Approved;
             application.ReviewedAt = DateTimeOffset.UtcNow;
             application.ReviewedByUserId = reviewerId;
-            ActivityLogger.Log(db, reviewerId, $"approved {application.Name}'s application");
+            ActivityLogger.Log(db, reviewerId, $"approved {trimmedName}'s application");
 
             await db.SaveChangesAsync();
 
             var inviteUrl = $"{configuration["AdminFrontendUrl"]}/set-password?token={Uri.EscapeDataString(rawToken)}";
-            var (subject, html) = EmailTemplates.Approved(application.Name, inviteUrl);
+            var (subject, html) = EmailTemplates.Approved(trimmedName, inviteUrl);
             var emailSent = true;
             try
             {
@@ -165,11 +169,12 @@ public static class ApplicationEndpoints
                     new { message = "A user with this email already exists." }, statusCode: 409);
             }
 
-            var handle = await SlugGenerator.GenerateUniqueAsync(request.Name, h => db.Users.AnyAsync(u => u.Handle == h));
+            var trimmedName = request.Name.Trim();
+            var handle = await SlugGenerator.GenerateUniqueAsync(trimmedName, h => db.Users.AnyAsync(u => u.Handle == h));
             var hasher = new PasswordHasher<ApplicationUser>();
             var newUser = new ApplicationUser
             {
-                Name = request.Name,
+                Name = trimmedName,
                 Handle = handle,
                 Email = request.Email,
                 Role = Role.Author,

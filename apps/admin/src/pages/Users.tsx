@@ -80,6 +80,12 @@ function DeleteUserDialog({
   const deleteUser = useDeleteUser()
   const { data: impact, isPending: impactPending, isError: impactError } = useUserDeletionImpact(user.id, { enabled: open })
   const [confirmText, setConfirmText] = useState('')
+  // Stored names can carry accidental leading/trailing whitespace from
+  // manual entry (direct-add-author, application submission) — comparing
+  // trimmed values means that doesn't silently block deletion forever,
+  // since there's no way to fix a name typo after the fact and nobody can
+  // see or reproduce an invisible trailing space.
+  const expectedName = user.name.trim()
 
   function handleConfirm() {
     deleteUser.mutate(user.id, {
@@ -123,11 +129,11 @@ function DeleteUserDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete {user.name}?</DialogTitle>
+          <DialogTitle>Delete {expectedName}?</DialogTitle>
           <DialogDescription>{impactSentence}</DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor="confirm-name">Type "{user.name}" to confirm</Label>
+          <Label htmlFor="confirm-name">Type "{expectedName}" to confirm</Label>
           <Input id="confirm-name" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
         </div>
         <DialogFooter>
@@ -136,7 +142,7 @@ function DeleteUserDialog({
           </DialogClose>
           <Button
             variant="destructive"
-            disabled={confirmText !== user.name || impactPending || deleteUser.isPending}
+            disabled={confirmText.trim() !== expectedName || impactPending || deleteUser.isPending}
             onClick={handleConfirm}
           >
             {deleteUser.isPending ? 'Deleting…' : 'Delete'}

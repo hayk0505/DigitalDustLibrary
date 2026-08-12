@@ -37,6 +37,28 @@ public class ApplicationApproveTests(ApiFactory factory)
         Assert.False(createdUser.IsActive);
         var inviteToken = await db.InviteTokens.SingleAsync(t => t.UserId == createdUser.Id);
         Assert.True(inviteToken.IsActive);
+    }
+
+    // Regression test: an AuthorApplication row seeded directly (simulating
+    // one submitted before the submit-endpoint trim fix existed) still gets
+    // its whitespace trimmed on approval, not just at submission time — the
+    // resulting User.Name must never carry it forward untrimmed.
+    [Fact]
+    public async Task Approve_ApplicationWithUntrimmedName_CreatesUserWithTrimmedName()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = ApplicationTestHelpers.UniqueSuffix();
+        var email = $"approve-untrimmed-{suffix}@example.com";
+        var application = await ApplicationTestHelpers.CreatePendingApplicationAsync(
+            factory, $"  Untrimmed Approve {suffix}  ", email, "Pitch text");
+
+        var response = await editor.PostAsync($"/api/applications/{application.Id}/approve", null);
+
+        response.EnsureSuccessStatusCode();
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var createdUser = await db.Users.SingleAsync(u => u.Email == email);
+        Assert.Equal($"Untrimmed Approve {suffix}", createdUser.Name);
 
         var emailSender = (LoggingEmailSender)scope.ServiceProvider.GetRequiredService<IEmailSender>();
         var sentEmail = emailSender.Sent.Last(e => e.To == email);

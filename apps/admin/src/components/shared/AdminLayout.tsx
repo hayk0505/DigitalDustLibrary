@@ -6,6 +6,7 @@ import { useTheme } from '@/hooks/useTheme'
 import { usePosts } from '@/lib/api/posts'
 import { useApplications } from '@/lib/api/applications'
 import { Avatar } from './Avatar'
+import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS: { screen: Screen; label: string; to: string }[] = [
@@ -23,6 +24,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
   const { can } = usePermissions()
   const { theme, toggle } = useTheme()
+  const isReviewer = user?.role === 'editor' || user?.role === 'owner'
 
   const canSeeReviewQueue = can('reviewQueue')
   const canSeeApplications = can('applications')
@@ -35,13 +37,14 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <aside className="flex w-64 flex-col justify-between bg-sidebar p-6 text-sidebar-foreground">
+    <div className="flex h-screen overflow-hidden bg-background">
+      <aside className="flex w-64 shrink-0 flex-col justify-between overflow-y-auto bg-sidebar p-6 text-sidebar-foreground">
         <div>
           <div className="mb-8 size-10 rounded-xl bg-sidebar-primary" />
           <nav className="space-y-1">
             {NAV_ITEMS.filter((item) => can(item.screen)).map((item) => {
               const count = badgeCounts[item.screen]
+              const label = item.screen === 'myPosts' && isReviewer ? 'All Posts' : item.label
               return (
                 <Link
                   key={item.to}
@@ -49,7 +52,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
                   className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-sidebar-accent"
                   activeProps={{ className: 'bg-sidebar-accent font-medium' }}
                 >
-                  <span>{item.label}</span>
+                  <span>{label}</span>
                   {!!count && (
                     <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs text-primary-foreground">
                       {count}
@@ -62,19 +65,36 @@ export function AdminLayout({ children }: { children: ReactNode }) {
         </div>
 
         <div className="space-y-3">
-          <button
-            type="button"
-            onClick={toggle}
-            className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-sidebar-accent"
+          <label
+            htmlFor="theme-toggle"
+            className="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-sidebar-accent"
           >
-            {theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
-          </button>
+            <span>Theme</span>
+            {/* The sidebar stays dark-styled in both themes (see index.css's
+                --sidebar tokens), unlike the main content area — so this
+                needs its own sidebar-scoped colors instead of the Switch's
+                default bg-input/bg-background, which are tuned for a
+                theme-dependent background and turn near-invisible (white
+                track, near-white thumb) against the dark sidebar in light
+                mode. */}
+            <Switch
+              id="theme-toggle"
+              checked={theme === 'dark'}
+              onCheckedChange={toggle}
+              className="data-[state=unchecked]:bg-sidebar-foreground/20 data-[state=checked]:bg-sidebar-primary"
+              thumbClassName="bg-sidebar-foreground"
+            />
+          </label>
           {user && (
             <div className="flex items-center gap-2">
               <Avatar name={user.name} size="sm" />
               <div className="min-w-0">
                 <p className="truncate text-sm">{user.name}</p>
-                <button type="button" onClick={logout} className="text-xs text-sidebar-foreground/70 hover:underline">
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="cursor-pointer text-xs text-sidebar-foreground/70 hover:underline"
+                >
                   Sign out
                 </button>
               </div>
@@ -83,7 +103,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className={cn('flex-1 p-8')}>{children}</main>
+      <main className={cn('flex-1 overflow-y-auto p-8')}>{children}</main>
     </div>
   )
 }
