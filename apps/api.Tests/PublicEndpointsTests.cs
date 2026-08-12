@@ -31,6 +31,50 @@ public class PublicEndpointsTests(ApiFactory factory)
         Assert.DoesNotContain(posts!, p => p.Title == $"Secret Draft {suffix}");
     }
 
+    // Regression test for a real prod incident: a Post row somehow ended up
+    // Status=Published with PublishedAt=null (the only two write paths,
+    // PATCH's self-publish and /approve, always set both together — how this
+    // happened is still unconfirmed, but it happened), and
+    // Mapping.ToPublicDto's `p.PublishedAt!.Value` force-unwrap threw
+    // InvalidOperationException for every single request to GET
+    // /api/public/posts, taking down the entire public blog homepage (no
+    // global exception middleware exists yet, so this surfaced as a bare
+    // 500 with no body). A single corrupt row must never be able to break
+    // the public listing for every visitor.
+    [Fact]
+    public async Task GetPosts_PublishedPostWithNullPublishedAt_IsExcludedNotThrown()
+    {
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Corrupt Author {suffix}", $"corrupt-author-{suffix}@example.com", Role.Author);
+        await PostTestHelpers.CreatePostAsync(factory, author.Id, $"Corrupt Post {suffix}", PostStatus.Published);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync("/api/public/posts");
+
+        response.EnsureSuccessStatusCode();
+        var posts = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        Assert.DoesNotContain(posts!, p => p.Title == $"Corrupt Post {suffix}");
+    }
+
+    [Fact]
+    public async Task GetPostBySlug_PublishedPostWithNullPublishedAt_Returns404NotThrown()
+    {
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Corrupt Slug Author {suffix}", $"corrupt-slug-author-{suffix}@example.com", Role.Author);
+        var post = await PostTestHelpers.CreatePostAsync(factory, author.Id, $"Corrupt Slug Post {suffix}", PostStatus.Published);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var slug = (await db.Posts.SingleAsync(p => p.Id == post.Id)).Slug;
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/posts/{slug}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
     [Fact]
     public async Task GetPostBySlug_UnknownSlug_Returns404()
     {
