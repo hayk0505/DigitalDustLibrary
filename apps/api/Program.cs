@@ -182,13 +182,14 @@ if (app.Environment.IsDevelopment())
     await DbSeeder.SeedAsync(db);
 }
 
-// Production bootstrap for the very first real Owner account — see
-// DbSeeder.BootstrapOwnerAsync for why this needs to exist and run in every
-// environment (not just Development, unlike the block above).
+// Production bootstrap for the very first real Owner account, plus the one
+// SiteSettings row GET/PATCH /api/settings assume always exists — both run
+// in every environment (not just Development, unlike the block above).
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await DbSeeder.BootstrapOwnerAsync(db, app.Configuration["Bootstrap:OwnerEmail"], app.Configuration["Bootstrap:OwnerPassword"]);
+    await DbSeeder.EnsureSiteSettingsAsync(db);
 }
 
 app.UseCors();

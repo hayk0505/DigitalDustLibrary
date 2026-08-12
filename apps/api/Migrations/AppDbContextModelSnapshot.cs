@@ -32,7 +32,7 @@ namespace DigitalDustLibrary.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("ActorId")
+                    b.Property<Guid?>("ActorId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CreatedAt")
@@ -396,8 +396,7 @@ namespace DigitalDustLibrary.Api.Migrations
                     b.HasOne("DigitalDustLibrary.Api.Models.ApplicationUser", "Actor")
                         .WithMany()
                         .HasForeignKey("ActorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Actor");
                 });

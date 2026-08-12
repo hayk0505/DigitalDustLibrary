@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { useUsers, useUpdateUser } from '@/lib/api/users'
+import { useUsers, useUpdateUser, useDeleteUser, useUserDeletionImpact } from '@/lib/api/users'
 import { getUserStatusColors } from '@/lib/status'
 import { Avatar } from '@/components/shared/Avatar'
 import { FilterChips } from '@/components/shared/FilterChips'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import type { ManagedUser, Role } from '@/lib/types'
 
@@ -66,27 +68,114 @@ function DeactivateDialog({
   )
 }
 
+function DeleteUserDialog({
+  user,
+  open,
+  onOpenChange,
+}: {
+  user: ManagedUser
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const deleteUser = useDeleteUser()
+  const { data: impact, isPending: impactPending, isError: impactError } = useUserDeletionImpact(user.id, { enabled: open })
+  const [confirmText, setConfirmText] = useState('')
+
+  function handleConfirm() {
+    deleteUser.mutate(user.id)
+    setConfirmText('')
+    onOpenChange(false)
+  }
+
+  const impactParts: string[] = []
+  if (impact) {
+    if (impact.postCount > 0) impactParts.push(`${impact.postCount} post(s)`)
+    if (impact.mediaCount > 0) impactParts.push(`${impact.mediaCount} uploaded image(s)`)
+    if (impact.reviewNoteCount > 0) {
+      impactParts.push(`${impact.reviewNoteCount} review note(s) they wrote on other authors' posts`)
+    }
+    if (impact.affectedOtherPostCount > 0) {
+      impactParts.push(`${impact.affectedOtherPostCount} other author's post(s) will lose their featured image`)
+    }
+  }
+
+  let impactSentence: string
+  if (impactPending) {
+    impactSentence = 'Checking what will be deleted…'
+  } else if (impactError) {
+    impactSentence = "Couldn't load the deletion impact — proceed with caution."
+  } else {
+    impactSentence = `This permanently deletes their account${
+      impactParts.length > 0 ? `, along with ${impactParts.join(', ')}` : ''
+    }. This cannot be undone.`
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        onOpenChange(next)
+        if (!next) setConfirmText('')
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete {user.name}?</DialogTitle>
+          <DialogDescription>{impactSentence}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Label htmlFor="confirm-name">Type "{user.name}" to confirm</Label>
+          <Input id="confirm-name" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button variant="destructive" disabled={confirmText !== user.name || impactPending} onClick={handleConfirm}>
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function UserRowActions({ user, isSelf }: { user: ManagedUser; isSelf: boolean }) {
   const update = useUpdateUser()
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   if (!user.isActive) {
     return (
-      <Button size="sm" variant="secondary" onClick={() => update.mutate({ id: user.id, isActive: true })}>
-        Reactivate
-      </Button>
+      <div className="flex gap-2">
+        <Button size="sm" variant="secondary" onClick={() => update.mutate({ id: user.id, isActive: true })}>
+          Reactivate
+        </Button>
+        <span title={isSelf ? "You can't delete your own account" : undefined} className="inline-flex">
+          <Button size="sm" variant="destructive" disabled={isSelf} onClick={() => setDeleteOpen(true)}>
+            Delete
+          </Button>
+        </span>
+        <DeleteUserDialog user={user} open={deleteOpen} onOpenChange={setDeleteOpen} />
+      </div>
     )
   }
 
   return (
-    <>
+    <div className="flex gap-2">
       <span title={isSelf ? "You can't deactivate your own account" : undefined} className="inline-flex">
         <Button size="sm" variant="destructive" disabled={isSelf} onClick={() => setConfirmOpen(true)}>
           Deactivate
         </Button>
       </span>
+      <span title={isSelf ? "You can't delete your own account" : undefined} className="inline-flex">
+        <Button size="sm" variant="destructive" disabled={isSelf} onClick={() => setDeleteOpen(true)}>
+          Delete
+        </Button>
+      </span>
       <DeactivateDialog user={user} open={confirmOpen} onOpenChange={setConfirmOpen} />
-    </>
+      <DeleteUserDialog user={user} open={deleteOpen} onOpenChange={setDeleteOpen} />
+    </div>
   )
 }
 
@@ -103,7 +192,7 @@ export function Users() {
       <div>
         <h1 className="font-heading text-2xl text-foreground">Users & Roles</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Change a user's role or deactivate their account. You can't change your own role or deactivate yourself.
+          Change a user's role, deactivate their account, or permanently delete it. You can't change your own role, deactivate yourself, or delete yourself.
         </p>
       </div>
 

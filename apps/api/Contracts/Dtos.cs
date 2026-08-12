@@ -83,6 +83,8 @@ public record AcceptInviteRequest(string Token, string Password);
 
 public record ManagedUserDto(Guid Id, string Name, string Email, Role Role, bool IsActive, DateTimeOffset CreatedAt);
 
+public record UserDeletionImpactDto(int PostCount, int MediaCount, int ReviewNoteCount, int AffectedOtherPostCount);
+
 public record DirectAddAuthorResponseDto(ManagedUserDto User, string? DevInviteUrl);
 
 public record UpdateUserRequest(Role? Role, bool? IsActive);
@@ -128,7 +130,7 @@ public static class Mapping
         new(s.Id, s.SiteTitle, s.Tagline, s.DefaultMetaDescription, s.LinkedInUrl, s.XUrl);
 
     public static ActivityEventDto ToDto(this ActivityLogEntry e) =>
-        new(e.Id, e.Actor?.Name ?? "", e.Action, e.CreatedAt);
+        new(e.Id, e.Actor?.Name ?? "Deleted user", e.Action, e.CreatedAt);
 
     public static PublicPostDto ToPublicDto(this Post p, int dispatchNumber) => new(
         p.Slug, p.Title, p.BodyHtml, p.Excerpt, p.SeoTitle, p.MetaDescription,

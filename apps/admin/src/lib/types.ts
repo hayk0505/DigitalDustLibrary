@@ -65,6 +65,13 @@ export interface ManagedUser {
   createdAt: string
 }
 
+export interface UserDeletionImpact {
+  postCount: number
+  mediaCount: number
+  reviewNoteCount: number
+  affectedOtherPostCount: number
+}
+
 export type ApplicationStatus = 'pending' | 'approved' | 'rejected'
 
 export interface AuthorApplication {

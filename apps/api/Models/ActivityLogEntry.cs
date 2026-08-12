@@ -9,7 +9,7 @@ namespace DigitalDustLibrary.Api.Models;
 public class ActivityLogEntry
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();
-    public Guid ActorId { get; set; }
+    public Guid? ActorId { get; set; }
     public ApplicationUser? Actor { get; set; }
     public required string Action { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;

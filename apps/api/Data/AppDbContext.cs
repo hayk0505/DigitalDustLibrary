@@ -102,7 +102,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasOne(a => a.Actor)
                 .WithMany()
                 .HasForeignKey(a => a.ActorId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

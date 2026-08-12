@@ -11,7 +11,9 @@ namespace DigitalDustLibrary.Api.Data;
 /// so switching VITE_ENABLE_MOCKS off and pointing at this API is a true
 /// drop-in for local dev/demo — same logins work either way. Dev/demo only:
 /// don't run this against a real production database with real users.
-/// Also seeds the one SiteSettings row every deployment needs to exist.
+/// The one SiteSettings row every deployment needs is handled separately by
+/// EnsureSiteSettingsAsync below, which — unlike this method — runs in every
+/// environment.
 /// </summary>
 public static class DbSeeder
 {
@@ -33,12 +35,29 @@ public static class DbSeeder
             db.Users.Add(await Make("Hayk Baroyan", "owner@dd.local", Role.Owner));
         }
 
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Ensures the one SiteSettings row GET/PATCH /api/settings assume always
+    /// exists (both call db.SiteSettings.SingleAsync()) — runs in every
+    /// environment, unlike SeedAsync's demo accounts above. The EF migration
+    /// that creates the SiteSettings table doesn't insert a row itself, and
+    /// this used to be the only thing that did — but it lived inside
+    /// SeedAsync, which Program.cs only calls when IsDevelopment(), so a
+    /// production boot (ASPNETCORE_ENVIRONMENT=Production, no auto-migrate/
+    /// seed block — see docker-compose.prod.yml) never got a row, and every
+    /// call to /api/settings 500'd on SingleAsync's "sequence contains no
+    /// elements". Idempotent, so safe to call unconditionally on every
+    /// startup alongside BootstrapOwnerAsync.
+    /// </summary>
+    public static async Task EnsureSiteSettingsAsync(AppDbContext db)
+    {
         if (!await db.SiteSettings.AnyAsync())
         {
             db.SiteSettings.Add(new SiteSettings());
+            await db.SaveChangesAsync();
         }
-
-        await db.SaveChangesAsync();
     }
 
     /// <summary>
