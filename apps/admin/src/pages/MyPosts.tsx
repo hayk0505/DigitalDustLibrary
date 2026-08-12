@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { usePosts } from '@/lib/api/posts'
 import { FilterChips } from '@/components/shared/FilterChips'
 import { StatusBadge } from '@/components/shared/StatusBadge'
-import { PillarTag } from '@/components/shared/PillarTag'
+import { CategoryTag } from '@/components/shared/CategoryTag'
 import { formatRelativeTime } from '@/lib/formatting'
 import type { PostStatus } from '@/lib/types'
 
@@ -47,7 +47,7 @@ export function MyPosts() {
               <div className="min-w-0">
                 <p className="truncate text-sm text-foreground">{post.title}</p>
                 <div className="mt-1 flex items-center gap-2">
-                  <PillarTag pillar={post.pillar} />
+                  <CategoryTag name={post.categoryName} color={post.categoryColor} />
                   <span className="text-xs text-muted-foreground">
                     {isReviewer
                       ? `${post.authorName} · ${formatRelativeTime(post.updatedAt)}`

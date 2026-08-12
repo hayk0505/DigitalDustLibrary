@@ -9,8 +9,6 @@ export interface User {
 
 export type PostStatus = 'draft' | 'pending_review' | 'changes_requested' | 'published'
 
-export type Pillar = 'tech' | 'social_psych' | 'software_dev'
-
 export interface ReviewNote {
   id: string
   comment: string
@@ -26,7 +24,9 @@ export interface Post {
   seoTitle: string
   metaDescription: string
   featuredImageId: string | null
-  pillar: Pillar
+  categoryId: string
+  categoryName: string
+  categoryColor: string
   status: PostStatus
   authorId: string
   authorName: string
@@ -50,7 +50,9 @@ export interface Category {
   id: string
   name: string
   slug: string
-  isPillar: boolean
+  description: string
+  color: string
+  position: number
   isVisible: boolean
   isDeleted: boolean
   postCount: number

@@ -7,7 +7,7 @@ import { useUsers } from '@/lib/api/users'
 import { StatTile } from '@/components/shared/StatTile'
 import { Card } from '@/components/shared/Card'
 import { StatusBadge } from '@/components/shared/StatusBadge'
-import { PillarTag } from '@/components/shared/PillarTag'
+import { CategoryTag } from '@/components/shared/CategoryTag'
 import { Avatar } from '@/components/shared/Avatar'
 import { formatRelativeTime } from '@/lib/formatting'
 import type { Post } from '@/lib/types'
@@ -59,7 +59,7 @@ function AuthorDashboard() {
                 <div className="min-w-0">
                   <p className="truncate text-sm text-foreground">{post.title}</p>
                   <div className="mt-1 flex items-center gap-2">
-                    <PillarTag pillar={post.pillar} />
+                    <CategoryTag name={post.categoryName} color={post.categoryColor} />
                     <span className="text-xs text-muted-foreground">{formatRelativeTime(post.updatedAt)}</span>
                   </div>
                 </div>
@@ -130,7 +130,7 @@ function ReviewerDashboard() {
                 <div className="min-w-0">
                   <p className="truncate text-sm text-foreground">{post.title}</p>
                   <div className="mt-1 flex items-center gap-2">
-                    <PillarTag pillar={post.pillar} />
+                    <CategoryTag name={post.categoryName} color={post.categoryColor} />
                     <span className="text-xs text-muted-foreground">
                       {post.authorName} · {formatRelativeTime(post.updatedAt)}
                     </span>

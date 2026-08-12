@@ -11,22 +11,27 @@ public static class CategoryEndpoints
 {
     public static void MapCategoryEndpoints(this IEndpointRouteBuilder app)
     {
-        // Whole group requires Editor or Owner — Authors don't see this screen
-        // at all per Admin_Panel_Build_Spec.md's nav table, and that has to be
-        // enforced here too, not just hidden in the UI (a client-side-only
-        // check is not real access control).
-        var group = app.MapGroup("/api/categories").WithTags("Categories").RequireAuthorization("EditorOrOwner");
+        // Group requires only an authenticated user — GET is readable by any
+        // role (Authors need the list to populate the post editor's category
+        // picker, mirroring PostEndpoints.cs's group-level bare
+        // RequireAuthorization()). The write routes (POST/PATCH/DELETE) chain
+        // their own stricter "EditorOrOwner" policy individually below, since
+        // Authors still shouldn't be able to create/edit/delete categories.
+        var group = app.MapGroup("/api/categories").WithTags("Categories").RequireAuthorization();
 
         // GET /api/categories — returns everything, including hidden and
         // soft-deleted categories. This is the admin management list, not the
         // public blog's category filter (that's a different, not-yet-built
         // public endpoint that WOULD filter to IsVisible && !IsDeleted only).
+        // Ordered by Position (admin-controlled display/paging order), then
+        // CreatedAt as a tie-breaker — Position isn't unique at the schema
+        // level (drag-and-drop reordering writes plain ints, ties are
+        // possible), so the tie-breaker keeps this deterministic.
         group.MapGet("/", async (AppDbContext db) =>
         {
-            var categories = await db.Categories.OrderBy(c => c.Name).ToListAsync();
+            var categories = await db.Categories.OrderBy(c => c.Position).ThenBy(c => c.CreatedAt).ToListAsync();
             var postCounts = await db.Posts
-                .Where(p => p.CategoryId != null)
-                .GroupBy(p => p.CategoryId!.Value)
+                .GroupBy(p => p.CategoryId)
                 .Select(g => new { CategoryId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.CategoryId, x => x.Count);
 
@@ -40,17 +45,27 @@ public static class CategoryEndpoints
                 return Results.Json(new { message = $"Slug '{request.Slug}' is already in use." }, statusCode: 409);
             }
 
+            // Position defaults to "append to the end" when omitted — max()
+            // over zero existing categories is null, not 0, so that case is
+            // handled explicitly rather than letting the very first category
+            // ever created end up with a null Position.
+            var position = request.Position
+                ?? (await db.Categories.MaxAsync(c => (int?)c.Position) ?? 0) + 1;
+
             var category = new Category
             {
                 Name = request.Name,
                 Slug = request.Slug,
-                IsPillar = request.IsPillar ?? false,
+                Description = request.Description,
+                Color = request.Color,
+                Position = position,
             };
 
             db.Categories.Add(category);
             await db.SaveChangesAsync();
             return Results.Created($"/api/categories/{category.Id}", category.ToDto(0));
-        });
+        })
+        .RequireAuthorization("EditorOrOwner");
 
         // PATCH — covers hide/show (IsVisible), soft-delete/restore (IsDeleted),
         // and renaming, all through the same partial-update shape as posts.
@@ -69,6 +84,9 @@ public static class CategoryEndpoints
 
             if (request.Name is not null) category.Name = request.Name;
             if (request.Slug is not null) category.Slug = request.Slug;
+            if (request.Description is not null) category.Description = request.Description;
+            if (request.Color is not null) category.Color = request.Color;
+            if (request.Position is not null) category.Position = request.Position.Value;
             if (request.IsVisible is not null && request.IsVisible.Value != category.IsVisible)
             {
                 category.IsVisible = request.IsVisible.Value;
@@ -84,7 +102,8 @@ public static class CategoryEndpoints
             await db.SaveChangesAsync();
             var postCount = await db.Posts.CountAsync(p => p.CategoryId == id);
             return Results.Ok(category.ToDto(postCount));
-        });
+        })
+        .RequireAuthorization("EditorOrOwner");
 
         // DELETE — true hard delete. Blocked whenever any post (including
         // already-published ones) still references this category, per the
@@ -109,6 +128,7 @@ public static class CategoryEndpoints
             db.Categories.Remove(category);
             await db.SaveChangesAsync();
             return Results.NoContent();
-        });
+        })
+        .RequireAuthorization("EditorOrOwner");
     }
 }

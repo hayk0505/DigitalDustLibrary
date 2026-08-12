@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getApplicationStatusColors, getCategoryStateColors, getPillarColor, getStatusColors, getUserStatusColors, getVisibilityColors } from './status'
+import { getApplicationStatusColors, getCategoryStateColors, getStatusColors, getUserStatusColors, getVisibilityColors } from './status'
 
 describe('getStatusColors', () => {
   it('maps draft to its token classes and label', () => {
@@ -15,19 +15,6 @@ describe('getStatusColors', () => {
       bg: 'bg-status-changes-bg',
       fg: 'text-status-changes-fg',
       label: 'Changes Requested',
-    })
-  })
-})
-
-describe('getPillarColor', () => {
-  it('maps tech to its token class and label', () => {
-    expect(getPillarColor('tech')).toEqual({ bg: 'bg-pillar-tech', label: 'Tech' })
-  })
-
-  it('maps software_dev to its token class and label', () => {
-    expect(getPillarColor('software_dev')).toEqual({
-      bg: 'bg-pillar-dev',
-      label: 'Software Development',
     })
   })
 })

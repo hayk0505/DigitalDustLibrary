@@ -24,3 +24,7 @@ body {
 	color: var(--color-ink);
 	font-family: var(--font-display);
 }
+
+.group:hover h3[style*='--hover-color'] {
+	color: var(--hover-color);
+}

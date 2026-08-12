@@ -22,7 +22,9 @@ public record PostDto(
     string SeoTitle,
     string MetaDescription,
     Guid? FeaturedImageId,
-    Pillar Pillar,
+    Guid CategoryId,
+    string CategoryName,
+    string CategoryColor,
     PostStatus Status,
     Guid AuthorId,
     string AuthorName,
@@ -41,7 +43,7 @@ public record CreatePostRequest(
     string? SeoTitle,
     string? MetaDescription,
     Guid? FeaturedImageId,
-    Pillar? Pillar,
+    Guid? CategoryId,
     PostStatus? Status);
 
 public record UpdatePostRequest(
@@ -51,7 +53,7 @@ public record UpdatePostRequest(
     string? SeoTitle,
     string? MetaDescription,
     Guid? FeaturedImageId,
-    Pillar? Pillar,
+    Guid? CategoryId,
     PostStatus? Status);
 
 public record RequestChangesRequest(string Comment);
@@ -61,15 +63,21 @@ public record CreateMediaRequest(string Filename, string DataUrl, MediaTag Tag, 
 // PostCount isn't a column on Category — it's computed per-request (how many
 // posts currently reference this category), which is also what decides whether
 // a hard DELETE is allowed. See CategoryEndpoints.
-public record CategoryDto(Guid Id, string Name, string Slug, bool IsPillar, bool IsVisible, bool IsDeleted, int PostCount);
+public record CategoryDto(Guid Id, string Name, string Slug, string Description, string Color, int Position, bool IsVisible, bool IsDeleted, int PostCount);
 
-public record CreateCategoryRequest(string Name, string Slug, bool? IsPillar);
+public record CreateCategoryRequest(string Name, string Slug, string Description, string Color, int? Position);
 
 // Same partial-update shape as UpdatePostRequest: only fields you send get
 // changed. IsVisible and IsDeleted are separate flags on purpose (see
 // Category.cs) — toggling one doesn't touch the other. There's no separate
 // "restore" endpoint; setting IsDeleted back to false via this same PATCH does it.
-public record UpdateCategoryRequest(string? Name, string? Slug, bool? IsVisible, bool? IsDeleted);
+// Description/Color/Position default to null (unlike Name/Slug/IsVisible/
+// IsDeleted above, an intentional asymmetry) purely so every existing
+// 4-positional-arg test call site (new UpdateCategoryRequest(a, b, c, d))
+// keeps compiling without being touched by this change.
+public record UpdateCategoryRequest(
+    string? Name, string? Slug, bool? IsVisible, bool? IsDeleted,
+    string? Description = null, string? Color = null, int? Position = null);
 
 public record AuthorApplicationDto(
     Guid Id, string Name, string Email, string Pitch, ApplicationStatus Status,
@@ -97,12 +105,12 @@ public record ActivityEventDto(Guid Id, string ActorName, string Action, DateTim
 
 public record PublicPostDto(
     string Slug, string Title, string BodyHtml, string Excerpt, string SeoTitle, string MetaDescription,
-    string? FeaturedImageUrl, Pillar Pillar, string AuthorHandle, string AuthorName,
+    string? FeaturedImageUrl, string CategorySlug, string CategoryName, string CategoryColor, string AuthorHandle, string AuthorName,
     DateTimeOffset PublishedAt, int ReadingMinutes, int DispatchNumber);
 
 public record PublicAuthorDto(string Handle, string Name);
 
-public record PublicCategoryDto(string Name, string Slug);
+public record PublicCategoryDto(string Name, string Slug, string Description, string Color, int Position, int PostCount);
 
 public static class Mapping
 {
@@ -110,7 +118,8 @@ public static class Mapping
 
     public static PostDto ToDto(this Post p) => new(
         p.Id, p.Title, p.Slug, p.BodyHtml, p.Excerpt, p.SeoTitle, p.MetaDescription,
-        p.FeaturedImageId, p.Pillar, p.Status, p.AuthorId, p.Author?.Name ?? "", p.UpdatedAt, p.PublishedAt,
+        p.FeaturedImageId, p.CategoryId, p.Category?.Name ?? "", p.Category?.Color ?? "",
+        p.Status, p.AuthorId, p.Author?.Name ?? "", p.UpdatedAt, p.PublishedAt,
         p.ReviewNotes.OrderByDescending(r => r.CreatedAt).FirstOrDefault() is { } latest
             ? new ReviewNoteDto(latest.Id, latest.Comment, latest.Reviewer?.Name ?? "", latest.CreatedAt)
             : null);
@@ -118,7 +127,7 @@ public static class Mapping
     public static MediaAssetDto ToDto(this MediaAsset m) => new(m.Id, m.Filename, m.Tag, m.Width, m.Height, m.Url);
 
     public static CategoryDto ToDto(this Category c, int postCount) =>
-        new(c.Id, c.Name, c.Slug, c.IsPillar, c.IsVisible, c.IsDeleted, postCount);
+        new(c.Id, c.Name, c.Slug, c.Description, c.Color, c.Position, c.IsVisible, c.IsDeleted, postCount);
 
     public static AuthorApplicationDto ToDto(this AuthorApplication a) =>
         new(a.Id, a.Name, a.Email, a.Pitch, a.Status, a.SubmittedAt, a.ReviewedAt);
@@ -134,12 +143,14 @@ public static class Mapping
 
     public static PublicPostDto ToPublicDto(this Post p, int dispatchNumber) => new(
         p.Slug, p.Title, p.BodyHtml, p.Excerpt, p.SeoTitle, p.MetaDescription,
-        p.FeaturedImage?.Url, p.Pillar, p.Author?.Handle ?? "", p.Author?.Name ?? "",
+        p.FeaturedImage?.Url, p.Category?.Slug ?? "", p.Category?.Name ?? "", p.Category?.Color ?? "",
+        p.Author?.Handle ?? "", p.Author?.Name ?? "",
         p.PublishedAt!.Value, EstimateReadingMinutes(p.BodyHtml), dispatchNumber);
 
     public static PublicAuthorDto ToPublicDto(this ApplicationUser u) => new(u.Handle, u.Name);
 
-    public static PublicCategoryDto ToPublicDto(this Category c) => new(c.Name, c.Slug);
+    public static PublicCategoryDto ToPublicDto(this Category c, int postCount) =>
+        new(c.Name, c.Slug, c.Description, c.Color, c.Position, postCount);
 
     // Same word-count/200wpm formula as apps/admin/src/lib/formatting.ts's
     // estimateReadTime — computed here so the blog never has to duplicate it.

@@ -173,4 +173,54 @@ public class PublicEndpointsTests(ApiFactory factory)
         var dto = await response.Content.ReadFromJsonAsync<PublicAuthorDto>(AuthHelper.JsonOptions);
         Assert.Equal($"Handle Author {suffix}", dto!.Name);
     }
+
+    [Fact]
+    public async Task GetPosts_WithCategoryFilter_ReturnsOnlyThatCategorysPosts()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Category Filter Author {suffix}", $"category-filter-author-{suffix}@example.com", Role.Author);
+        var categoryA = await CategoryTestHelpers.CreateCategoryAsync(editor, $"Filter A {suffix}", $"filter-a-{suffix}");
+        var categoryB = await CategoryTestHelpers.CreateCategoryAsync(editor, $"Filter B {suffix}", $"filter-b-{suffix}");
+        var postInA = await PostTestHelpers.CreatePostAsync(
+            factory, author.Id, $"In A {suffix}", PostStatus.PendingReview, categoryId: categoryA.Id);
+        await editor.PostAsync($"/api/posts/{postInA.Id}/approve", null);
+        var postInB = await PostTestHelpers.CreatePostAsync(
+            factory, author.Id, $"In B {suffix}", PostStatus.PendingReview, categoryId: categoryB.Id);
+        await editor.PostAsync($"/api/posts/{postInB.Id}/approve", null);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/posts?category={categoryA.Slug}");
+
+        response.EnsureSuccessStatusCode();
+        var posts = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        Assert.Contains(posts!, p => p.Title == $"In A {suffix}");
+        Assert.DoesNotContain(posts!, p => p.Title == $"In B {suffix}");
+    }
+
+    [Fact]
+    public async Task GetCategories_ReturnsDescriptionColorPositionAndPublishedPostCount()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Category Shape Author {suffix}", $"category-shape-author-{suffix}@example.com", Role.Author);
+        var category = await CategoryTestHelpers.CreateCategoryAsync(
+            editor, $"Shape Test {suffix}", $"shape-test-{suffix}", "A real description.", "#654321", position: 777);
+        var post = await PostTestHelpers.CreatePostAsync(
+            factory, author.Id, $"Shape Post {suffix}", PostStatus.PendingReview, categoryId: category.Id);
+        await editor.PostAsync($"/api/posts/{post.Id}/approve", null);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync("/api/public/categories");
+
+        response.EnsureSuccessStatusCode();
+        var categories = await response.Content.ReadFromJsonAsync<List<PublicCategoryDto>>(AuthHelper.JsonOptions);
+        var found = categories!.Single(c => c.Slug == $"shape-test-{suffix}");
+        Assert.Equal("A real description.", found.Description);
+        Assert.Equal("#654321", found.Color);
+        Assert.Equal(777, found.Position);
+        Assert.Equal(1, found.PostCount);
+    }
 }

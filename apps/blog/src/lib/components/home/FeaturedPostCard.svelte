@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { pillarAccentClasses, type PillarAccent, type Post } from '$lib/data';
+	import type { Post } from '$lib/data';
 	import AuthorByline from '../shared/AuthorByline.svelte';
 
-	let { post, accent }: { post: Post; accent: PillarAccent } = $props();
+	let { post, color }: { post: Post; color: string } = $props();
 </script>
 
 <a
@@ -11,9 +11,8 @@
 >
 	<span class="font-label text-xs tracking-widest text-paper/60 uppercase">Featured</span>
 	<span
-		class="pointer-events-none absolute top-2 right-4 font-display text-7xl font-bold {pillarAccentClasses[
-			accent
-		].text}"
+		class="pointer-events-none absolute top-2 right-4 font-display text-7xl font-bold"
+		style="color: {color}"
 	>
 		{String(post.dispatchNumber).padStart(2, '0')}
 	</span>

@@ -11,7 +11,7 @@ public static class PublicEndpoints
     {
         var group = app.MapGroup("/api/public").WithTags("Public").AllowAnonymous();
 
-        group.MapGet("/posts", async (Pillar? pillar, AppDbContext db) =>
+        group.MapGet("/posts", async (string? category, AppDbContext db) =>
         {
             // PublishedAt != null alongside the status check: the only two
             // write paths (PATCH's self-publish, /approve) always set both
@@ -23,10 +23,10 @@ public static class PublicEndpoints
             // with no publish timestamp isn't in a genuinely valid published
             // state (its date-based sort position and dispatch number would
             // be meaningless).
-            var query = db.Posts.Include(p => p.Author).Include(p => p.FeaturedImage)
+            var query = db.Posts.Include(p => p.Author).Include(p => p.FeaturedImage).Include(p => p.Category)
                 .Where(p => p.Status == PostStatus.Published && p.PublishedAt != null);
 
-            if (pillar is not null) query = query.Where(p => p.Pillar == pillar);
+            if (category is not null) query = query.Where(p => p.Category!.Slug == category);
 
             var posts = await query.OrderByDescending(p => p.PublishedAt).ToListAsync();
             var dispatchNumbers = await BuildDispatchNumbersAsync(db);
@@ -36,7 +36,7 @@ public static class PublicEndpoints
 
         group.MapGet("/posts/{slug}", async (string slug, AppDbContext db) =>
         {
-            var post = await db.Posts.Include(p => p.Author).Include(p => p.FeaturedImage)
+            var post = await db.Posts.Include(p => p.Author).Include(p => p.FeaturedImage).Include(p => p.Category)
                 .FirstOrDefaultAsync(p => p.Slug == slug && p.Status == PostStatus.Published && p.PublishedAt != null);
             if (post is null) return Results.Json(new { message = "Not found" }, statusCode: 404);
 
@@ -44,13 +44,22 @@ public static class PublicEndpoints
             return Results.Ok(post.ToPublicDto(dispatchNumbers[post.Id]));
         });
 
+        // Ordered by Position — the blog renders columns in this order and
+        // paginates through them 3 at a time in this order.
         group.MapGet("/categories", async (AppDbContext db) =>
         {
             var categories = await db.Categories
                 .Where(c => c.IsVisible && !c.IsDeleted)
-                .OrderBy(c => c.Name)
+                .OrderBy(c => c.Position).ThenBy(c => c.CreatedAt)
                 .ToListAsync();
-            return Results.Ok(categories.Select(c => c.ToPublicDto()));
+
+            var postCounts = await db.Posts
+                .Where(p => p.Status == PostStatus.Published)
+                .GroupBy(p => p.CategoryId)
+                .Select(g => new { CategoryId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.CategoryId, x => x.Count);
+
+            return Results.Ok(categories.Select(c => c.ToPublicDto(postCounts.GetValueOrDefault(c.Id))));
         });
 
         group.MapGet("/authors/{handle}", async (string handle, AppDbContext db) =>
@@ -62,23 +71,23 @@ public static class PublicEndpoints
     }
 
     // Dispatch number = a post's 1-based rank by PublishedAt ascending
-    // (oldest = 1) among Published posts sharing its Pillar. Computed for
+    // (oldest = 1) among Published posts sharing its Category. Computed for
     // every published post at once, not per-returned-post, since each
-    // number depends on the full ordering within its pillar.
+    // number depends on the full ordering within its category.
     private static async Task<Dictionary<Guid, int>> BuildDispatchNumbersAsync(AppDbContext db)
     {
         var published = await db.Posts
             .Where(p => p.Status == PostStatus.Published && p.PublishedAt != null)
             .OrderBy(p => p.PublishedAt)
-            .Select(p => new { p.Id, p.Pillar })
+            .Select(p => new { p.Id, p.CategoryId })
             .ToListAsync();
 
         var numbers = new Dictionary<Guid, int>();
-        var countByPillar = new Dictionary<Pillar, int>();
+        var countByCategory = new Dictionary<Guid, int>();
         foreach (var post in published)
         {
-            countByPillar[post.Pillar] = countByPillar.GetValueOrDefault(post.Pillar) + 1;
-            numbers[post.Id] = countByPillar[post.Pillar];
+            countByCategory[post.CategoryId] = countByCategory.GetValueOrDefault(post.CategoryId) + 1;
+            numbers[post.Id] = countByCategory[post.CategoryId];
         }
         return numbers;
     }

@@ -18,7 +18,7 @@ export function useApproveApplication() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['applications'] })
       if (data.devInviteUrl) {
-        toast.success('Application approved — email not sent (Resend not configured)', {
+        toast.success('Application approved — email not sent, share this link manually', {
           action: { label: 'Copy invite link', onClick: () => navigator.clipboard.writeText(data.devInviteUrl!) },
         })
       } else {
@@ -47,7 +47,7 @@ export function useDirectAddAuthor() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       if (data.devInviteUrl) {
-        toast.success('Author added — email not sent (Resend not configured)', {
+        toast.success('Author added — email not sent, share this link manually', {
           action: { label: 'Copy invite link', onClick: () => navigator.clipboard.writeText(data.devInviteUrl!) },
         })
       } else {

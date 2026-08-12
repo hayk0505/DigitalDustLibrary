@@ -3,6 +3,7 @@ using System;
 using DigitalDustLibrary.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DigitalDustLibrary.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260811175712_MakeActivityLogActorNullable")]
+    partial class MakeActivityLogActorNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -132,21 +135,16 @@ namespace DigitalDustLibrary.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsPillar")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsVisible")
@@ -155,9 +153,6 @@ namespace DigitalDustLibrary.Api.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int>("Position")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Slug")
                         .IsRequired()
@@ -252,7 +247,7 @@ namespace DigitalDustLibrary.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("CategoryId")
+                    b.Property<Guid?>("CategoryId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CreatedAt")
@@ -268,6 +263,9 @@ namespace DigitalDustLibrary.Api.Migrations
                     b.Property<string>("MetaDescription")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Pillar")
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("PublishedAt")
                         .HasColumnType("timestamp with time zone");
@@ -449,8 +447,7 @@ namespace DigitalDustLibrary.Api.Migrations
                     b.HasOne("DigitalDustLibrary.Api.Models.Category", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("DigitalDustLibrary.Api.Models.MediaAsset", "FeaturedImage")
                         .WithMany()

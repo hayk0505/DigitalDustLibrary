@@ -16,7 +16,7 @@ public static class PostEndpoints
         // GET /api/posts?mine=true — matches mocks/handlers/posts.ts.
         group.MapGet("/", async (bool? mine, ClaimsPrincipal user, AppDbContext db) =>
         {
-            var query = db.Posts.Include(p => p.Author).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer).AsQueryable();
+            var query = db.Posts.Include(p => p.Author).Include(p => p.Category).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer).AsQueryable();
 
             if (mine == true)
             {
@@ -36,8 +36,51 @@ public static class PostEndpoints
             var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)
                 ?? user.FindFirstValue("sub")!);
 
+            // !IsDeleted filter: a soft-deleted category is "gone" from the
+            // client's perspective (it's excluded from the public blog and
+            // the post editor's picker) even though its row still exists for
+            // hard-delete-blocking purposes — treat an explicitly-supplied
+            // soft-deleted category ID the same as a nonexistent one. Does
+            // NOT filter on IsVisible: a hidden-but-not-deleted category is
+            // still a legitimate assignment target (e.g. staging drafts in a
+            // category ahead of its public launch).
+            if (request.CategoryId is not null && !await db.Categories.AnyAsync(c => c.Id == request.CategoryId.Value && !c.IsDeleted))
+            {
+                return Results.Json(new { message = "The specified category does not exist." }, statusCode: 400);
+            }
+
             var title = request.Title ?? "Untitled draft";
             var slug = await SlugGenerator.GenerateUniqueAsync(title, s => db.Posts.AnyAsync(p => p.Slug == s));
+
+            // Defaults to the lowest-Position category when omitted, the
+            // same "first in display order" rule Categories themselves use
+            // for their own default ordering — not hardcoded to a specific
+            // category, since categories are no longer a fixed set of 3.
+            // FirstOrDefaultAsync, not FirstAsync: every category can in
+            // principle be hard-deleted (nothing stops it once no post
+            // references any of them), and an empty Categories table must
+            // produce a clean 400 here, not an unhandled
+            // InvalidOperationException -> bare 500.
+            Guid categoryId;
+            if (request.CategoryId is { } requestedCategoryId)
+            {
+                categoryId = requestedCategoryId;
+            }
+            else
+            {
+                // !IsDeleted filter: a soft-deleted category must never be
+                // picked as the silent default for an omitted CategoryId —
+                // it's invisible on the public blog, so a post landing there
+                // by default would be unfindable. IsVisible is deliberately
+                // NOT filtered here for the same reason as above: hidden
+                // categories are still valid targets, including as a default.
+                var defaultCategoryId = await db.Categories.Where(c => !c.IsDeleted).OrderBy(c => c.Position).Select(c => c.Id).FirstOrDefaultAsync();
+                if (defaultCategoryId == Guid.Empty)
+                {
+                    return Results.Json(new { message = "No category exists — create one first." }, statusCode: 400);
+                }
+                categoryId = defaultCategoryId;
+            }
 
             var post = new Post
             {
@@ -48,7 +91,7 @@ public static class PostEndpoints
                 SeoTitle = request.SeoTitle ?? "",
                 MetaDescription = request.MetaDescription ?? "",
                 FeaturedImageId = request.FeaturedImageId,
-                Pillar = request.Pillar ?? Pillar.Tech,
+                CategoryId = categoryId,
                 Status = request.Status ?? PostStatus.Draft,
                 AuthorId = userId,
             };
@@ -66,7 +109,7 @@ public static class PostEndpoints
         // PATCHing status directly, bypassing review entirely.
         group.MapPatch("/{id:guid}", async (Guid id, UpdatePostRequest request, AppDbContext db, ClaimsPrincipal user) =>
         {
-            var post = await db.Posts.Include(p => p.Author).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer)
+            var post = await db.Posts.Include(p => p.Author).Include(p => p.Category).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer)
                 .FirstOrDefaultAsync(p => p.Id == id);
             if (post is null) return Results.Json(new { message = "Not found" }, statusCode: 404);
 
@@ -106,7 +149,18 @@ public static class PostEndpoints
             if (request.SeoTitle is not null) post.SeoTitle = request.SeoTitle;
             if (request.MetaDescription is not null) post.MetaDescription = request.MetaDescription;
             if (request.FeaturedImageId is not null) post.FeaturedImageId = request.FeaturedImageId;
-            if (request.Pillar is not null) post.Pillar = request.Pillar.Value;
+            if (request.CategoryId is not null)
+            {
+                // !IsDeleted filter — same rationale as the POST /api/posts
+                // validation above: a soft-deleted category is not a valid
+                // assignment target, but IsVisible is not filtered (hidden
+                // categories remain assignable).
+                if (!await db.Categories.AnyAsync(c => c.Id == request.CategoryId.Value && !c.IsDeleted))
+                {
+                    return Results.Json(new { message = "The specified category does not exist." }, statusCode: 400);
+                }
+                post.CategoryId = request.CategoryId.Value;
+            }
             if (request.Status is not null)
             {
                 post.Status = request.Status.Value;
@@ -121,7 +175,7 @@ public static class PostEndpoints
         // POST /api/posts/{id}/approve
         group.MapPost("/{id:guid}/approve", async (Guid id, AppDbContext db, ClaimsPrincipal user) =>
         {
-            var post = await db.Posts.Include(p => p.Author).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer)
+            var post = await db.Posts.Include(p => p.Author).Include(p => p.Category).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer)
                 .FirstOrDefaultAsync(p => p.Id == id);
             if (post is null) return Results.Json(new { message = "Not found" }, statusCode: 404);
             if (post.Status != PostStatus.PendingReview)
@@ -151,7 +205,7 @@ public static class PostEndpoints
                 return Results.Json(new { message = "A comment is required when requesting changes." }, statusCode: 400);
             }
 
-            var post = await db.Posts.Include(p => p.Author).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer)
+            var post = await db.Posts.Include(p => p.Author).Include(p => p.Category).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer)
                 .FirstOrDefaultAsync(p => p.Id == id);
             if (post is null) return Results.Json(new { message = "Not found" }, statusCode: 404);
             if (post.Status != PostStatus.PendingReview)

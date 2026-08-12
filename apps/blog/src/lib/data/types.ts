@@ -1,10 +1,10 @@
-export type PillarAccent = 'red' | 'green' | 'blue';
-
-export type Pillar = {
+export type Category = {
 	slug: string;
-	label: string;
-	index: number;
-	accent: PillarAccent;
+	name: string;
+	description: string;
+	color: string;
+	position: number;
+	postCount: number;
 };
 
 export type Author = {
@@ -20,7 +20,9 @@ export type Post = {
 	seoTitle: string;
 	metaDescription: string;
 	featuredImageUrl: string | null;
-	pillarSlug: string;
+	categorySlug: string;
+	categoryName: string;
+	categoryColor: string;
 	authorHandle: string;
 	authorName: string;
 	publishedAt: string;

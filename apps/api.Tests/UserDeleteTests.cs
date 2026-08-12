@@ -44,7 +44,16 @@ public class UserDeleteTests(ApiFactory factory)
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
 
-            var ownPost = new Post { Title = $"Own Post {suffix}", Slug = $"own-post-{suffix}", AuthorId = target.Id };
+            // Post.CategoryId is non-nullable now — a throwaway category just
+            // to satisfy the FK, this test doesn't care which one.
+            var category = new Category
+            {
+                Name = $"UserDelete Test Category {suffix}", Slug = $"user-delete-test-category-{suffix}",
+                Description = "Throwaway category for UserDeleteTests.", Color = "#A27B5B",
+            };
+            db.Categories.Add(category);
+
+            var ownPost = new Post { Title = $"Own Post {suffix}", Slug = $"own-post-{suffix}", AuthorId = target.Id, CategoryId = category.Id };
             db.Posts.Add(ownPost);
             ownPostId = ownPost.Id;
 
@@ -70,7 +79,7 @@ public class UserDeleteTests(ApiFactory factory)
             var otherPost = new Post
             {
                 Title = $"Other Post {suffix}", Slug = $"other-post-{suffix}", AuthorId = otherAuthor.Id,
-                FeaturedImageId = media.Id,
+                FeaturedImageId = media.Id, CategoryId = category.Id,
             };
             db.Posts.Add(otherPost);
             db.ReviewNotes.Add(new ReviewNote { PostId = otherPost.Id, ReviewerId = target.Id, Comment = "Reviewed by target" });
@@ -181,7 +190,15 @@ public class UserDeleteTests(ApiFactory factory)
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            db.Posts.Add(new Post { Title = $"Impact Post {suffix}", Slug = $"impact-post-{suffix}", AuthorId = target.Id });
+            // Post.CategoryId is non-nullable now — a throwaway category just
+            // to satisfy the FK, this test doesn't care which one.
+            var category = new Category
+            {
+                Name = $"Impact Test Category {suffix}", Slug = $"impact-test-category-{suffix}",
+                Description = "Throwaway category for UserDeleteTests.", Color = "#A27B5B",
+            };
+            db.Categories.Add(category);
+            db.Posts.Add(new Post { Title = $"Impact Post {suffix}", Slug = $"impact-post-{suffix}", AuthorId = target.Id, CategoryId = category.Id });
             db.MediaAssets.Add(new MediaAsset
             {
                 Filename = "impact.png", Tag = MediaTag.Featured, Width = 10, Height = 10,

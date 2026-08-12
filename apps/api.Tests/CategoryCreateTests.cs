@@ -14,7 +14,7 @@ public class CategoryCreateTests(ApiFactory factory)
         var suffix = CategoryTestHelpers.UniqueSuffix();
 
         var response = await editor.PostAsJsonAsync("/api/categories",
-            new CreateCategoryRequest($"Create Test {suffix}", $"create-test-{suffix}", false));
+            new CreateCategoryRequest($"Create Test {suffix}", $"create-test-{suffix}", "Test description.", "#A27B5B", null));
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var created = await response.Content.ReadFromJsonAsync<CategoryDto>();
@@ -34,7 +34,7 @@ public class CategoryCreateTests(ApiFactory factory)
         await CategoryTestHelpers.CreateCategoryAsync(editor, $"Dup Test {suffix}", slug);
 
         var response = await editor.PostAsJsonAsync("/api/categories",
-            new CreateCategoryRequest($"Dup Test Again {suffix}", slug, false));
+            new CreateCategoryRequest($"Dup Test Again {suffix}", slug, "Test description.", "#A27B5B", null));
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
@@ -45,7 +45,7 @@ public class CategoryCreateTests(ApiFactory factory)
         var client = factory.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/categories",
-            new CreateCategoryRequest("No Auth", $"no-auth-{CategoryTestHelpers.UniqueSuffix()}", false));
+            new CreateCategoryRequest("No Auth", $"no-auth-{CategoryTestHelpers.UniqueSuffix()}", "Test description.", "#A27B5B", null));
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -56,8 +56,23 @@ public class CategoryCreateTests(ApiFactory factory)
         var author = await AuthHelper.LoginAsAsync(factory, AuthHelper.AuthorEmail);
 
         var response = await author.PostAsJsonAsync("/api/categories",
-            new CreateCategoryRequest("Author Attempt", $"author-attempt-{CategoryTestHelpers.UniqueSuffix()}", false));
+            new CreateCategoryRequest("Author Attempt", $"author-attempt-{CategoryTestHelpers.UniqueSuffix()}", "Test description.", "#A27B5B", null));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Create_WithoutPosition_DefaultsToOneMoreThanCurrentMax()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = CategoryTestHelpers.UniqueSuffix();
+        var first = await CategoryTestHelpers.CreateCategoryAsync(editor, $"Max Base {suffix}", $"max-base-{suffix}", position: 500);
+
+        var response = await editor.PostAsJsonAsync("/api/categories",
+            new CreateCategoryRequest($"Max Next {suffix}", $"max-next-{suffix}", "Desc", "#A27B5B", null));
+
+        response.EnsureSuccessStatusCode();
+        var created = await response.Content.ReadFromJsonAsync<CategoryDto>();
+        Assert.True(created!.Position > first.Position, "expected the new category's Position to be greater than the existing max");
     }
 }

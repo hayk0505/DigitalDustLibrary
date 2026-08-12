@@ -141,4 +141,21 @@ public class CategoryUpdateTests(ApiFactory factory)
         var entries = await activityResponse.Content.ReadFromJsonAsync<List<ActivityEventDto>>(AuthHelper.JsonOptions);
         Assert.Contains(entries!, e => e.Action == $"archived \"Archive Log {suffix}\"");
     }
+
+    [Fact]
+    public async Task Patch_UpdatesDescriptionColorAndPosition()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = CategoryTestHelpers.UniqueSuffix();
+        var created = await CategoryTestHelpers.CreateCategoryAsync(editor, $"Fields Test {suffix}", $"fields-test-{suffix}");
+
+        var response = await editor.PatchAsJsonAsync($"/api/categories/{created.Id}",
+            new UpdateCategoryRequest(null, null, null, null, "New description.", "#123456", 42));
+
+        response.EnsureSuccessStatusCode();
+        var updated = await response.Content.ReadFromJsonAsync<CategoryDto>();
+        Assert.Equal("New description.", updated!.Description);
+        Assert.Equal("#123456", updated.Color);
+        Assert.Equal(42, updated.Position);
+    }
 }

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { usePosts, useApprovePost, useRequestChanges } from '@/lib/api/posts'
 import { Avatar } from '@/components/shared/Avatar'
-import { PillarTag } from '@/components/shared/PillarTag'
+import { CategoryTag } from '@/components/shared/CategoryTag'
 import { Card } from '@/components/shared/Card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -29,7 +29,7 @@ export function ReviewDetail({ postId }: { postId: string }) {
           <div className="text-sm text-muted-foreground">
             {post.authorName} · {formatRelativeTime(post.updatedAt)} · {estimateReadTime(post.bodyHtml)}
           </div>
-          <PillarTag pillar={post.pillar} />
+          <CategoryTag name={post.categoryName} color={post.categoryColor} />
         </div>
         <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: post.bodyHtml }} />
       </div>

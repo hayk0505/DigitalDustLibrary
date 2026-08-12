@@ -205,4 +205,79 @@ public class PostPatchTests(ApiFactory factory)
         var renamed = await renameResponse.Content.ReadFromJsonAsync<PostDto>(AuthHelper.JsonOptions);
         Assert.Equal(lockedSlug, renamed!.Slug);
     }
+
+    [Fact]
+    public async Task Post_WithoutCategoryId_DefaultsToLowestPositionCategory()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var author = await AuthHelper.LoginAsAsync(factory, AuthHelper.AuthorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        // Positioned below whatever the current global minimum is (not a fixed
+        // constant) so this assertion holds regardless of what other tests have
+        // already created in the shared, never-reset test database and
+        // regardless of test execution order.
+        var floor = await CategoryTestHelpers.LowestExistingPositionAsync(editor);
+        var lowestCategory = await CategoryTestHelpers.CreateCategoryAsync(
+            editor, $"Lowest Position {suffix}", $"lowest-position-{suffix}", position: floor - 1000);
+
+        var response = await author.PostAsJsonAsync("/api/posts",
+            new CreatePostRequest($"No Category Given {suffix}", null, null, null, null, null, null, null));
+
+        response.EnsureSuccessStatusCode();
+        var created = await response.Content.ReadFromJsonAsync<PostDto>(AuthHelper.JsonOptions);
+        Assert.Equal(lowestCategory.Id, created!.CategoryId);
+    }
+
+    [Fact]
+    public async Task Post_WithoutCategoryId_SkipsDeletedLowestPositionCategory()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var author = await AuthHelper.LoginAsAsync(factory, AuthHelper.AuthorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        // Both positions are anchored below the current global minimum (see
+        // comment above) so nextLowest is guaranteed to be the true minimum
+        // among non-deleted categories, and deletedLowest would have been the
+        // global minimum were it not soft-deleted — independent of test order.
+        var floor = await CategoryTestHelpers.LowestExistingPositionAsync(editor);
+        var deletedLowest = await CategoryTestHelpers.CreateCategoryAsync(
+            editor, $"Deleted Lowest {suffix}", $"deleted-lowest-{suffix}", position: floor - 2000);
+        await editor.PatchAsJsonAsync($"/api/categories/{deletedLowest.Id}", new UpdateCategoryRequest(null, null, null, true));
+        var nextLowest = await CategoryTestHelpers.CreateCategoryAsync(
+            editor, $"Next Lowest {suffix}", $"next-lowest-{suffix}", position: floor - 1000);
+
+        var response = await author.PostAsJsonAsync("/api/posts",
+            new CreatePostRequest($"Skip Deleted {suffix}", null, null, null, null, null, null, null));
+
+        response.EnsureSuccessStatusCode();
+        var created = await response.Content.ReadFromJsonAsync<PostDto>(AuthHelper.JsonOptions);
+        Assert.Equal(nextLowest.Id, created!.CategoryId);
+    }
+
+    [Fact]
+    public async Task Post_WithNonexistentCategoryId_Returns400NotServerError()
+    {
+        var author = await AuthHelper.LoginAsAsync(factory, AuthHelper.AuthorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+
+        var response = await author.PostAsJsonAsync("/api/posts",
+            new CreatePostRequest($"Bad Category {suffix}", null, null, null, null, null, Guid.NewGuid(), null));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Patch_WithNonexistentCategoryId_Returns400NotServerError()
+    {
+        var author = await AuthHelper.LoginAsAsync(factory, AuthHelper.AuthorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var createResponse = await author.PostAsJsonAsync("/api/posts",
+            new CreatePostRequest($"Patch Bad Category {suffix}", null, null, null, null, null, null, null));
+        createResponse.EnsureSuccessStatusCode();
+        var created = await createResponse.Content.ReadFromJsonAsync<PostDto>(AuthHelper.JsonOptions);
+
+        var response = await author.PatchAsJsonAsync($"/api/posts/{created!.Id}",
+            new UpdatePostRequest(null, null, null, null, null, null, Guid.NewGuid(), null));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }

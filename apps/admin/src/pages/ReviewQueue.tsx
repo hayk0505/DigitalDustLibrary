@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { usePosts } from '@/lib/api/posts'
 import { Avatar } from '@/components/shared/Avatar'
-import { PillarTag } from '@/components/shared/PillarTag'
+import { CategoryTag } from '@/components/shared/CategoryTag'
 import { formatRelativeTime } from '@/lib/formatting'
 
 export function ReviewQueue() {
@@ -27,7 +27,7 @@ export function ReviewQueue() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-foreground">{post.title}</p>
                 <div className="mt-1 flex items-center gap-2">
-                  <PillarTag pillar={post.pillar} />
+                  <CategoryTag name={post.categoryName} color={post.categoryColor} />
                   <span className="text-xs text-muted-foreground">
                     {post.authorName} · Submitted {formatRelativeTime(post.updatedAt)}
                   </span>

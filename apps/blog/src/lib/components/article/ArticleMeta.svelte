@@ -1,24 +1,20 @@
 <script lang="ts">
-	import { pillarAccentClasses, getPillarBySlug, type Post } from '$lib/data';
 	import { formatDispatchDate } from '$lib/utils/format-date';
 	import AuthorByline from '$lib/components/shared/AuthorByline.svelte';
-	import PillarDot from '$lib/components/shared/PillarDot.svelte';
+	import CategoryDot from '$lib/components/shared/CategoryDot.svelte';
+	import type { Post } from '$lib/data';
 
 	let { post }: { post: Post } = $props();
-
-	const pillar = $derived(getPillarBySlug(post.pillarSlug));
 </script>
 
-{#if pillar}
-	<div class="flex items-center gap-2 font-label text-xs tracking-widest uppercase">
-		<PillarDot accent={pillar.accent} size="md" />
-		<span class={pillarAccentClasses[pillar.accent].text}>{pillar.label}</span>
-		<span class="text-ink/30">/</span>
-		<span class="text-ink/60">{formatDispatchDate(post.publishedAt)}</span>
-		<span class="text-ink/30">/</span>
-		<span class="text-ink/60">{post.readingMinutes} min</span>
-	</div>
-{/if}
+<div class="flex items-center gap-2 font-label text-xs tracking-widest uppercase">
+	<CategoryDot color={post.categoryColor} size="md" />
+	<span style="color: {post.categoryColor}">{post.categoryName}</span>
+	<span class="text-ink/30">/</span>
+	<span class="text-ink/60">{formatDispatchDate(post.publishedAt)}</span>
+	<span class="text-ink/30">/</span>
+	<span class="text-ink/60">{post.readingMinutes} min</span>
+</div>
 
 <h1 class="mt-3 font-display text-4xl font-bold">{post.title}</h1>
 <p class="mt-3 font-display text-lg text-ink/70 italic">{post.excerpt}</p>

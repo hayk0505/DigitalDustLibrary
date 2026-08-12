@@ -1,5 +1,5 @@
 import { API_URL, API_ORIGIN } from './config';
-import type { Author, Post } from './data/types';
+import type { Author, Category, Post } from './data/types';
 
 type ApiPost = {
 	slug: string;
@@ -9,7 +9,9 @@ type ApiPost = {
 	seoTitle: string;
 	metaDescription: string;
 	featuredImageUrl: string | null;
-	pillar: string;
+	categorySlug: string;
+	categoryName: string;
+	categoryColor: string;
 	authorHandle: string;
 	authorName: string;
 	publishedAt: string;
@@ -26,7 +28,9 @@ function toPost(api: ApiPost): Post {
 		seoTitle: api.seoTitle,
 		metaDescription: api.metaDescription,
 		featuredImageUrl: api.featuredImageUrl,
-		pillarSlug: api.pillar,
+		categorySlug: api.categorySlug,
+		categoryName: api.categoryName,
+		categoryColor: api.categoryColor,
 		authorHandle: api.authorHandle,
 		authorName: api.authorName,
 		publishedAt: api.publishedAt,
@@ -40,6 +44,31 @@ export async function fetchPosts(fetchFn: typeof fetch): Promise<Post[]> {
 	if (!response.ok) throw new Error(`Failed to fetch posts: ${response.status}`);
 	const posts: ApiPost[] = await response.json();
 	return posts.map(toPost);
+}
+
+type ApiCategory = {
+	name: string;
+	slug: string;
+	description: string;
+	color: string;
+	position: number;
+	postCount: number;
+};
+
+export async function fetchCategories(fetchFn: typeof fetch): Promise<Category[]> {
+	const response = await fetchFn(`${API_URL}/categories`);
+	if (!response.ok) throw new Error(`Failed to fetch categories: ${response.status}`);
+	const categories: ApiCategory[] = await response.json();
+	return categories
+		.map((c) => ({
+			slug: c.slug,
+			name: c.name,
+			description: c.description,
+			color: c.color,
+			position: c.position,
+			postCount: c.postCount
+		}))
+		.sort((a, b) => a.position - b.position);
 }
 
 export async function fetchPostBySlug(fetchFn: typeof fetch, slug: string): Promise<Post | null> {
