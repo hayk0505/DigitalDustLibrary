@@ -82,9 +82,12 @@ function DeleteUserDialog({
   const [confirmText, setConfirmText] = useState('')
 
   function handleConfirm() {
-    deleteUser.mutate(user.id)
-    setConfirmText('')
-    onOpenChange(false)
+    deleteUser.mutate(user.id, {
+      onSuccess: () => {
+        setConfirmText('')
+        onOpenChange(false)
+      },
+    })
   }
 
   const impactParts: string[] = []
@@ -131,8 +134,12 @@ function DeleteUserDialog({
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button variant="destructive" disabled={confirmText !== user.name || impactPending} onClick={handleConfirm}>
-            Delete
+          <Button
+            variant="destructive"
+            disabled={confirmText !== user.name || impactPending || deleteUser.isPending}
+            onClick={handleConfirm}
+          >
+            {deleteUser.isPending ? 'Deleting…' : 'Delete'}
           </Button>
         </DialogFooter>
       </DialogContent>
