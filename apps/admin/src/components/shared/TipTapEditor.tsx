@@ -43,6 +43,11 @@ export function TipTapEditor({ value, onChange }: { value: string; onChange: (ht
   const editor = useEditor({
     extensions: [StarterKit, Link.configure({ openOnClick: false }), Image],
     content: value,
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm min-h-[420px] max-w-none p-4 text-foreground focus:outline-none',
+      },
+    },
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
   })
 
@@ -75,7 +80,7 @@ export function TipTapEditor({ value, onChange }: { value: string; onChange: (ht
           </button>
         ))}
       </div>
-      <EditorContent editor={editor} className="prose prose-sm max-w-none p-4 text-foreground focus:outline-none" />
+      <EditorContent editor={editor} />
     </div>
   )
 }

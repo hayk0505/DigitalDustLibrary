@@ -39,8 +39,11 @@ function toPost(api: ApiPost): Post {
 	};
 }
 
-export async function fetchPosts(fetchFn: typeof fetch): Promise<Post[]> {
-	const response = await fetchFn(`${API_URL}/posts`);
+export async function fetchPosts(fetchFn: typeof fetch, categorySlug?: string): Promise<Post[]> {
+	const url = categorySlug
+		? `${API_URL}/posts?category=${encodeURIComponent(categorySlug)}`
+		: `${API_URL}/posts`;
+	const response = await fetchFn(url);
 	if (!response.ok) throw new Error(`Failed to fetch posts: ${response.status}`);
 	const posts: ApiPost[] = await response.json();
 	return posts.map(toPost);

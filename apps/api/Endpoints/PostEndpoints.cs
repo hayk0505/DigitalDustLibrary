@@ -82,6 +82,7 @@ public static class PostEndpoints
                 categoryId = defaultCategoryId;
             }
 
+            var status = request.Status ?? PostStatus.Draft;
             var post = new Post
             {
                 Title = title,
@@ -92,7 +93,8 @@ public static class PostEndpoints
                 MetaDescription = request.MetaDescription ?? "",
                 FeaturedImageId = request.FeaturedImageId,
                 CategoryId = categoryId,
-                Status = request.Status ?? PostStatus.Draft,
+                Status = status,
+                PublishedAt = status == PostStatus.Published ? DateTimeOffset.UtcNow : null,
                 AuthorId = userId,
             };
 

@@ -6,6 +6,7 @@ import { useTheme } from '@/hooks/useTheme'
 import { usePosts } from '@/lib/api/posts'
 import { useApplications } from '@/lib/api/applications'
 import { Avatar } from './Avatar'
+import { Logo } from './Logo'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 
@@ -40,7 +41,9 @@ export function AdminLayout({ children }: { children: ReactNode }) {
     <div className="flex h-screen overflow-hidden bg-background">
       <aside className="flex w-64 shrink-0 flex-col justify-between overflow-y-auto bg-sidebar p-6 text-sidebar-foreground">
         <div>
-          <div className="mb-8 size-10 rounded-xl bg-sidebar-primary" />
+          <div className="mb-8 size-12 rounded-xl bg-sidebar-primary flex items-center justify-center">
+            <Logo className="size-10 text-[#2c3639]" />
+          </div>
           <nav className="space-y-1">
             {NAV_ITEMS.filter((item) => can(item.screen)).map((item) => {
               const count = badgeCounts[item.screen]

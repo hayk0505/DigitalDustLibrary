@@ -32,7 +32,7 @@
   --destructive: #B2503C;
   --destructive-foreground: #FFFFFF;
   --border: rgba(44, 54, 57, .09);
-  --input: #FFFFFF;
+  --input: rgba(44, 54, 57, .22);
   --ring: #A27B5B;
 
   --sidebar: #2C3639;
@@ -92,7 +92,7 @@
   --destructive: #C67A5F;
   --destructive-foreground: #FFFFFF;
   --border: rgba(220, 215, 201, .1);
-  --input: rgba(220, 215, 201, .05);
+  --input: rgba(220, 215, 201, .28);
   --ring: #A27B5B;
 
   --sidebar: #232B2D;
@@ -122,9 +122,6 @@
 
   --shadow-elevated: 0 14px 34px -20px rgba(0, 0, 0, .7);
 
-  --font-heading: 'Spectral', ui-serif, serif;
-  --font-sans: 'IBM Plex Sans', ui-sans-serif, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);

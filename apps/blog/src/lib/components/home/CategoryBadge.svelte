@@ -13,7 +13,9 @@
 		</span>
 		<span class="text-ink/50">{postCount} posts</span>
 	</div>
-	<h2 class="mt-1 font-display text-2xl font-bold uppercase">{category.name}</h2>
+	<h2 class="mt-1 font-display text-2xl font-bold uppercase">
+		<a href="/category/{category.slug}" class="hover:text-accent-red">{category.name}</a>
+	</h2>
 	<p class="mt-1 text-sm text-ink/60">{category.description}</p>
 	<div class="mt-2 h-1 w-10" style="background-color: {category.color}"></div>
 </header>
