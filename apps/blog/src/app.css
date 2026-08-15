@@ -1,12 +1,12 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
-@import '@fontsource/fraunces/400.css';
-@import '@fontsource/fraunces/400-italic.css';
-@import '@fontsource/fraunces/700.css';
+@import '@fontsource/cormorant-garamond/400.css';
+@import '@fontsource/cormorant-garamond/400-italic.css';
+@import '@fontsource/cormorant-garamond/700.css';
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/500.css';
-@import '@fontsource/archivo/900.css';
+@import '@fontsource/ibm-plex-mono/700.css';
 
 @theme {
 	--color-accent-red: rgb(201, 85, 61);
@@ -14,9 +14,19 @@
 	--color-accent-blue: rgb(74, 111, 191);
 	--color-ink: #1c1a17;
 	--color-paper: #f4f1ea;
-	--font-display: 'Fraunces', ui-serif, serif;
+	--font-display: 'Cormorant Garamond', ui-serif, serif;
 	--font-label: 'IBM Plex Mono', ui-monospace, monospace;
-	--font-brand: 'Archivo', system-ui, sans-serif;
+
+	/* Shared geometry — same in both themes; only color/surface changes
+	   between light and dark. */
+	--radius-card: 10px;
+	--radius-image: 7px;
+	--radius-control: 3px;
+}
+
+:root[data-theme='dark'] {
+	--color-ink: #e9e1d0;
+	--color-paper: #111211;
 }
 
 body {
@@ -28,3 +38,269 @@ body {
 .group:hover h3[style*='--hover-color'] {
 	color: var(--hover-color);
 }
+
+:root[data-theme='dark'] .group:hover h3[style*='--hover-color'] {
+	color: color-mix(in srgb, var(--hover-color) 85%, white);
+}
+
+/* Category "accent color" (dispatch numbers, dots, underlines) — same
+   mechanism as --hover-color above: the raw hex is embedded as a custom
+   property via inline style (works for both the hashed default palette and
+   any admin-set folderColor), so a plain [data-theme] selector can still
+   re-derive a dark-appropriate variant from it without a second server
+   round-trip or a duplicated color table. */
+.accent-text {
+	color: var(--accent);
+}
+
+.accent-bg {
+	background-color: var(--accent);
+}
+
+:root[data-theme='dark'] .accent-text {
+	color: color-mix(in srgb, var(--accent) 82%, white);
+}
+
+:root[data-theme='dark'] .accent-bg {
+	background-color: color-mix(in srgb, var(--accent) 82%, white);
+}
+
+.scrollbar-hide {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
+}
+
+    .masthead {
+      position: relative; flex-shrink: 0; width: 76px;
+      padding: 24px 10px; border-right: 1px solid rgba(38,38,30,.3);
+      background: linear-gradient(92deg,#aaa798 0%,#b6b3a4 63%,#aaa797 100%);
+      box-shadow: 5px 0 10px rgba(33,30,21,.23);
+      font-family: var(--font-label), "Arial Narrow", sans-serif;
+    }
+    .masthead:before { content:""; position:absolute; inset:0; opacity:.22; background: repeating-linear-gradient(83deg, transparent 0 4px, rgba(25,25,19,.18) 4px 5px); }
+    .title {
+      position: relative; margin: 0; font-family: var(--font-label), "Arial Narrow", sans-serif;
+      font-size: 32px; line-height: .96; letter-spacing: 1px; font-weight: 700;
+      writing-mode: vertical-rl; white-space: nowrap; color:#44453b;
+    }
+    .meta { position:absolute; z-index:1; right:10px; bottom:170px; font-size:14px; line-height:1.5; letter-spacing:.2px; writing-mode:vertical-rl; color:#4a493e; }
+    .file { position:absolute; z-index:1; left:12px; bottom:36px; font-size:9px; letter-spacing:.2px; }
+    .theme-toggle-spine {
+      position:absolute; z-index:1; left:12px; bottom:66px;
+      letter-spacing:.2px; text-transform:uppercase;
+      color:#44453b; text-decoration:underline; background:none; border:none; padding:0; cursor:pointer;
+      font-family: inherit;
+    }
+    .theme-toggle-spine:hover { color:#1c1a17; }
+    .barcode { position:absolute; z-index:1; left:12px; bottom:7px; width:34px; height:25px; opacity:.8; background:repeating-linear-gradient(90deg,#45453b 0 2px, transparent 2px 3px,#45453b 3px 4px,transparent 4px 6px,#45453b 6px 8px,transparent 8px 10px); }
+
+    .author-file {
+      flex-shrink:0; width:172px; padding:18px 14px;
+      background:#d7ccb8; border-right:1px solid rgba(38,38,30,.15);
+      font-family: var(--font-label), "Arial Narrow", sans-serif; color:#3d3b30;
+      display:flex; flex-direction:column; gap:10px; overflow-y:auto;
+    }
+    .author-file-tag { display:flex; align-items:center; justify-content:space-between; font-size:10px; letter-spacing:.5px; text-transform:uppercase; opacity:.65; }
+    .author-file-id { padding:2px 6px; border:1px solid rgba(38,38,30,.25); border-radius:4px; font-size:9px; }
+    .author-file-name { font-family: var(--font-display), serif; font-size:22px; font-weight:700; line-height:1.05; text-transform:uppercase; margin:0; }
+    .author-file-bio { font-size:11px; line-height:1.55; color:#5a5748; margin:0; }
+    .author-file-sep { height:1px; background:rgba(38,38,30,.18); }
+    .author-file-stat-num { font-family: var(--font-display), serif; font-size:28px; font-weight:700; display:block; line-height:1; }
+    .author-file-stat-label { font-size:10px; letter-spacing:.5px; text-transform:uppercase; opacity:.65; }
+    .author-file-meta { font-size:10px; letter-spacing:.4px; text-transform:uppercase; opacity:.7; margin:0; }
+    .author-file-link { font-size:11px; letter-spacing:.3px; text-decoration:underline; color:#3d3b30; }
+
+    .folders { width:142px; gap:6px; padding-bottom:6px; background-color:#d7ccb8; font-family: var(--font-label), "Arial Narrow", sans-serif; }
+
+    .folder-header {
+      flex-shrink:0; display:flex; align-items:center; justify-content:space-between; gap:8px;
+      padding:10px 12px; margin:6px 6px 0 0;
+      background:#efece2; border:1px solid rgba(38,38,30,.18); border-radius:0 10px 10px 0;
+    }
+    .folder-header-label { font-size:11px; font-weight:700; letter-spacing:.5px; color:#3d3b30; text-transform:uppercase; }
+    .folder-header-num {
+      font-size:10px; font-family:monospace; color:#3d3b30;
+      padding:2px 6px; border:1px solid rgba(38,38,30,.25); border-radius:4px;
+    }
+
+    .folder {
+      --tone-raw: #d7d2c3; --ink-on-tone-raw: #2a281f;
+      --tone: var(--tone-raw); --ink-on-tone: var(--ink-on-tone-raw);
+      --edge: color-mix(in srgb, var(--tone) 60%, black);
+      position:relative; display:block; flex: 0 0 auto; min-height:64px;
+      margin:0 6px 0 0; padding:10px 34px 22px 12px;
+      color: var(--ink-on-tone, #2a281f);
+      background:
+        repeating-linear-gradient(95deg, rgba(44,42,33,.035) 0 1px, transparent 1px 4px), var(--tone);
+      border: 1px solid var(--edge);
+      border-radius: 0 10px 10px 0;
+      box-shadow: 2px 3px 6px rgba(45,40,27,.24);
+      text-decoration:none;
+      transition: background-color .15s ease, color .15s ease;
+    }
+    .folder:hover, .folder.active {
+      background:
+        repeating-linear-gradient(95deg, rgba(244,241,234,.06) 0 1px, transparent 1px 4px), var(--ink-on-tone, #2a281f);
+      color: var(--tone);
+    }
+    .folder-active-dot {
+      position:absolute; top:-5px; right:-5px; z-index:1;
+      width:11px; height:11px; border-radius:50%;
+      background:#f4f1ea; border:1px solid rgba(0,0,0,.3);
+      box-shadow:0 1px 3px rgba(0,0,0,.35);
+    }
+    .folder-icon {
+      position:absolute; top:10px; right:10px;
+      display:flex; align-items:center; justify-content:center;
+      width:24px; height:24px;
+      border:1px solid color-mix(in srgb, currentColor 35%, transparent);
+      border-radius:6px;
+    }
+    .folder-label {
+      display:block; font-size:12px; font-weight:700; letter-spacing:.3px; line-height:1.25;
+      text-transform:uppercase; padding-top:2px;
+    }
+    .folder-num { position:absolute; bottom:8px; right:10px; font-size:10px; font-family:monospace; opacity:.8; }
+
+    .mobile-category-chip {
+      --tone-raw: #d7d2c3; --ink-on-tone-raw: #2a281f;
+      background-color: var(--tone-raw); color: var(--ink-on-tone-raw);
+    }
+
+    /* Dark theme — sidebar reads as the same archival document with the
+       lights turned down: warm ivory type, charcoal paper, category tones
+       darkened (not hue-shifted) so each tab stays recognizable from light
+       mode. --tone/--ink-on-tone are never set inline (only the -raw
+       variants are), so these overrides aren't fighting inline-style
+       specificity. */
+    :root[data-theme='dark'] .masthead {
+      background: #20211e;
+      border-right-color: #3a3933;
+      box-shadow: none;
+    }
+    :root[data-theme='dark'] .masthead:before { opacity: .07; }
+    :root[data-theme='dark'] .title { color: #d2c8b5; }
+    :root[data-theme='dark'] .meta,
+    :root[data-theme='dark'] .file { color: #77746b; }
+    :root[data-theme='dark'] .theme-toggle-spine { color: #77746b; }
+    :root[data-theme='dark'] .theme-toggle-spine:hover { color: #d2c8b5; }
+    :root[data-theme='dark'] .barcode {
+      background-image: repeating-linear-gradient(90deg,#77746b 0 2px, transparent 2px 3px,#77746b 3px 4px,transparent 4px 6px,#77746b 6px 8px,transparent 8px 10px);
+    }
+
+    :root[data-theme='dark'] .author-file {
+      background: #1a1a18; border-right-color: #3a3933; color: #e5ddcd;
+    }
+    :root[data-theme='dark'] .author-file-tag { color: #b8b0a0; }
+    :root[data-theme='dark'] .author-file-id { color: #77736a; border-color: #4a4942; }
+    :root[data-theme='dark'] .author-file-name { color: #e5ddcd; }
+    :root[data-theme='dark'] .author-file-bio { color: #989286; }
+    :root[data-theme='dark'] .author-file-sep { background: #3b3934; }
+    :root[data-theme='dark'] .author-file-stat-num { color: #e9e1d0; }
+    :root[data-theme='dark'] .author-file-stat-label,
+    :root[data-theme='dark'] .author-file-meta { color: #a39d90; }
+    :root[data-theme='dark'] .author-file-link { color: #d9d0be; }
+
+    :root[data-theme='dark'] .folders { background-color: #1a1a18; }
+
+    :root[data-theme='dark'] .folder-header {
+      background: #24231f; border-color: #3a3933;
+    }
+    :root[data-theme='dark'] .folder-header-label { color: #d2c8b5; }
+    :root[data-theme='dark'] .folder-header-num { color: #b8b0a0; border-color: #4a4942; }
+
+    :root[data-theme='dark'] .folder {
+      --tone: color-mix(in srgb, var(--tone-raw) 78%, black);
+      --ink-on-tone: #e8e2d3;
+      --edge: color-mix(in srgb, var(--tone) 55%, black);
+    }
+    :root[data-theme='dark'] .folder-active-dot {
+      background: #e9e1d0; border-color: rgba(0,0,0,.5);
+    }
+
+    :root[data-theme='dark'] .mobile-category-chip {
+      background-color: color-mix(in srgb, var(--tone-raw) 78%, black);
+      color: #e8e2d3;
+    }
+
+    .article-card {
+      border-color: #c8c4ba;
+      transition: background-color .2s ease, border-color .2s ease, transform .2s ease;
+    }
+    .article-card:hover { border-color: #aaa69c; transform: translateY(-1px); }
+
+    :root[data-theme='dark'] .article-card {
+      background-color: #171817; border-color: #484741;
+    }
+    :root[data-theme='dark'] .article-card:hover {
+      background-color: #1c1d1b; border-color: #666157;
+    }
+
+    .no-image-placeholder {
+      background-color: #ece7d8;
+      border: 1px dashed #c8c4ba;
+    }
+    :root[data-theme='dark'] .no-image-placeholder {
+      background-color: #151615;
+      border-color: #383833;
+    }
+
+    .archive-empty {
+      color: #8a8479;
+      letter-spacing: .1em;
+    }
+    :root[data-theme='dark'] .archive-empty { color: #77746b; }
+
+    .view-toggle-btn {
+      border-radius: var(--radius-control);
+      border: 1px solid #c8c4ba;
+      color: #716c62;
+    }
+    .view-toggle-btn:hover { border-color: #aaa69c; }
+    .view-toggle-btn.is-active {
+      background-color: #f4f1ea;
+      border-color: #c8c4ba;
+      color: #211f1c;
+    }
+    :root[data-theme='dark'] .view-toggle-btn {
+      border-color: #484741;
+      color: #aaa394;
+    }
+    :root[data-theme='dark'] .view-toggle-btn:hover { border-color: #666157; }
+    :root[data-theme='dark'] .view-toggle-btn.is-active {
+      background-color: #1c1d1b;
+      border-color: #666157;
+      color: #f0e8d7;
+    }
+
+    .list-thumb {
+      border-radius: var(--radius-image);
+      overflow: hidden;
+    }
+
+    .mobile-drawer {
+      border-left: 1px solid #c8c4ba;
+      box-shadow: -8px 0 24px rgba(20,18,14,.15);
+    }
+    :root[data-theme='dark'] .mobile-drawer {
+      border-left-color: #34342f;
+      box-shadow: -8px 0 24px rgba(0,0,0,.4);
+    }
+
+    .scroll-top-btn {
+      background-color: var(--color-paper);
+      border: 1px solid #c8c4ba;
+      color: #716c62;
+      box-shadow: 0 2px 8px rgba(20,18,14,.15);
+      transition: border-color .2s ease, color .2s ease, transform .2s ease;
+    }
+    .scroll-top-btn:hover { border-color: #aaa69c; color: #211f1c; transform: translateY(-2px); }
+    :root[data-theme='dark'] .scroll-top-btn {
+      border-color: #484741; color: #aaa394;
+      box-shadow: 0 2px 8px rgba(0,0,0,.4);
+    }
+    :root[data-theme='dark'] .scroll-top-btn:hover { border-color: #666157; color: #f0e8d7; }

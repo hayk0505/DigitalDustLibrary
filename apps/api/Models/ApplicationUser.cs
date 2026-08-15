@@ -20,4 +20,9 @@ public class ApplicationUser
     public Role Role { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    // Short author bio shown on the public blog's Author File sidebar card
+    // and author page. Nullable/admin-optional — no bio set just means the
+    // card omits that line rather than showing a placeholder.
+    public string? Bio { get; set; }
 }

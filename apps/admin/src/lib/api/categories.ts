@@ -13,7 +13,7 @@ export function useCategories() {
 export function useCreateCategory() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (category: { name: string; slug: string; description: string; color: string; position?: number }) =>
+    mutationFn: (category: { name: string; slug: string; description: string; color: string; position?: number; folderColor?: string }) =>
       apiFetch<Category>('/categories', { method: 'POST', body: JSON.stringify(category) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
@@ -25,7 +25,7 @@ export function useCreateCategory() {
 export function useUpdateCategory() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...patch }: { id: string } & Partial<Pick<Category, 'name' | 'slug' | 'isVisible' | 'isDeleted' | 'description' | 'color' | 'position'>>) =>
+    mutationFn: ({ id, ...patch }: { id: string } & Partial<Pick<Category, 'name' | 'slug' | 'isVisible' | 'isDeleted' | 'description' | 'color' | 'folderColor' | 'position'>>) =>
       apiFetch<Category>(`/categories/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })

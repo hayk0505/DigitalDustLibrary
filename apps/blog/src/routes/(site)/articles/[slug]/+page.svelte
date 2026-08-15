@@ -33,7 +33,7 @@
 
 <ArticleTopBar shareUrl={page.url.href} />
 
-<article class="mx-auto max-w-3xl px-6 py-10">
+<article class="mx-auto max-w-3xl  py-10">
 	<ArticleMeta post={data.post} />
 	<div class="mt-8">
 		<FeaturedImage url={data.post.featuredImageUrl} />

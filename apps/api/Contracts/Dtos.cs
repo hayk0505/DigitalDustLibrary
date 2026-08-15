@@ -25,6 +25,7 @@ public record PostDto(
     Guid CategoryId,
     string CategoryName,
     string CategoryColor,
+    string? CategoryFolderColor,
     PostStatus Status,
     Guid AuthorId,
     string AuthorName,
@@ -63,9 +64,9 @@ public record CreateMediaRequest(string Filename, string DataUrl, MediaTag Tag, 
 // PostCount isn't a column on Category — it's computed per-request (how many
 // posts currently reference this category), which is also what decides whether
 // a hard DELETE is allowed. See CategoryEndpoints.
-public record CategoryDto(Guid Id, string Name, string Slug, string Description, string Color, int Position, bool IsVisible, bool IsDeleted, int PostCount);
+public record CategoryDto(Guid Id, string Name, string Slug, string Description, string Color, string? FolderColor, int Position, bool IsVisible, bool IsDeleted, int PostCount);
 
-public record CreateCategoryRequest(string Name, string Slug, string Description, string Color, int? Position);
+public record CreateCategoryRequest(string Name, string Slug, string Description, string Color, int? Position, string? FolderColor = null);
 
 // Same partial-update shape as UpdatePostRequest: only fields you send get
 // changed. IsVisible and IsDeleted are separate flags on purpose (see
@@ -74,10 +75,11 @@ public record CreateCategoryRequest(string Name, string Slug, string Description
 // Description/Color/Position default to null (unlike Name/Slug/IsVisible/
 // IsDeleted above, an intentional asymmetry) purely so every existing
 // 4-positional-arg test call site (new UpdateCategoryRequest(a, b, c, d))
-// keeps compiling without being touched by this change.
+// keeps compiling without being touched by this change. FolderColor joins
+// them at the end for the same reason.
 public record UpdateCategoryRequest(
     string? Name, string? Slug, bool? IsVisible, bool? IsDeleted,
-    string? Description = null, string? Color = null, int? Position = null);
+    string? Description = null, string? Color = null, int? Position = null, string? FolderColor = null);
 
 public record AuthorApplicationDto(
     Guid Id, string Name, string Email, string Pitch, ApplicationStatus Status,
@@ -89,13 +91,13 @@ public record CreateDirectAuthorRequest(string Name, string Email);
 
 public record AcceptInviteRequest(string Token, string Password);
 
-public record ManagedUserDto(Guid Id, string Name, string Email, Role Role, bool IsActive, DateTimeOffset CreatedAt);
+public record ManagedUserDto(Guid Id, string Name, string Email, Role Role, bool IsActive, DateTimeOffset CreatedAt, string? Bio);
 
 public record UserDeletionImpactDto(int PostCount, int MediaCount, int ReviewNoteCount, int AffectedOtherPostCount);
 
 public record DirectAddAuthorResponseDto(ManagedUserDto User, string? DevInviteUrl);
 
-public record UpdateUserRequest(Role? Role, bool? IsActive);
+public record UpdateUserRequest(Role? Role, bool? IsActive, string? Bio = null);
 
 public record SiteSettingsDto(Guid Id, string SiteTitle, string Tagline, string DefaultMetaDescription, string LinkedInUrl, string XUrl);
 
@@ -105,12 +107,12 @@ public record ActivityEventDto(Guid Id, string ActorName, string Action, DateTim
 
 public record PublicPostDto(
     string Slug, string Title, string BodyHtml, string Excerpt, string SeoTitle, string MetaDescription,
-    string? FeaturedImageUrl, string CategorySlug, string CategoryName, string CategoryColor, string AuthorHandle, string AuthorName,
-    DateTimeOffset PublishedAt, int ReadingMinutes, int DispatchNumber);
+    string? FeaturedImageUrl, string CategorySlug, string CategoryName, string CategoryColor, string? CategoryFolderColor,
+    string AuthorHandle, string AuthorName, DateTimeOffset PublishedAt, int ReadingMinutes, int DispatchNumber);
 
-public record PublicAuthorDto(string Handle, string Name);
+public record PublicAuthorDto(string Handle, string Name, string? Bio, DateTimeOffset CreatedAt);
 
-public record PublicCategoryDto(string Name, string Slug, string Description, string Color, int Position, int PostCount);
+public record PublicCategoryDto(string Name, string Slug, string Description, string Color, string? FolderColor, int Position, int PostCount);
 
 public static class Mapping
 {
@@ -118,7 +120,7 @@ public static class Mapping
 
     public static PostDto ToDto(this Post p) => new(
         p.Id, p.Title, p.Slug, p.BodyHtml, p.Excerpt, p.SeoTitle, p.MetaDescription,
-        p.FeaturedImageId, p.CategoryId, p.Category?.Name ?? "", p.Category?.Color ?? "",
+        p.FeaturedImageId, p.CategoryId, p.Category?.Name ?? "", p.Category?.Color ?? "", p.Category?.FolderColor,
         p.Status, p.AuthorId, p.Author?.Name ?? "", p.UpdatedAt, p.PublishedAt,
         p.ReviewNotes.OrderByDescending(r => r.CreatedAt).FirstOrDefault() is { } latest
             ? new ReviewNoteDto(latest.Id, latest.Comment, latest.Reviewer?.Name ?? "", latest.CreatedAt)
@@ -127,13 +129,13 @@ public static class Mapping
     public static MediaAssetDto ToDto(this MediaAsset m) => new(m.Id, m.Filename, m.Tag, m.Width, m.Height, m.Url);
 
     public static CategoryDto ToDto(this Category c, int postCount) =>
-        new(c.Id, c.Name, c.Slug, c.Description, c.Color, c.Position, c.IsVisible, c.IsDeleted, postCount);
+        new(c.Id, c.Name, c.Slug, c.Description, c.Color, c.FolderColor, c.Position, c.IsVisible, c.IsDeleted, postCount);
 
     public static AuthorApplicationDto ToDto(this AuthorApplication a) =>
         new(a.Id, a.Name, a.Email, a.Pitch, a.Status, a.SubmittedAt, a.ReviewedAt);
 
     public static ManagedUserDto ToManagedDto(this ApplicationUser u) =>
-        new(u.Id, u.Name, u.Email, u.Role, u.IsActive, u.CreatedAt);
+        new(u.Id, u.Name, u.Email, u.Role, u.IsActive, u.CreatedAt, u.Bio);
 
     public static SiteSettingsDto ToDto(this SiteSettings s) =>
         new(s.Id, s.SiteTitle, s.Tagline, s.DefaultMetaDescription, s.LinkedInUrl, s.XUrl);
@@ -143,14 +145,14 @@ public static class Mapping
 
     public static PublicPostDto ToPublicDto(this Post p, int dispatchNumber) => new(
         p.Slug, p.Title, p.BodyHtml, p.Excerpt, p.SeoTitle, p.MetaDescription,
-        p.FeaturedImage?.Url, p.Category?.Slug ?? "", p.Category?.Name ?? "", p.Category?.Color ?? "",
+        p.FeaturedImage?.Url, p.Category?.Slug ?? "", p.Category?.Name ?? "", p.Category?.Color ?? "", p.Category?.FolderColor,
         p.Author?.Handle ?? "", p.Author?.Name ?? "",
         p.PublishedAt!.Value, EstimateReadingMinutes(p.BodyHtml), dispatchNumber);
 
-    public static PublicAuthorDto ToPublicDto(this ApplicationUser u) => new(u.Handle, u.Name);
+    public static PublicAuthorDto ToPublicDto(this ApplicationUser u) => new(u.Handle, u.Name, u.Bio, u.CreatedAt);
 
     public static PublicCategoryDto ToPublicDto(this Category c, int postCount) =>
-        new(c.Name, c.Slug, c.Description, c.Color, c.Position, postCount);
+        new(c.Name, c.Slug, c.Description, c.Color, c.FolderColor, c.Position, postCount);
 
     // Same word-count/200wpm formula as apps/admin/src/lib/formatting.ts's
     // estimateReadTime — computed here so the blog never has to duplicate it.

@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import SeoHead from '$lib/components/shared/SeoHead.svelte';
 	import PostTeaserRow from '$lib/components/home/PostTeaserRow.svelte';
+	import { getCategoryTabColor } from '$lib/utils/category-visuals';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -18,6 +19,7 @@
 
 <div class="mt-8 max-w-2xl">
 	{#each data.posts as post (post.slug)}
-		<PostTeaserRow {post} color={post.categoryColor} />
+		{@const accentColor = post.categoryFolderColor ?? getCategoryTabColor(post.categorySlug)}
+		<PostTeaserRow {post} color={accentColor} />
 	{/each}
 </div>

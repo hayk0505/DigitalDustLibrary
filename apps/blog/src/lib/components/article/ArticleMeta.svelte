@@ -1,15 +1,18 @@
 <script lang="ts">
 	import { formatDispatchDate } from '$lib/utils/format-date';
+	import { getCategoryTabColor } from '$lib/utils/category-visuals';
 	import AuthorByline from '$lib/components/shared/AuthorByline.svelte';
 	import CategoryDot from '$lib/components/shared/CategoryDot.svelte';
 	import type { Post } from '$lib/data';
 
 	let { post }: { post: Post } = $props();
+
+	const accentColor = $derived(post.categoryFolderColor ?? getCategoryTabColor(post.categorySlug));
 </script>
 
 <div class="flex items-center gap-2 font-label text-xs tracking-widest uppercase">
-	<CategoryDot color={post.categoryColor} size="md" />
-	<span style="color: {post.categoryColor}">{post.categoryName}</span>
+	<CategoryDot color={accentColor} size="md" />
+	<span class="accent-text" style="--accent: {accentColor}">{post.categoryName}</span>
 	<span class="text-ink/30">/</span>
 	<span class="text-ink/60">{formatDispatchDate(post.publishedAt)}</span>
 	<span class="text-ink/30">/</span>

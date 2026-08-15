@@ -28,6 +28,7 @@ export function applyPostPatch(id: string, body: Partial<Post>): Post | null {
     ? {
         categoryName: categories.find((c) => c.id === body.categoryId)?.name ?? '',
         categoryColor: categories.find((c) => c.id === body.categoryId)?.color ?? '',
+        categoryFolderColor: categories.find((c) => c.id === body.categoryId)?.folderColor ?? null,
       }
     : {}
   Object.assign(post, body, categoryPatch, { updatedAt: new Date().toISOString() })
@@ -57,6 +58,7 @@ export const postHandlers = [
       categoryId: body.categoryId ?? 'cat-tech',
       categoryName: body.categoryId ? (categories.find((c) => c.id === body.categoryId)?.name ?? '') : 'Tech',
       categoryColor: body.categoryId ? (categories.find((c) => c.id === body.categoryId)?.color ?? '') : '#C9553D',
+      categoryFolderColor: body.categoryId ? (categories.find((c) => c.id === body.categoryId)?.folderColor ?? null) : null,
       status: body.status ?? 'draft',
       authorId: userId,
       authorName: findUserById(userId)?.name ?? '',

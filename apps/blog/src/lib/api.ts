@@ -12,6 +12,7 @@ type ApiPost = {
 	categorySlug: string;
 	categoryName: string;
 	categoryColor: string;
+	categoryFolderColor: string | null;
 	authorHandle: string;
 	authorName: string;
 	publishedAt: string;
@@ -31,6 +32,7 @@ function toPost(api: ApiPost): Post {
 		categorySlug: api.categorySlug,
 		categoryName: api.categoryName,
 		categoryColor: api.categoryColor,
+		categoryFolderColor: api.categoryFolderColor,
 		authorHandle: api.authorHandle,
 		authorName: api.authorName,
 		publishedAt: api.publishedAt,
@@ -54,6 +56,7 @@ type ApiCategory = {
 	slug: string;
 	description: string;
 	color: string;
+	folderColor: string | null;
 	position: number;
 	postCount: number;
 };
@@ -68,6 +71,7 @@ export async function fetchCategories(fetchFn: typeof fetch): Promise<Category[]
 			name: c.name,
 			description: c.description,
 			color: c.color,
+			folderColor: c.folderColor,
 			position: c.position,
 			postCount: c.postCount
 		}))

@@ -16,6 +16,14 @@ public class Category
     public required string Slug { get; set; }
     public required string Description { get; set; }
     public required string Color { get; set; }
+
+    // Muted tone for the blog's file-folder category tabs — deliberately
+    // separate from Color (the bright accent used for dots/hover elsewhere
+    // on the site). Nullable and admin-optional: unset categories fall back
+    // to a deterministic hashed tone client-side (see apps/blog's
+    // category-visuals.ts), so this never blocks category creation.
+    public string? FolderColor { get; set; }
+
     public int Position { get; set; }
     public bool IsVisible { get; set; } = true;
     public bool IsDeleted { get; set; }

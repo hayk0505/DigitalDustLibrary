@@ -58,6 +58,7 @@ public static class CategoryEndpoints
                 Slug = request.Slug,
                 Description = request.Description,
                 Color = request.Color,
+                FolderColor = request.FolderColor,
                 Position = position,
             };
 
@@ -86,6 +87,7 @@ public static class CategoryEndpoints
             if (request.Slug is not null) category.Slug = request.Slug;
             if (request.Description is not null) category.Description = request.Description;
             if (request.Color is not null) category.Color = request.Color;
+            if (request.FolderColor is not null) category.FolderColor = request.FolderColor;
             if (request.Position is not null) category.Position = request.Position.Value;
             if (request.IsVisible is not null && request.IsVisible.Value != category.IsVisible)
             {

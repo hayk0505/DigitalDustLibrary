@@ -19,7 +19,6 @@ describe('applyPostPatch', () => {
   })
 
   it('re-resolves categoryName/categoryColor from the new categoryId, not just categoryId itself', () => {
-    // post-1 starts as cat-tech (mocks/fixtures/posts.ts) — move it to cat-dev.
     const updated = applyPostPatch('post-1', { categoryId: 'cat-dev' })
 
     expect(updated?.categoryId).toBe('cat-dev')

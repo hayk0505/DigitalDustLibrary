@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import type { ManagedUser, Role } from '@/lib/types'
 
@@ -61,6 +62,54 @@ function DeactivateDialog({
           </DialogClose>
           <Button variant="destructive" onClick={handleConfirm}>
             Deactivate
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function EditBioDialog({
+  user,
+  open,
+  onOpenChange,
+}: {
+  user: ManagedUser
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const update = useUpdateUser()
+  const [bio, setBio] = useState(user.bio ?? '')
+
+  function handleSave() {
+    update.mutate({ id: user.id, bio }, { onSuccess: () => onOpenChange(false) })
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        onOpenChange(next)
+        if (next) setBio(user.bio ?? '')
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit {user.name}'s bio</DialogTitle>
+          <DialogDescription>
+            Shown on the public blog's Author File sidebar card and author page. Leave blank to omit it.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Label htmlFor="bio">Bio</Label>
+          <Textarea id="bio" rows={4} value={bio} onChange={(e) => setBio(e.target.value)} />
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button onClick={handleSave} disabled={update.isPending}>
+            {update.isPending ? 'Saving…' : 'Save'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -157,10 +206,14 @@ function UserRowActions({ user, isSelf }: { user: ManagedUser; isSelf: boolean }
   const update = useUpdateUser()
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [bioOpen, setBioOpen] = useState(false)
 
   if (!user.isActive) {
     return (
       <div className="flex gap-2">
+        <Button size="sm" variant="secondary" onClick={() => setBioOpen(true)}>
+          Edit bio
+        </Button>
         <Button size="sm" variant="secondary" onClick={() => update.mutate({ id: user.id, isActive: true })}>
           Reactivate
         </Button>
@@ -169,6 +222,7 @@ function UserRowActions({ user, isSelf }: { user: ManagedUser; isSelf: boolean }
             Delete
           </Button>
         </span>
+        <EditBioDialog user={user} open={bioOpen} onOpenChange={setBioOpen} />
         <DeleteUserDialog user={user} open={deleteOpen} onOpenChange={setDeleteOpen} />
       </div>
     )
@@ -176,6 +230,10 @@ function UserRowActions({ user, isSelf }: { user: ManagedUser; isSelf: boolean }
 
   return (
     <div className="flex gap-2">
+      <Button size="sm" variant="secondary" onClick={() => setBioOpen(true)}>
+        Edit bio
+      </Button>
+      <EditBioDialog user={user} open={bioOpen} onOpenChange={setBioOpen} />
       <span title={isSelf ? "You can't deactivate your own account" : undefined} className="inline-flex">
         <Button size="sm" variant="destructive" disabled={isSelf} onClick={() => setConfirmOpen(true)}>
           Deactivate

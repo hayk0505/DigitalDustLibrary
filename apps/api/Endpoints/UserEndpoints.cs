@@ -60,6 +60,8 @@ public static class UserEndpoints
                 }
             }
 
+            if (request.Bio is not null) target.Bio = request.Bio;
+
             await db.SaveChangesAsync();
             return Results.Ok(target.ToManagedDto());
         });

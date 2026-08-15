@@ -8,6 +8,7 @@ export const managedUsers: ManagedUser[] = [
     role: 'author',
     isActive: true,
     createdAt: '2026-06-01T09:00:00Z',
+    bio: null,
   },
   {
     id: 'user-editor',
@@ -16,6 +17,7 @@ export const managedUsers: ManagedUser[] = [
     role: 'editor',
     isActive: true,
     createdAt: '2026-05-15T09:00:00Z',
+    bio: null,
   },
   {
     id: 'user-owner',
@@ -24,5 +26,6 @@ export const managedUsers: ManagedUser[] = [
     role: 'owner',
     isActive: true,
     createdAt: '2026-01-10T09:00:00Z',
+    bio: 'Software engineer exploring technology, software, and internet culture.',
   },
 ]

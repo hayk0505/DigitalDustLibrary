@@ -27,6 +27,7 @@ export interface Post {
   categoryId: string
   categoryName: string
   categoryColor: string
+  categoryFolderColor: string | null
   status: PostStatus
   authorId: string
   authorName: string
@@ -52,6 +53,7 @@ export interface Category {
   slug: string
   description: string
   color: string
+  folderColor: string | null
   position: number
   isVisible: boolean
   isDeleted: boolean
@@ -65,6 +67,7 @@ export interface ManagedUser {
   role: Role
   isActive: boolean
   createdAt: string
+  bio: string | null
 }
 
 export interface UserDeletionImpact {

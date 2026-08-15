@@ -14,7 +14,7 @@ export function useUsers(options?: { enabled?: boolean }) {
 export function useUpdateUser() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...patch }: { id: string } & Partial<Pick<ManagedUser, 'role' | 'isActive'>>) =>
+    mutationFn: ({ id, ...patch }: { id: string } & Partial<Pick<ManagedUser, 'role' | 'isActive' | 'bio'>>) =>
       apiFetch<ManagedUser>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })

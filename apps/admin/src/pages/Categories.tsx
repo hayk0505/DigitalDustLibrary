@@ -18,27 +18,16 @@ export const categorySchema = z.object({
   slug: z.string().min(1, 'Slug is required'),
   description: z.string().min(1, 'Description is required'),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Must be a hex color like #A27B5B'),
-  // An untouched <input type="number"> reads back as '' on submit, not undefined.
-  // z.coerce.number() runs before .optional() ever sees the value, and
-  // Number('') === 0 — so without this preprocess, leaving Position blank
-  // silently coerces to a defined 0 (not "no position given"), which then
-  // defeats the `body.position ?? <append-to-end default>` fallback both here
-  // and server-side, since 0 isn't nullish. Normalize '' (and null/undefined)
-  // to undefined *before* coercion runs, so an actually-blank field round-trips
-  // as "omitted" the way the field's own hint text ("Leave blank to add it
-  // after every existing category") promises.
+  folderColor: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined ? undefined : val),
+    z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Must be a hex color like #7C8B96').optional(),
+  ),
   position: z.preprocess(
     (val) => (val === '' || val === null || val === undefined ? undefined : val),
     z.coerce.number().int().optional(),
   ),
 })
 type CategoryForm = z.infer<typeof categorySchema>
-// z.coerce.number() makes the schema's input type (what defaultValues/register
-// accept) diverge from its output type (what a validated submit produces —
-// position: number | undefined post-coercion). react-hook-form 7.55+'s useForm
-// takes a 3rd generic for exactly this split; without it, zodResolver's inferred
-// Resolver<Input, Context, Output> doesn't structurally match Resolver<CategoryForm,
-// any, CategoryForm> and tsc rejects it.
 type CategoryFormInput = z.input<typeof categorySchema>
 
 function EditCategoryDialog({ category, open, onOpenChange }: { category: Category; open: boolean; onOpenChange: (open: boolean) => void }) {
@@ -50,17 +39,11 @@ function EditCategoryDialog({ category, open, onOpenChange }: { category: Catego
       slug: category.slug,
       description: category.description,
       color: category.color,
+      folderColor: category.folderColor ?? '',
       position: category.position,
     },
   })
 
-  // EditCategoryDialog is rendered unconditionally inside CategoryRowActions
-  // (so its Dialog can animate open/closed), which means useForm's
-  // defaultValues only get captured once, at first mount — not on every
-  // reopen, and not when `category` itself changes underneath it (e.g. after
-  // a save invalidates and refetches ['categories']). Without this, reopening
-  // Edit shows stale pre-edit values, and saving again without touching every
-  // field would silently PATCH the earlier edit back to its old value.
   useEffect(() => {
     if (open) {
       reset({
@@ -68,6 +51,7 @@ function EditCategoryDialog({ category, open, onOpenChange }: { category: Catego
         slug: category.slug,
         description: category.description,
         color: category.color,
+        folderColor: category.folderColor ?? '',
         position: category.position,
       })
     }
@@ -110,6 +94,21 @@ function EditCategoryDialog({ category, open, onOpenChange }: { category: Catego
               <Input id="edit-color" {...register('color')} className="font-mono" />
             </div>
             {errors.color && <p className="text-sm text-destructive">{errors.color.message}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-folderColor">Folder Color (optional)</Label>
+            <div className="flex items-center gap-2">
+              <Controller
+                control={control}
+                name="folderColor"
+                render={({ field }) => (
+                  <input type="color" value={(field.value as string | undefined) ?? '#7C8B96'} onChange={(e) => field.onChange(e.target.value)} className="h-9 w-9 rounded border border-input" />
+                )}
+              />
+              <Input id="edit-folderColor" {...register('folderColor')} className="font-mono" placeholder="Unset — uses an automatic color" />
+            </div>
+            {errors.folderColor && <p className="text-sm text-destructive">{errors.folderColor.message}</p>}
+            <p className="text-xs text-muted-foreground">Used for the blog's file-folder tab. Leave blank for an automatic color.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-position">Position</Label>
@@ -194,14 +193,14 @@ export function Categories() {
     formState: { errors },
   } = useForm<CategoryFormInput, unknown, CategoryForm>({
     resolver: zodResolver(categorySchema),
-    defaultValues: { name: '', slug: '', description: '', color: '#A27B5B', position: undefined },
+    defaultValues: { name: '', slug: '', description: '', color: '#A27B5B', folderColor: '', position: undefined },
   })
 
   function onSubmit(values: CategoryForm) {
     createCategory.mutate(values, {
       onSuccess: () => {
         setOpen(false)
-        reset({ name: '', slug: '', description: '', color: '#A27B5B', position: undefined })
+        reset({ name: '', slug: '', description: '', color: '#A27B5B', folderColor: '', position: undefined })
         setSlugTouched(false)
       },
     })
@@ -221,7 +220,7 @@ export function Categories() {
           onOpenChange={(next) => {
             setOpen(next)
             if (!next) {
-              reset({ name: '', slug: '', description: '', color: '#A27B5B', position: undefined })
+              reset({ name: '', slug: '', description: '', color: '#A27B5B', folderColor: '', position: undefined })
               setSlugTouched(false)
             }
           }}
@@ -269,6 +268,21 @@ export function Categories() {
                 {errors.color && <p className="text-sm text-destructive">{errors.color.message}</p>}
               </div>
               <div className="space-y-2">
+                <Label htmlFor="folderColor">Folder Color (optional)</Label>
+                <div className="flex items-center gap-2">
+                  <Controller
+                    control={control}
+                    name="folderColor"
+                    render={({ field }) => (
+                      <input type="color" value={(field.value as string | undefined) ?? '#7C8B96'} onChange={(e) => field.onChange(e.target.value)} className="h-9 w-9 rounded border border-input" />
+                    )}
+                  />
+                  <Input id="folderColor" {...register('folderColor')} className="font-mono" placeholder="Unset — uses an automatic color" />
+                </div>
+                {errors.folderColor && <p className="text-sm text-destructive">{errors.folderColor.message}</p>}
+                <p className="text-xs text-muted-foreground">Used for the blog's file-folder tab. Leave blank for an automatic color.</p>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="position">Position (optional)</Label>
                 <Input id="position" type="number" {...register('position')} />
                 {errors.position && <p className="text-sm text-destructive">{errors.position.message}</p>}
@@ -306,7 +320,10 @@ export function Categories() {
                   <tr key={category.id}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="inline-block size-3 rounded-full" style={{ backgroundColor: category.color }} />
+                        <span className="inline-block size-3 rounded-full" style={{ backgroundColor: category.color }} title="Color" />
+                        {category.folderColor && (
+                          <span className="inline-block size-3 rounded-sm" style={{ backgroundColor: category.folderColor }} title="Folder Color" />
+                        )}
                         <span className="text-foreground">{category.name}</span>
                       </div>
                       <p className="font-mono text-xs text-muted-foreground">/{category.slug}</p>

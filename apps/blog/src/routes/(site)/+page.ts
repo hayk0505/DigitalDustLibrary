@@ -1,10 +1,10 @@
-import { fetchPosts, fetchCategories } from '$lib/api';
+import { fetchPosts } from '$lib/api';
 import type { PageLoad } from './$types';
 
 const CATEGORIES_PER_PAGE = 3;
 
-export const load: PageLoad = async ({ fetch, url }) => {
-	const [posts, categories] = await Promise.all([fetchPosts(fetch), fetchCategories(fetch)]);
+export const load: PageLoad = async ({ fetch, url, parent }) => {
+	const [{ categories }, posts] = await Promise.all([parent(), fetchPosts(fetch)]);
 
 	const catPage = Math.max(0, Number(url.searchParams.get('catPage') ?? '0') || 0);
 	const totalPages = Math.max(1, Math.ceil(categories.length / CATEGORIES_PER_PAGE));
@@ -19,11 +19,5 @@ export const load: PageLoad = async ({ fetch, url }) => {
 		posts: posts.filter((post) => post.categorySlug === category.slug)
 	}));
 
-	return {
-		columns,
-		totalCount: posts.length,
-		catPage: clampedPage,
-		totalCatPages: totalPages,
-		hasMultipleCatPages: categories.length > CATEGORIES_PER_PAGE
-	};
+	return { columns };
 };

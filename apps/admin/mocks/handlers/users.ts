@@ -8,7 +8,7 @@ export const userHandlers = [
   http.patch('/api/users/:id', async ({ params, request }) => {
     const user = managedUsers.find((u) => u.id === params.id)
     if (!user) return HttpResponse.json({ message: 'Not found' }, { status: 404 })
-    const body = (await request.json()) as Partial<Pick<ManagedUser, 'role' | 'isActive'>>
+    const body = (await request.json()) as Partial<Pick<ManagedUser, 'role' | 'isActive' | 'bio'>>
     Object.assign(user, body)
     return HttpResponse.json(user)
   }),

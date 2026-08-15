@@ -42,12 +42,23 @@ public static class MediaEndpoints
         // POST /api/media — decodes the client's data URL and writes it to disk
         // under wwwroot/uploads (served by app.UseStaticFiles() in Program.cs),
         // returning a real static URL instead of persisting the data: URI itself.
+        // The returned URL is built from the configured ApiPublicOrigin, not the
+        // incoming request's Scheme/Host — apps/admin's API client defaults to a
+        // relative `/api` base URL (no VITE_API_BASE_URL set in prod), so an
+        // upload made through the admin UI arrives with Host:
+        // admin.digitaldustlibrary.com, not api.digitaldustlibrary.com. Caddy's
+        // admin.* site block only proxies /api/* to this container — /uploads/*
+        // isn't proxied there, so a request-derived URL would point at a path
+        // that 404s (or worse, silently falls through to the admin SPA's
+        // try_files fallback and serves index.html). ApiPublicOrigin is always
+        // the one host that actually serves /uploads/*, regardless of which
+        // origin the upload request itself came in through.
         group.MapPost("/", async (
             CreateMediaRequest request,
             ClaimsPrincipal user,
             AppDbContext db,
             IWebHostEnvironment env,
-            HttpRequest httpRequest) =>
+            IConfiguration configuration) =>
         {
             var match = DataUrlPattern.Match(request.DataUrl);
             if (!match.Success || !AllowedImageExtensions.TryGetValue(match.Groups["mime"].Value, out var extension))
@@ -84,7 +95,7 @@ public static class MediaEndpoints
                 Tag = request.Tag,
                 Width = request.Width,
                 Height = request.Height,
-                Url = $"{httpRequest.Scheme}://{httpRequest.Host}/uploads/{storedFilename}",
+                Url = $"{configuration["ApiPublicOrigin"]}/uploads/{storedFilename}",
                 UploadedById = userId,
             };
 

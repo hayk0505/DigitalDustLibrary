@@ -1,12 +1,12 @@
 <script lang="ts">
 	import type { Post } from '$lib/data';
-	import MasonryCard from './MasonryCard.svelte';
+	import ArticleGridCard from './ArticleGridCard.svelte';
 
 	let { posts, color }: { posts: Post[]; color: string } = $props();
 </script>
 
-<div class="columns-2 gap-4 sm:columns-3 lg:columns-4">
+<div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 	{#each posts as post (post.slug)}
-		<MasonryCard {post} {color} />
+		<ArticleGridCard {post} {color} />
 	{/each}
 </div>

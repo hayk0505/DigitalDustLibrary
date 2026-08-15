@@ -6,13 +6,14 @@ export const categoryHandlers = [
   http.get('/api/categories', () => HttpResponse.json(categories)),
 
   http.post('/api/categories', async ({ request }) => {
-    const body = (await request.json()) as { name: string; slug: string; description: string; color: string; position?: number }
+    const body = (await request.json()) as { name: string; slug: string; description: string; color: string; folderColor?: string; position?: number }
     const created: Category = {
       id: `cat-${categories.length + 1}`,
       name: body.name,
       slug: body.slug,
       description: body.description,
       color: body.color,
+      folderColor: body.folderColor ?? null,
       position: body.position ?? Math.max(0, ...categories.map((c) => c.position)) + 1,
       isVisible: true,
       isDeleted: false,

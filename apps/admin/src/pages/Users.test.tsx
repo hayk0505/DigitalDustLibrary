@@ -17,6 +17,7 @@ const target: ManagedUser = {
   role: 'author',
   isActive: true,
   createdAt: '2026-01-01T00:00:00Z',
+  bio: null,
 }
 // A real prod incident: a name stored with a trailing space (from
 // unsanitized direct-add/application input) made the confirm-name gate
@@ -30,6 +31,7 @@ const targetWithWhitespace: ManagedUser = {
   role: 'author',
   isActive: true,
   createdAt: '2026-01-01T00:00:00Z',
+  bio: null,
 }
 
 function jsonResponse(body: unknown, status = 200) {
