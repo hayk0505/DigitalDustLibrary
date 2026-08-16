@@ -60,8 +60,17 @@ services:
       timeout: 5s
       retries: 20
       start_period: 30s
-    # No `ports:` — only reachable from the `api` service on this stack's own
-    # internal network. Never exposed to the host or the internet.
+    ports:
+      - "127.0.0.1:5432:5432"
+      # Loopback-only, deliberately. Not reachable from the internet or even
+      # the droplet's own LAN-facing interface — ufw never opens 5432, and
+      # binding to 127.0.0.1 means the only way in is already being logged
+      # into the droplet (SSH) and tunneling through it: `ssh -L
+      # 5433:127.0.0.1:5432 deploy@<droplet-ip>`, then pointing a DB client
+      # (e.g. NocoDB) at localhost:5433 on your own machine. This is for
+      # occasional on-demand admin access (browsing/editing prod data via
+      # NocoDB), not a standing connection — nothing listens unless someone
+      # is actively tunneled in.
 
   api:
     image: ghcr.io/${GHCR_OWNER}/digitaldustlibrary-api:latest

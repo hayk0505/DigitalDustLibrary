@@ -57,5 +57,32 @@ services:
       - /src/bin
       - /src/obj
 
+  # Dev convenience only — a spreadsheet-style UI for browsing/editing the
+  # digitaldustlibrary Postgres database without writing SQL. Not part of the
+  # app itself; nothing else depends on it. NocoDB keeps its OWN metadata
+  # (bases, views, its own login) in the nocodb_data volume — separate from
+  # the actual project data it's just pointed at.
+  nocodb:
+    image: nocodb/nocodb:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8090:8080"
+    environment:
+      # Without this, NocoDB's SSRF guard rejects the `postgres` service name
+      # (and any other Docker-internal/private-IP host) from the "Add Data
+      # Source" UI with "Connection to internal hosts is not allowed" — even
+      # though it's reachable and intentional here (dev-only, both containers
+      # on the same private compose network). NC_ALLOW_PRIVATE_IP is NOT the
+      # right variable despite the name suggesting it (undocumented, doesn't
+      # work — see nocodb/nocodb#13583); NC_ALLOW_LOCAL_EXTERNAL_DBS is the
+      # one a NocoDB maintainer confirmed actually gates this check.
+      NC_ALLOW_LOCAL_EXTERNAL_DBS: "true"
+    volumes:
+      - nocodb_data:/usr/app/data
+
 volumes:
   postgres_data:
+  nocodb_data:
