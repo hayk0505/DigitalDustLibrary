@@ -12,6 +12,17 @@
 </div>
 
 <style>
+	/* Author/scraped content can't be trusted to always contain a break
+	   opportunity (e.g. a long URL, or — as found on a real test article —
+	   a run of table-cell text that lost its spaces on the way into this
+	   field). Without this, one such run forces the whole page wider than
+	   the viewport instead of wrapping, which is easy to miss on the
+	   normal article column (768px, rarely narrow enough to hit) but shows
+	   up reliably on Reader Mode's narrower mobile column. */
+	.article-body {
+		overflow-wrap: break-word;
+	}
+
 	.article-body :global(p:first-of-type::first-letter) {
 		float: left;
 		margin-right: 0.5rem;

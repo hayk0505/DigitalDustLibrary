@@ -5,6 +5,6 @@
 	let { categories }: { categories: Category[] } = $props();
 </script>
 
-<div class="hidden shrink-0 self-start md:sticky md:top-0 md:flex md:h-screen">
+<div class="dd-chrome hidden shrink-0 self-start md:sticky md:top-0 md:flex md:h-screen">
 	<CategoryRail {categories} />
 </div>

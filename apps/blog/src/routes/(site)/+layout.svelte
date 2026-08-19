@@ -7,6 +7,7 @@
 	import TurntableAudio from '$lib/components/shared/TurntableAudio.svelte';
 	import MobileTurntablePlayer from '$lib/components/shared/MobileTurntablePlayer.svelte';
 	import { turntable } from '$lib/state/turntable.svelte';
+	import { readerMode } from '$lib/state/reader-mode.svelte';
 
 	let { children, data } = $props();
 
@@ -17,6 +18,15 @@
 	// shared Workers isolate. See turntable.svelte.ts's class comment.
 	$effect(() => {
 		turntable.setTracks(data.tracks);
+	});
+
+	// Brings readerMode.active in sync with what app.html's inline script
+	// already decided (and already applied via the .dd-chrome CSS rule
+	// below, pre-hydration) — this component's own {#if}s never gate on
+	// readerMode.active directly, so there's nothing here for a flash to
+	// affect; see reader-mode.svelte.ts.
+	$effect(() => {
+		readerMode.load();
 	});
 </script>
 
@@ -38,5 +48,9 @@
 </div>
 
 <TurntableAudio />
-<MobileTurntablePlayer />
-<ScrollToTopButton />
+<div class="dd-chrome">
+	<MobileTurntablePlayer />
+</div>
+<div class="dd-chrome">
+	<ScrollToTopButton />
+</div>

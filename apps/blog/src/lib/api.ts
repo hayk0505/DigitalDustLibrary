@@ -1,5 +1,5 @@
 import { API_URL, API_ORIGIN } from './config';
-import type { Author, Category, Post, Track } from './data/types';
+import type { Author, Category, Post, PostTag, Track } from './data/types';
 
 type ApiPost = {
 	slug: string;
@@ -18,6 +18,7 @@ type ApiPost = {
 	publishedAt: string;
 	readingMinutes: number;
 	dispatchNumber: number;
+	tags: PostTag[];
 };
 
 function toPost(api: ApiPost): Post {
@@ -37,7 +38,8 @@ function toPost(api: ApiPost): Post {
 		authorName: api.authorName,
 		publishedAt: api.publishedAt,
 		readingMinutes: api.readingMinutes,
-		dispatchNumber: api.dispatchNumber
+		dispatchNumber: api.dispatchNumber,
+		tags: api.tags ?? []
 	};
 }
 

@@ -152,24 +152,6 @@ body {
 	font-size: 9px;
 	letter-spacing: 0.2px;
 }
-.theme-toggle-spine {
-	position: absolute;
-	z-index: 1;
-	left: 12px;
-	bottom: 66px;
-	letter-spacing: 0.2px;
-	text-transform: uppercase;
-	color: #44453b;
-	text-decoration: underline;
-	background: none;
-	border: none;
-	padding: 0;
-	cursor: pointer;
-	font-family: inherit;
-}
-.theme-toggle-spine:hover {
-	color: #1c1a17;
-}
 .barcode {
 	position: absolute;
 	z-index: 1;
@@ -388,6 +370,15 @@ body {
 	color: var(--ink-on-tone-raw);
 }
 
+/* Softened relative to the chip's own ink color (which stays full-contrast
+   for the icon and position number) -- text-only, and mobile-only, per
+   request. Blending toward white rather than picking a flat gray keeps it
+   working for both branches of getCategoryTextColor's dark/light choice
+   (category-visuals.ts), whichever a given category's tone lands on. */
+.mobile-category-chip-label {
+	color: color-mix(in srgb, var(--ink-on-tone-raw) 78%, white);
+}
+
 /* Dark theme — sidebar reads as the same archival document with the
        lights turned down: warm ivory type, charcoal paper, category tones
        darkened (not hue-shifted) so each tab stays recognizable from light
@@ -408,12 +399,6 @@ body {
 :root[data-theme='dark'] .meta,
 :root[data-theme='dark'] .file {
 	color: #77746b;
-}
-:root[data-theme='dark'] .theme-toggle-spine {
-	color: #77746b;
-}
-:root[data-theme='dark'] .theme-toggle-spine:hover {
-	color: #d2c8b5;
 }
 :root[data-theme='dark'] .barcode {
 	background-image: repeating-linear-gradient(
@@ -488,6 +473,15 @@ body {
 :root[data-theme='dark'] .mobile-category-chip {
 	background-color: color-mix(in srgb, var(--tone-raw) 78%, black);
 	color: #e8e2d3;
+}
+/* Without this, .mobile-category-chip-label's light-mode rule (which reads
+   --ink-on-tone-raw, the per-category inline value) would win here too,
+   since it's a more specific descendant selector than .mobile-category-chip
+   -- overriding this override right back to whatever a given category's
+   raw ink happened to be, instead of the uniform cream used for every
+   category in dark mode. */
+:root[data-theme='dark'] .mobile-category-chip-label {
+	color: color-mix(in srgb, #e8e2d3 75%, transparent);
 }
 
 .article-card {
@@ -1265,4 +1259,605 @@ body {
 }
 :root[data-theme='dark'] .dd-mobile-fab.is-dragging {
 	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+}
+
+/* ============================================================================
+   Reader Mode — strips the persistent blog chrome so an article reads like
+   a standalone document instead of another page of the site. See
+   $lib/state/reader-mode.svelte.ts, app.html's inline script, and
+   articles/[slug]/+page.svelte's readerMode.active branch.
+   ============================================================================ */
+
+/* Pre-hydration flash guard: app.html's inline script stamps this attribute
+   from localStorage before the page paints, so a returning reader-mode
+   user's very first frame already has the chrome hidden — no flash while
+   Svelte boots and its own state catches up. Deliberately plain/unlayered
+   (like the dark-mode .prose overrides above): Tailwind's own utilities
+   live in @layer utilities, and unlayered rules always beat layered ones
+   regardless of specificity, so this can't lose to a utility class applied
+   to the same element. */
+:root[data-reader-mode='on'] .dd-chrome {
+	display: none !important;
+}
+
+.dd-reader-mode {
+	/* Shared by .dd-reader-header/.dd-reader-navbar (which each set their own
+	   height to one of these) and .dd-reader-rail (which subtracts both from
+	   its own sticky offset/height so it never overlaps either bar) -- one
+	   place to change if either bar's size ever does. */
+	--dd-reader-header-height: 48px;
+	--dd-reader-navbar-height: 44px;
+	min-height: 100vh;
+}
+
+/* ── Desktop rail ─────────────────────────────────────────────────────── */
+
+.dd-reader-rail {
+	display: none;
+	position: sticky;
+	top: var(--dd-reader-header-height);
+	height: calc(100vh - var(--dd-reader-header-height) - var(--dd-reader-navbar-height));
+	width: 84px;
+	flex-shrink: 0;
+	flex-direction: column;
+	align-items: center;
+	justify-content: space-between;
+	padding: 22px 0;
+	border-right: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent);
+	background-color: var(--color-paper);
+}
+@media (min-width: 768px) {
+	.dd-reader-rail {
+		display: flex;
+	}
+}
+
+.dd-reader-rail-mid,
+.dd-reader-rail-bottom {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 22px;
+}
+
+/* Sized for ReaderTopBar's mobile use — the desktop rail no longer has a
+   mark of its own, that moved to ReaderHeader (see .dd-reader-header-mark). */
+.dd-reader-mark {
+	width: 30px;
+	height: 30px;
+}
+
+.dd-reader-rail-btn {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 5px;
+	background: none;
+	border: none;
+	padding: 0;
+	color: var(--color-ink);
+	opacity: 0.6;
+	cursor: pointer;
+	text-decoration: none;
+	font-family: var(--font-label);
+	font-size: 9px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	transition:
+		opacity 0.15s ease,
+		color 0.15s ease;
+}
+.dd-reader-rail-btn:hover {
+	opacity: 1;
+	color: var(--color-accent-red);
+}
+
+.dd-reader-aa {
+	font-family: var(--font-display);
+	font-size: 15px;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.dd-reader-barcode {
+	width: 30px;
+	height: 22px;
+	opacity: 0.45;
+	background: repeating-linear-gradient(
+		90deg,
+		var(--color-ink) 0 2px,
+		transparent 2px 3px,
+		var(--color-ink) 3px 4px,
+		transparent 4px 6px,
+		var(--color-ink) 6px 8px,
+		transparent 8px 10px
+	);
+}
+
+/* ── Mobile top bar ───────────────────────────────────────────────────── */
+
+.dd-reader-topbar {
+	position: sticky;
+	top: 0;
+	z-index: 30;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 14px 20px;
+	background-color: var(--color-paper);
+	border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent);
+}
+@media (min-width: 768px) {
+	.dd-reader-topbar {
+		display: none;
+	}
+}
+
+.dd-reader-topbar-actions {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+}
+
+.dd-reader-topbar-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: none;
+	border: none;
+	padding: 0;
+	color: var(--color-ink);
+	cursor: pointer;
+}
+.dd-reader-topbar-btn.dd-reader-aa {
+	font-size: 17px;
+}
+
+/* ── Article surface ──────────────────────────────────────────────────── */
+
+.dd-reader-article {
+	margin-left: auto;
+	margin-right: auto;
+	max-width: var(--reader-width, 720px);
+	padding: 64px 24px 100px;
+}
+@media (max-width: 767px) {
+	.dd-reader-article {
+		max-width: none;
+		padding: 28px 22px 96px;
+	}
+}
+
+.dd-reader-title {
+	font-family: var(--font-display);
+	font-size: 44px;
+	font-weight: 700;
+	line-height: 1.08;
+}
+@media (max-width: 767px) {
+	.dd-reader-title {
+		font-size: 38px;
+	}
+}
+
+.dd-reader-divider {
+	width: 44px;
+	height: 2px;
+	margin-top: 20px;
+	background-color: var(--color-accent-red);
+}
+
+.dd-reader-meta {
+	margin-top: 14px;
+	font-family: var(--font-label);
+	font-size: 11px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: color-mix(in srgb, var(--color-ink) 55%, transparent);
+}
+
+/* Overrides @tailwindcss/typography's own rem-based .prose sizing, same
+   unlayered-beats-layered mechanism as the dark-mode --tw-prose-* block
+   above. Line-height only visibly affects paragraphs: Typography sets its
+   own tighter line-heights directly on headings/code, which is the right
+   call for a "reading" line-height control anyway — it's about body copy. */
+.dd-reader-article .article-body {
+	margin-top: 36px;
+	font-size: var(--reader-font-size, 19px);
+	line-height: var(--reader-line-height, 1.75);
+}
+
+/* ── Bottom nav bar ───────────────────────────────────────────────────── */
+
+/* No backdrop-filter here, deliberately — ReaderNavBarMobile's Contents
+   button opens a `position: fixed` panel that's rendered as a plain DOM
+   child of this element (ReaderContentsPanel isn't portaled out), and any
+   filter/backdrop-filter/transform on an ancestor creates a new containing
+   block for fixed-position descendants. With blur here, the panel's
+   computed `top` was being measured from this bar's own box instead of the
+   viewport — it opened, just ~800px off-screen below the fold, which read
+   as "the button does nothing." A higher background opacity stands in for
+   the lost blur. If a blur effect comes back, it has to live on a
+   non-ancestor layer (e.g. a decorative ::before), not this element. */
+.dd-reader-navbar {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 20;
+	display: none;
+	align-items: center;
+	gap: 36px;
+	/* Fixed, not padding-driven — .dd-reader-rail's own height calc (above)
+	   subtracts this exact value via --dd-reader-navbar-height so its
+	   bottom section clears this bar instead of rendering underneath it. */
+	height: var(--dd-reader-navbar-height);
+	padding: 0 24px;
+	border-top: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent);
+	background-color: color-mix(in srgb, var(--color-paper) 97%, transparent);
+	font-family: var(--font-label);
+	font-size: 10px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: color-mix(in srgb, var(--color-ink) 62%, transparent);
+}
+.dd-reader-navbar.is-desktop {
+	justify-content: center;
+}
+.dd-reader-navbar.is-mobile {
+	justify-content: space-between;
+}
+@media (min-width: 768px) {
+	.dd-reader-navbar.is-desktop {
+		display: flex;
+	}
+}
+@media (max-width: 767px) {
+	.dd-reader-navbar.is-mobile {
+		display: flex;
+	}
+}
+
+.dd-reader-navbar-link {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
+	cursor: pointer;
+	text-decoration: none;
+	font: inherit;
+	letter-spacing: inherit;
+	text-transform: inherit;
+}
+.dd-reader-navbar-link:hover {
+	color: var(--color-accent-red);
+}
+.dd-reader-navbar-link[aria-disabled='true'],
+.dd-reader-navbar-arrow[aria-disabled='true'] {
+	opacity: 0.35;
+	pointer-events: none;
+}
+
+.dd-reader-navbar-progress {
+	color: var(--color-ink);
+	opacity: 0.8;
+}
+
+/* Mobile-only cluster (ReaderNavBarMobile) -- prev/next collapse to plain
+   arrows around the reading percentage instead of the desktop nav bar's
+   full "Prev Article"/"Next Article" links, since a mobile row doesn't
+   have room for five separate labelled items. */
+.dd-reader-navbar-progress-group {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.dd-reader-navbar-arrow {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: inherit;
+	text-decoration: none;
+}
+.dd-reader-navbar-arrow:hover {
+	color: var(--color-accent-red);
+}
+
+/* ── Floating panels (text settings, contents) ───────────────────────── */
+
+.dd-reader-panel-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 40;
+	background: none;
+	border: none;
+	padding: 0;
+	margin: 0;
+	cursor: default;
+}
+
+.dd-reader-panel {
+	position: fixed;
+	z-index: 41;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 16px;
+	background-color: var(--color-paper);
+	color: var(--color-ink);
+	border-radius: 0;
+	box-shadow: 0 16px 40px rgba(20, 18, 14, 0.18);
+}
+:root[data-theme='dark'] .dd-reader-panel {
+	box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+.dd-reader-panel-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding-bottom: 12px;
+	border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent);
+	font-family: var(--font-label);
+	font-size: 13px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+.dd-reader-panel-header button {
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
+	cursor: pointer;
+	opacity: 0.75;
+}
+.dd-reader-panel-header button:hover {
+	opacity: 1;
+}
+
+/* Grid, not each .dd-reader-panel-row sizing its own label/slider split --
+   with "Size" vs "Line height" vs "Width" all different lengths,
+   independent flex rows gave each slider a different leftover width. One
+   shared grid sizes the label column to the widest label present (auto,
+   not a guessed px value) and gives every slider the same 1fr column, so
+   they render the same width regardless of their own label's length. */
+.dd-reader-panel-rows {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	align-items: center;
+	column-gap: 20px;
+	row-gap: 16px;
+}
+/* display:contents removes this element's own box so its label/input
+   become direct children of the grid above (and thus land in its two
+   columns) -- inheritable properties (font, color, etc.) still cascade
+   through to them same as normal. */
+.dd-reader-panel-row {
+	display: contents;
+	font-family: var(--font-label);
+	font-size: 12px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: color-mix(in srgb, var(--color-ink) 65%, transparent);
+}
+.dd-reader-panel-row > span {
+	white-space: nowrap;
+}
+.dd-reader-panel-row input[type='range'] {
+	width: 100%;
+	min-width: 0;
+}
+
+/* Custom slider — replaces the browser's default range styling with a
+   flat track + filled progress + round thumb (see the reference redesign).
+   Firefox has a native filled-progress pseudo-element (::-moz-range-
+   progress); WebKit/Chromium don't, so the fill there is painted as a
+   value-dependent gradient on the track itself, driven by --range-percent
+   (set inline per input in ReaderTextSettingsPanel.svelte, since only the
+   component knows the current value against its min/max). */
+.dd-reader-panel input[type='range'] {
+	-webkit-appearance: none;
+	appearance: none;
+	height: 4px;
+	border-radius: 999px;
+	background: linear-gradient(
+		to right,
+		var(--color-accent-blue) 0%,
+		var(--color-accent-blue) var(--range-percent, 50%),
+		color-mix(in srgb, var(--color-ink) 15%, transparent) var(--range-percent, 50%),
+		color-mix(in srgb, var(--color-ink) 15%, transparent) 100%
+	);
+	outline: none;
+	cursor: pointer;
+}
+.dd-reader-panel input[type='range']::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: var(--color-accent-blue);
+	border: none;
+	cursor: pointer;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+.dd-reader-panel input[type='range']::-moz-range-track {
+	height: 4px;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--color-ink) 15%, transparent);
+}
+.dd-reader-panel input[type='range']::-moz-range-progress {
+	height: 4px;
+	border-radius: 999px;
+	background: var(--color-accent-blue);
+}
+.dd-reader-panel input[type='range']::-moz-range-thumb {
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: var(--color-accent-blue);
+	border: none;
+	cursor: pointer;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+.dd-reader-panel-row-desktop-only {
+	display: none;
+}
+@media (min-width: 768px) {
+	.dd-reader-panel-row-desktop-only {
+		/* contents, not flex — .dd-reader-panel-row's own base display is
+		   contents now (see above), and this row needs to match that to
+		   keep participating in the shared grid instead of becoming its
+		   own flex box. */
+		display: contents;
+	}
+}
+
+.dd-reader-panel-empty {
+	margin: 0;
+	font-family: var(--font-label);
+	font-size: 11px;
+	opacity: 0.6;
+}
+
+.dd-reader-toc {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	max-height: 50vh;
+	overflow-y: auto;
+}
+
+.dd-reader-toc-item {
+	background: none;
+	border: none;
+	padding: 6px 0;
+	text-align: left;
+	color: var(--color-ink);
+	cursor: pointer;
+	font-family: var(--font-display);
+	font-size: 14px;
+	line-height: 1.3;
+}
+.dd-reader-toc-item.is-sub {
+	padding-left: 14px;
+	font-size: 13px;
+	opacity: 0.75;
+}
+.dd-reader-toc-item:hover {
+	color: var(--color-accent-red);
+}
+
+/* Reader Mode also needs to escape <main>'s normal-layout padding/
+   max-width (mx-auto max-w-6xl px-6 pb-8 md:pt-6, set in (site)/
+   +layout.svelte) -- right for every other page, but the rail/topbar/
+   article column here already do their own spacing and are laid out
+   assuming they run flush to the true viewport edges (see .dd-reader-
+   rail's own sticky/full-height box, for one -- with <main>'s padding
+   still in effect it was inset an extra 24px on each side, on top of
+   its own padding).
+
+   Scoped with :has(), not the data-reader-mode attribute alone: that
+   flag persists across navigation by design (see reader-mode.svelte.ts
+   -- nothing resets it just because you followed a link out of the
+   article), so a plain attribute selector would strip every other
+   page's padding too, the moment you left an article without
+   explicitly exiting Reader Mode first. :has() only matches while
+   <main> actually contains reader-mode markup, so it stops applying
+   the instant that's no longer true, regardless of the flag's own
+   value. */
+main:has(.dd-reader-mode) {
+	padding: 0;
+	max-width: none;
+	margin: 0;
+}
+
+/* -- Desktop header -------------------------------------------------- */
+
+/* Spans the full width, above both the rail and the article column --
+   see .dd-reader-mode's --dd-reader-header-height, which .dd-reader-rail
+   reads to sit below this instead of overlapping it. Sticky, like
+   ArticleTopBar in the normal view, so it stays reachable (Exit Reader)
+   on a long scroll without needing to go back to the rail. */
+.dd-reader-header {
+	display: none;
+	position: sticky;
+	top: 0;
+	z-index: 25;
+	height: var(--dd-reader-header-height);
+	align-items: center;
+	gap: 16px;
+	padding: 0 20px;
+	border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent);
+	background-color: var(--color-paper);
+	font-family: var(--font-label);
+	font-size: 11px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+@media (min-width: 768px) {
+	.dd-reader-header {
+		display: flex;
+	}
+}
+
+/* Left and right sections get equal flex-basis regardless of their own
+   content width, so the centered title lands at the bar's true midpoint
+   rather than being pulled off-center by 'Reader Mode' vs 'Exit Reader'
+   being different lengths. */
+.dd-reader-header-brand,
+.dd-reader-header-exit {
+	display: flex;
+	align-items: center;
+	flex: 1 1 0;
+	min-width: 0;
+	gap: 8px;
+}
+.dd-reader-header-exit {
+	justify-content: flex-end;
+	background: none;
+	border: none;
+	padding: 0;
+	color: var(--color-ink);
+	opacity: 0.7;
+	cursor: pointer;
+	white-space: nowrap;
+	font: inherit;
+	letter-spacing: inherit;
+	text-transform: inherit;
+}
+.dd-reader-header-exit:hover {
+	opacity: 1;
+	color: var(--color-accent-red);
+}
+
+.dd-reader-header-mark {
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+}
+
+.dd-reader-header-label {
+	color: var(--color-accent-red);
+	white-space: nowrap;
+}
+
+.dd-reader-header-title {
+	flex: 1 1 0;
+	min-width: 0;
+	margin: 0;
+	text-align: center;
+	font-family: var(--font-display);
+	font-size: 13px;
+	letter-spacing: 0.02em;
+	text-transform: none;
+	color: var(--color-ink);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }

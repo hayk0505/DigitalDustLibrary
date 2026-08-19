@@ -15,6 +15,11 @@ export type Author = {
 	createdAt: string;
 };
 
+export type PostTag = {
+	name: string;
+	slug: string;
+};
+
 export type Post = {
 	slug: string;
 	title: string;
@@ -32,6 +37,7 @@ export type Post = {
 	publishedAt: string;
 	readingMinutes: number;
 	dispatchNumber: number;
+	tags: PostTag[];
 };
 
 // Sidebar turntable track — see GET /api/public/audio (PublicEndpoints.cs)

@@ -1,20 +1,8 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
 	import { X } from 'lucide-svelte';
-	import { getTheme, setTheme, type Theme } from '$lib/utils/theme';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();
-
-	let theme = $state<Theme>('light');
-
-	$effect(() => {
-		if (open) theme = getTheme();
-	});
-
-	function choose(next: Theme) {
-		theme = next;
-		setTheme(next);
-	}
 
 	function close() {
 		open = false;
@@ -47,28 +35,9 @@
 				<X class="h-5 w-5" />
 			</button>
 		</div>
-		<nav class="flex flex-col border-b border-ink/10 px-5 py-4 font-label text-sm tracking-widest uppercase">
+		<nav class="flex flex-col px-5 py-4 font-label text-sm tracking-widest uppercase">
 			<a href="/archive" onclick={close} class="py-2.5 hover:text-accent-red">Archive</a>
 			<a href="/become-an-author" onclick={close} class="py-2.5 hover:text-accent-red">Become an author</a>
 		</nav>
-		<div class="px-5 py-4">
-			<p class="font-label text-xs tracking-widest text-ink/50 uppercase">Theme</p>
-			<div class="mt-3 flex gap-2">
-				<button
-					type="button"
-					onclick={() => choose('light')}
-					class="view-toggle-btn flex-1 px-3 py-1.5 font-label text-xs tracking-widest uppercase transition-colors {theme === 'light' ? 'is-active' : ''}"
-				>
-					Light
-				</button>
-				<button
-					type="button"
-					onclick={() => choose('dark')}
-					class="view-toggle-btn flex-1 px-3 py-1.5 font-label text-xs tracking-widest uppercase transition-colors {theme === 'dark' ? 'is-active' : ''}"
-				>
-					Dark
-				</button>
-			</div>
-		</div>
 	</div>
 {/if}

@@ -19,7 +19,7 @@
 			style="--tone-raw: {tone}; --ink-on-tone-raw: {ink};"
 		>
 			<Icon class="h-3.5 w-3.5 shrink-0" />
-			{category.name}
+			<span class="mobile-category-chip-label">{category.name}</span>
 			<span class="opacity-70">{String(category.position).padStart(2, '0')}</span>
 		</a>
 	{/each}

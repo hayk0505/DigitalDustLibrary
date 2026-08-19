@@ -3,7 +3,6 @@
 	import type { Category } from '$lib/data';
 	import { getCategoryIcon, getCategoryTabColor, getCategoryTextColor } from '$lib/utils/category-visuals';
 	import AuthorFile from './AuthorFile.svelte';
-	import ThemeToggle from '../shared/ThemeToggle.svelte';
 	import TurntablePlayer from './TurntablePlayer.svelte';
 	let { categories }: { categories: Category[] } = $props();
 </script>
@@ -12,8 +11,11 @@
 	<h1 class="title">DIGITAL DUST <span class="text-accent-red uppercase">Library</span></h1>
 
 	<p class="meta">Field notes on what the internet leaves behind<br>Type. Image. Emotion</p>
-	
-	<ThemeToggle class="theme-toggle-spine text-sm" />
+
+	<!-- Theme toggle used to live here (.theme-toggle-spine) — moved to the
+	     top-right of the header (BlogTopNav/ArticleTopBar), as an icon
+	     matching mobile's, since this rail is desktop-only chrome and
+	     desktop had no other theme access before this. -->
 	<div class="file"></div><div class="barcode" aria-hidden="true"></div>
 </section>
 
