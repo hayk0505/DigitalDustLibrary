@@ -8,6 +8,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
@@ -193,12 +194,36 @@ app.UseStaticFiles(new StaticFileOptions
 // volume, specifically so new tracks can be scp'd straight in without a
 // deploy. See AudioTrackScanner / PublicEndpoints's GET /api/public/audio
 // for how the playlist itself gets built from whatever's sitting here.
+// ASP.NET Core's static-file middleware only serves extensions its own
+// built-in MIME table recognises and silently 404s anything else, rather
+// than serving it with a generic content type — which doesn't line up with
+// AudioTrackScanner.AllowedExtensions (that list decides what counts as a
+// track, this one decides what's actually fetchable, and they used to
+// disagree: .flac and .opus scanned into the playlist fine but 404'd the
+// moment the player requested them, since neither is in the framework
+// default table). Seeding the default table's gaps from that same list
+// keeps the two from drifting apart again.
+var audioContentTypes = new FileExtensionContentTypeProvider();
+foreach (var ext in AudioTrackScanner.AllowedExtensions)
+{
+    if (!audioContentTypes.Mappings.ContainsKey(ext))
+    {
+        audioContentTypes.Mappings[ext] = ext switch
+        {
+            ".flac" => "audio/flac",
+            ".opus" => "audio/opus",
+            _ => "application/octet-stream",
+        };
+    }
+}
+
 var audioPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "audio");
 Directory.CreateDirectory(audioPath);
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(audioPath),
     RequestPath = "/audio",
+    ContentTypeProvider = audioContentTypes,
 });
 
 if (app.Environment.IsDevelopment())

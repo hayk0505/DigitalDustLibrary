@@ -19,7 +19,12 @@ public record AudioTrack(string Id, string Title, string Artist, string Src, str
 /// </summary>
 public static class AudioTrackScanner
 {
-    private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
+    // Public so Program.cs's static-file setup for /audio can build its
+    // content-type map off this same list — see the comment there for why
+    // that matters (ASP.NET Core's default static-file middleware doesn't
+    // recognise every extension here, notably .flac and .opus, and silently
+    // 404s anything it doesn't recognise rather than serving it).
+    public static readonly IReadOnlySet<string> AllowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         ".mp3", ".m4a", ".aac", ".ogg", ".oga", ".opus", ".wav", ".flac", ".webm",
     };

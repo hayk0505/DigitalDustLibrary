@@ -62,6 +62,56 @@ public class PublicAudioEndpointTests(ApiFactory factory)
         }
     }
 
+    // Regression test for a prod bug: AudioTrackScanner.AllowedExtensions
+    // decides what counts as a track for the playlist, but ASP.NET Core's
+    // static-file middleware separately decides what it's willing to serve,
+    // based on its own built-in extension-to-MIME-type table — and that
+    // table doesn't recognise every extension in AllowedExtensions. A
+    // recognised-but-unservable extension scans fine (shows up with correct
+    // title/artist) but 404s the moment the player actually requests the
+    // file, since UseStaticFiles silently falls through instead of serving
+    // it. Every extension the scanner accepts must actually be fetchable
+    // through the static endpoint, or the track is just a broken listing.
+    //
+    // Sourced from AudioTrackScanner.AllowedExtensions itself, not a
+    // hand-copied list — a hand-copied list is exactly the kind of drift
+    // that caused the original bug (Program.cs's content-type map and the
+    // scanner's whitelist silently disagreeing), and this way a future
+    // addition to AllowedExtensions is automatically covered here too.
+    public static IEnumerable<object[]> AllowedExtensions =>
+        DigitalDustLibrary.Api.Services.AudioTrackScanner.AllowedExtensions
+            .Select(ext => new object[] { ext.TrimStart('.') });
+
+    [Theory]
+    [MemberData(nameof(AllowedExtensions))]
+    public async Task GetAudioFile_ServesEveryExtensionAudioTrackScannerAccepts(string ext)
+    {
+        var audioDir = AudioDir(factory);
+        Directory.CreateDirectory(audioDir);
+        var suffix = TagTestHelpers.UniqueSuffix();
+        var filename = $"Artist {suffix} - Track {suffix}.{ext}";
+        var filePath = Path.Combine(audioDir, filename);
+        var bytes = new byte[] { 9, 9, 9 };
+        await File.WriteAllBytesAsync(filePath, bytes);
+
+        try
+        {
+            var client = factory.CreateClient();
+            var listResponse = await client.GetAsync("/api/public/audio");
+            var tracks = await listResponse.Content.ReadFromJsonAsync<List<AudioTrack>>(AuthHelper.JsonOptions);
+            var found = tracks!.Single(t => t.Title == $"Track {suffix}");
+
+            var fileResponse = await client.GetAsync(found.Src);
+
+            Assert.Equal(HttpStatusCode.OK, fileResponse.StatusCode);
+            Assert.Equal(bytes, await fileResponse.Content.ReadAsByteArrayAsync());
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
+    }
+
     [Fact]
     public async Task GetAudio_IgnoresFilesWithUnsupportedExtensions()
     {
