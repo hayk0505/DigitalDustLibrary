@@ -1,5 +1,5 @@
 import { API_URL, API_ORIGIN } from './config';
-import type { Author, Category, Post } from './data/types';
+import type { Author, Category, Post, Track } from './data/types';
 
 type ApiPost = {
 	slug: string;
@@ -94,6 +94,22 @@ export async function fetchAuthorByHandle(
 	if (response.status === 404) return null;
 	if (!response.ok) throw new Error(`Failed to fetch author: ${response.status}`);
 	return response.json();
+}
+
+// Sidebar turntable playlist, fetched at request time from /api/public/audio
+// rather than scanned from a local static/audio/ folder — see
+// $lib/data/playlist.ts and docs/deployment.md's audio-files section for why
+// (tracks live only on the droplet now, never committed to this repo). Fails
+// soft: a fetch error just means an empty playlist (player hides itself),
+// not a broken page — this is decoration, not core content.
+export async function fetchPlaylist(fetchFn: typeof fetch): Promise<Track[]> {
+	try {
+		const response = await fetchFn(`${API_URL}/audio`);
+		if (!response.ok) return [];
+		return await response.json();
+	} catch {
+		return [];
+	}
 }
 
 export class ApplicationSubmitError extends Error {

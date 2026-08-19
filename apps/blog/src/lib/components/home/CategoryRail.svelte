@@ -4,7 +4,7 @@
 	import { getCategoryIcon, getCategoryTabColor, getCategoryTextColor } from '$lib/utils/category-visuals';
 	import AuthorFile from './AuthorFile.svelte';
 	import ThemeToggle from '../shared/ThemeToggle.svelte';
-
+	import TurntablePlayer from './TurntablePlayer.svelte';
 	let { categories }: { categories: Category[] } = $props();
 </script>
 
@@ -19,28 +19,34 @@
 
 <AuthorFile />
 
-<nav class="folders scrollbar-hide flex h-full w-28 shrink-0 flex-col overflow-y-auto" aria-label="Categories">
-	<div class="folder-header">
-		<span class="folder-header-label">Archive Log</span>
-		<span class="folder-header-num">01-A</span>
-	</div>
-	{#each categories as category (category.slug)}
-		{@const Icon = getCategoryIcon(category.slug)}
-		{@const tone = category.folderColor ?? getCategoryTabColor(category.slug)}
-		{@const ink = getCategoryTextColor(tone)}
-		{@const isActive = page.url.pathname === `/category/${category.slug}`}
-		<a
-			href="/category/{category.slug}"
-			class="folder"
-			class:active={isActive}
-			style="--tone-raw: {tone}; --ink-on-tone-raw: {ink};"
-		>
-			{#if isActive}
-				<span class="folder-active-dot" aria-hidden="true"></span>
-			{/if}
-			<span class="folder-icon"><Icon class="h-4 w-4" /></span>
-			<span class="folder-label">{category.name}</span>
-			<span class="folder-num">{String(category.position).padStart(2, '0')}</span>
-		</a>
-	{/each}
-</nav>
+<!-- The player sits outside the <nav>, which is the scroll container, so a long
+     category list scrolls behind it instead of pushing it off-screen. -->
+<div class="folders-col">
+	<nav class="folders scrollbar-hide flex min-h-0 flex-1 flex-col overflow-y-auto" aria-label="Categories">
+		<div class="folder-header">
+			<span class="folder-header-label">Archive Log</span>
+			<span class="folder-header-num">01-A</span>
+		</div>
+		{#each categories as category (category.slug)}
+			{@const Icon = getCategoryIcon(category.slug)}
+			{@const tone = category.folderColor ?? getCategoryTabColor(category.slug)}
+			{@const ink = getCategoryTextColor(tone)}
+			{@const isActive = page.url.pathname === `/category/${category.slug}`}
+			<a
+				href="/category/{category.slug}"
+				class="folder"
+				class:active={isActive}
+				style="--tone-raw: {tone}; --ink-on-tone-raw: {ink};"
+			>
+				{#if isActive}
+					<span class="folder-active-dot" aria-hidden="true"></span>
+				{/if}
+				<span class="folder-icon"><Icon class="h-4 w-4" /></span>
+				<span class="folder-label">{category.name}</span>
+				<span class="folder-num">{String(category.position).padStart(2, '0')}</span>
+			</a>
+		{/each}
+	</nav>
+
+	<TurntablePlayer />
+</div>

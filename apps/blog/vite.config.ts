@@ -19,6 +19,16 @@ export default defineConfig({
 			adapter: adapter()
 		})
 	],
+	optimizeDeps: {
+		// lucide-svelte is imported only from sidebar components, so Vite doesn't
+		// see it during initial scanning and discovers it mid-session. That
+		// triggers a re-optimization, which changes the dep browserHash and makes
+		// already-requested `?v=<hash>` module URLs 504 — and because a failed
+		// icon import takes the whole client bundle down, the page then silently
+		// stops hydrating. Declaring it here pre-bundles it up front so the hash
+		// stays stable for the life of the session.
+		include: ['lucide-svelte']
+	},
 	server: {
 		port: 5174
 	}

@@ -27,4 +27,5 @@ public class Post
     public DateTimeOffset? PublishedAt { get; set; }
 
     public List<ReviewNote> ReviewNotes { get; set; } = [];
+    public List<PostTag> PostTags { get; set; } = [];
 }

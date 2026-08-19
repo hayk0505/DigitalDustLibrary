@@ -34,6 +34,7 @@ function makePost(overrides: Partial<Post>): Post {
     authorName: 'Some Author',
     updatedAt: '2026-01-01T00:00:00Z',
     publishedAt: null,
+    tags: [],
     latestReviewNote: null,
     ...overrides,
   }

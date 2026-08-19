@@ -28,6 +28,13 @@ export interface Post {
   categoryName: string
   categoryColor: string
   categoryFolderColor: string | null
+  tags: { id: string; name: string; slug: string }[]
+  // Write-only: not returned by the API, mirrors CreatePostRequest/
+  // UpdatePostRequest.TagIds. Kept on this response-shaped interface (rather
+  // than a separate request type, which this codebase doesn't have for
+  // Post) purely so PostEditor.tsx's save payload — { ...values, tagIds }
+  // — type-checks against useCreatePost/useUpdatePost's Partial<Post> param.
+  tagIds?: string[]
   status: PostStatus
   authorId: string
   authorName: string
@@ -57,6 +64,13 @@ export interface Category {
   position: number
   isVisible: boolean
   isDeleted: boolean
+  postCount: number
+}
+
+export interface Tag {
+  id: string
+  name: string
+  slug: string
   postCount: number
 }
 

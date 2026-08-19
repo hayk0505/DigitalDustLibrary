@@ -26,6 +26,7 @@ public record PostDto(
     string CategoryName,
     string CategoryColor,
     string? CategoryFolderColor,
+    List<TagRefDto> Tags,
     PostStatus Status,
     Guid AuthorId,
     string AuthorName,
@@ -45,7 +46,8 @@ public record CreatePostRequest(
     string? MetaDescription,
     Guid? FeaturedImageId,
     Guid? CategoryId,
-    PostStatus? Status);
+    PostStatus? Status,
+    List<Guid>? TagIds = null);
 
 public record UpdatePostRequest(
     string? Title,
@@ -55,7 +57,8 @@ public record UpdatePostRequest(
     string? MetaDescription,
     Guid? FeaturedImageId,
     Guid? CategoryId,
-    PostStatus? Status);
+    PostStatus? Status,
+    List<Guid>? TagIds = null);
 
 public record RequestChangesRequest(string Comment);
 
@@ -65,6 +68,20 @@ public record CreateMediaRequest(string Filename, string DataUrl, MediaTag Tag, 
 // posts currently reference this category), which is also what decides whether
 // a hard DELETE is allowed. See CategoryEndpoints.
 public record CategoryDto(Guid Id, string Name, string Slug, string Description, string Color, string? FolderColor, int Position, bool IsVisible, bool IsDeleted, int PostCount);
+
+public record TagDto(Guid Id, string Name, string Slug, int PostCount);
+
+public record TagRefDto(Guid Id, string Name, string Slug);
+
+public record PublicTagRefDto(string Name, string Slug);
+
+public record PublicTagDto(string Name, string Slug, int PostCount);
+
+public record CreateTagRequest(string Name);
+
+public record UpdateTagRequest(string? Name, string? Slug);
+
+public record MergeTagRequest(Guid TargetTagId);
 
 public record CreateCategoryRequest(string Name, string Slug, string Description, string Color, int? Position, string? FolderColor = null);
 
@@ -108,6 +125,7 @@ public record ActivityEventDto(Guid Id, string ActorName, string Action, DateTim
 public record PublicPostDto(
     string Slug, string Title, string BodyHtml, string Excerpt, string SeoTitle, string MetaDescription,
     string? FeaturedImageUrl, string CategorySlug, string CategoryName, string CategoryColor, string? CategoryFolderColor,
+    List<PublicTagRefDto> Tags,
     string AuthorHandle, string AuthorName, DateTimeOffset PublishedAt, int ReadingMinutes, int DispatchNumber);
 
 public record PublicAuthorDto(string Handle, string Name, string? Bio, DateTimeOffset CreatedAt);
@@ -118,9 +136,20 @@ public static class Mapping
 {
     public static UserDto ToDto(this ApplicationUser u) => new(u.Id, u.Name, u.Email, u.Role);
 
+    // Unlike AuthorName below (genuinely empty on create — no ApplicationUser
+    // is ever loaded anywhere in that flow), a just-created post's Tags comes
+    // back correctly POPULATED even though post.PostTags is never explicitly
+    // re-Include()d after PostEndpoints' POST handler does its
+    // AddRange+SaveChangesAsync for the join rows. This works because the
+    // Tag entities were already loaded (and are still tracked) in the same
+    // AppDbContext via the TagIds validation query, so when the new PostTag
+    // rows are added, EF Core's automatic relationship fixup wires up
+    // post.PostTags (and each PostTag.Tag navigation) against those tracked
+    // Tag/Post entities in-memory, with no extra query needed.
     public static PostDto ToDto(this Post p) => new(
         p.Id, p.Title, p.Slug, p.BodyHtml, p.Excerpt, p.SeoTitle, p.MetaDescription,
         p.FeaturedImageId, p.CategoryId, p.Category?.Name ?? "", p.Category?.Color ?? "", p.Category?.FolderColor,
+        p.PostTags.Select(pt => new TagRefDto(pt.Tag!.Id, pt.Tag.Name, pt.Tag.Slug)).ToList(),
         p.Status, p.AuthorId, p.Author?.Name ?? "", p.UpdatedAt, p.PublishedAt,
         p.ReviewNotes.OrderByDescending(r => r.CreatedAt).FirstOrDefault() is { } latest
             ? new ReviewNoteDto(latest.Id, latest.Comment, latest.Reviewer?.Name ?? "", latest.CreatedAt)
@@ -130,6 +159,10 @@ public static class Mapping
 
     public static CategoryDto ToDto(this Category c, int postCount) =>
         new(c.Id, c.Name, c.Slug, c.Description, c.Color, c.FolderColor, c.Position, c.IsVisible, c.IsDeleted, postCount);
+
+    public static TagDto ToDto(this Tag t, int postCount) => new(t.Id, t.Name, t.Slug, postCount);
+
+    public static PublicTagDto ToPublicDto(this Tag t, int postCount) => new(t.Name, t.Slug, postCount);
 
     public static AuthorApplicationDto ToDto(this AuthorApplication a) =>
         new(a.Id, a.Name, a.Email, a.Pitch, a.Status, a.SubmittedAt, a.ReviewedAt);
@@ -146,6 +179,7 @@ public static class Mapping
     public static PublicPostDto ToPublicDto(this Post p, int dispatchNumber) => new(
         p.Slug, p.Title, p.BodyHtml, p.Excerpt, p.SeoTitle, p.MetaDescription,
         p.FeaturedImage?.Url, p.Category?.Slug ?? "", p.Category?.Name ?? "", p.Category?.Color ?? "", p.Category?.FolderColor,
+        p.PostTags.Select(pt => new PublicTagRefDto(pt.Tag!.Name, pt.Tag.Slug)).ToList(),
         p.Author?.Handle ?? "", p.Author?.Name ?? "",
         p.PublishedAt!.Value, EstimateReadingMinutes(p.BodyHtml), dispatchNumber);
 

@@ -15,6 +15,7 @@ export const posts: Post[] = [
     authorName: 'Alex Rivera',
     updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     publishedAt: null,
+    tags: [],
     latestReviewNote: null,
   },
   {
@@ -31,6 +32,7 @@ export const posts: Post[] = [
     authorName: 'Alex Rivera',
     updatedAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
     publishedAt: null,
+    tags: [],
     latestReviewNote: null,
   },
   {
@@ -47,6 +49,7 @@ export const posts: Post[] = [
     authorName: 'Alex Rivera',
     updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
     publishedAt: null,
+    tags: [],
     latestReviewNote: {
       id: 'note-1',
       comment: 'Can you add a concrete before/after example in the second section?',
@@ -68,6 +71,7 @@ export const posts: Post[] = [
     authorName: 'Alex Rivera',
     updatedAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
     publishedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    tags: [],
     latestReviewNote: null,
   },
 ]

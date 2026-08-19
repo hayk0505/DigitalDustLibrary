@@ -28,4 +28,12 @@ public static class DbTestHelpers
         });
         await db.SaveChangesAsync();
     }
+
+    public static async Task AddPostTagAsync(ApiFactory factory, Guid postId, Guid tagId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.PostTags.Add(new PostTag { PostId = postId, TagId = tagId });
+        await db.SaveChangesAsync();
+    }
 }

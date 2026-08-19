@@ -65,6 +65,36 @@ body {
 	background-color: color-mix(in srgb, var(--accent) 82%, white);
 }
 
+/* @tailwindcss/typography's prose-neutral sets its own fixed --tw-prose-*
+   palette, tuned for a white page — it has no awareness of this project's
+   [data-theme='dark'] attribute (nothing here uses Tailwind's dark: variant),
+   so article body text stayed at light-mode gray on the near-black dark
+   background and became unreadable. These values are the plugin's own
+   prose-invert palette for prose-neutral (copied from its compiled output),
+   not hand-picked — they're what prose-neutral itself ships for dark
+   backgrounds, we're just applying them via our own theme switch instead of
+   Tailwind's. */
+:root[data-theme='dark'] .article-body {
+	--tw-prose-body: oklch(87% 0 0);
+	--tw-prose-headings: #fff;
+	--tw-prose-lead: oklch(70.8% 0 0);
+	--tw-prose-links: #fff;
+	--tw-prose-bold: #fff;
+	--tw-prose-counters: oklch(70.8% 0 0);
+	--tw-prose-bullets: oklch(43.9% 0 0);
+	--tw-prose-hr: oklch(37.1% 0 0);
+	--tw-prose-quotes: oklch(97% 0 0);
+	--tw-prose-quote-borders: oklch(37.1% 0 0);
+	--tw-prose-captions: oklch(70.8% 0 0);
+	--tw-prose-kbd: #fff;
+	--tw-prose-kbd-shadows: rgb(255 255 255 / 10%);
+	--tw-prose-code: #fff;
+	--tw-prose-pre-code: oklch(87% 0 0);
+	--tw-prose-pre-bg: rgb(0 0 0 / 50%);
+	--tw-prose-th-borders: oklch(43.9% 0 0);
+	--tw-prose-td-borders: oklch(37.1% 0 0);
+}
+
 .scrollbar-hide {
 	scrollbar-width: none;
 	-ms-overflow-style: none;
@@ -74,233 +104,1165 @@ body {
 	display: none;
 }
 
-    .masthead {
-      position: relative; flex-shrink: 0; width: 76px;
-      padding: 24px 10px; border-right: 1px solid rgba(38,38,30,.3);
-      background: linear-gradient(92deg,#aaa798 0%,#b6b3a4 63%,#aaa797 100%);
-      box-shadow: 5px 0 10px rgba(33,30,21,.23);
-      font-family: var(--font-label), "Arial Narrow", sans-serif;
-    }
-    .masthead:before { content:""; position:absolute; inset:0; opacity:.22; background: repeating-linear-gradient(83deg, transparent 0 4px, rgba(25,25,19,.18) 4px 5px); }
-    .title {
-      position: relative; margin: 0; font-family: var(--font-label), "Arial Narrow", sans-serif;
-      font-size: 32px; line-height: .96; letter-spacing: 1px; font-weight: 700;
-      writing-mode: vertical-rl; white-space: nowrap; color:#44453b;
-    }
-    .meta { position:absolute; z-index:1; right:10px; bottom:170px; font-size:14px; line-height:1.5; letter-spacing:.2px; writing-mode:vertical-rl; color:#4a493e; }
-    .file { position:absolute; z-index:1; left:12px; bottom:36px; font-size:9px; letter-spacing:.2px; }
-    .theme-toggle-spine {
-      position:absolute; z-index:1; left:12px; bottom:66px;
-      letter-spacing:.2px; text-transform:uppercase;
-      color:#44453b; text-decoration:underline; background:none; border:none; padding:0; cursor:pointer;
-      font-family: inherit;
-    }
-    .theme-toggle-spine:hover { color:#1c1a17; }
-    .barcode { position:absolute; z-index:1; left:12px; bottom:7px; width:34px; height:25px; opacity:.8; background:repeating-linear-gradient(90deg,#45453b 0 2px, transparent 2px 3px,#45453b 3px 4px,transparent 4px 6px,#45453b 6px 8px,transparent 8px 10px); }
+.masthead {
+	position: relative;
+	flex-shrink: 0;
+	width: 76px;
+	padding: 24px 10px;
+	border-right: 1px solid rgba(38, 38, 30, 0.3);
+	background: linear-gradient(92deg, #aaa798 0%, #b6b3a4 63%, #aaa797 100%);
+	box-shadow: 5px 0 10px rgba(33, 30, 21, 0.23);
+	font-family: var(--font-label), 'Arial Narrow', sans-serif;
+}
+.masthead:before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	opacity: 0.22;
+	background: repeating-linear-gradient(83deg, transparent 0 4px, rgba(25, 25, 19, 0.18) 4px 5px);
+}
+.title {
+	position: relative;
+	margin: 0;
+	font-family: var(--font-label), 'Arial Narrow', sans-serif;
+	font-size: 32px;
+	line-height: 0.96;
+	letter-spacing: 1px;
+	font-weight: 700;
+	writing-mode: vertical-rl;
+	white-space: nowrap;
+	color: #44453b;
+}
+.meta {
+	position: absolute;
+	z-index: 1;
+	right: 10px;
+	bottom: 170px;
+	font-size: 14px;
+	line-height: 1.5;
+	letter-spacing: 0.2px;
+	writing-mode: vertical-rl;
+	color: #4a493e;
+}
+.file {
+	position: absolute;
+	z-index: 1;
+	left: 12px;
+	bottom: 36px;
+	font-size: 9px;
+	letter-spacing: 0.2px;
+}
+.theme-toggle-spine {
+	position: absolute;
+	z-index: 1;
+	left: 12px;
+	bottom: 66px;
+	letter-spacing: 0.2px;
+	text-transform: uppercase;
+	color: #44453b;
+	text-decoration: underline;
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	font-family: inherit;
+}
+.theme-toggle-spine:hover {
+	color: #1c1a17;
+}
+.barcode {
+	position: absolute;
+	z-index: 1;
+	left: 12px;
+	bottom: 7px;
+	width: 34px;
+	height: 25px;
+	opacity: 0.8;
+	background: repeating-linear-gradient(
+		90deg,
+		#45453b 0 2px,
+		transparent 2px 3px,
+		#45453b 3px 4px,
+		transparent 4px 6px,
+		#45453b 6px 8px,
+		transparent 8px 10px
+	);
+}
 
-    .author-file {
-      flex-shrink:0; width:172px; padding:18px 14px;
-      background:#d7ccb8; border-right:1px solid rgba(38,38,30,.15);
-      font-family: var(--font-label), "Arial Narrow", sans-serif; color:#3d3b30;
-      display:flex; flex-direction:column; gap:10px; overflow-y:auto;
-    }
-    .author-file-tag { display:flex; align-items:center; justify-content:space-between; font-size:10px; letter-spacing:.5px; text-transform:uppercase; opacity:.65; }
-    .author-file-id { padding:2px 6px; border:1px solid rgba(38,38,30,.25); border-radius:4px; font-size:9px; }
-    .author-file-name { font-family: var(--font-display), serif; font-size:22px; font-weight:700; line-height:1.05; text-transform:uppercase; margin:0; }
-    .author-file-bio { font-size:11px; line-height:1.55; color:#5a5748; margin:0; }
-    .author-file-sep { height:1px; background:rgba(38,38,30,.18); }
-    .author-file-stat-num { font-family: var(--font-display), serif; font-size:28px; font-weight:700; display:block; line-height:1; }
-    .author-file-stat-label { font-size:10px; letter-spacing:.5px; text-transform:uppercase; opacity:.65; }
-    .author-file-meta { font-size:10px; letter-spacing:.4px; text-transform:uppercase; opacity:.7; margin:0; }
-    .author-file-link { font-size:11px; letter-spacing:.3px; text-decoration:underline; color:#3d3b30; }
+.author-file {
+	flex-shrink: 0;
+	width: 172px;
+	padding: 18px 14px;
+	background: #d7ccb8;
+	border-right: 1px solid rgba(38, 38, 30, 0.15);
+	font-family: var(--font-label), 'Arial Narrow', sans-serif;
+	color: #3d3b30;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	overflow-y: auto;
+}
+.author-file-tag {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: 10px;
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+	opacity: 0.65;
+}
+.author-file-id {
+	padding: 2px 6px;
+	border: 1px solid rgba(38, 38, 30, 0.25);
+	border-radius: 4px;
+	font-size: 9px;
+}
+.author-file-name {
+	font-family: var(--font-display), serif;
+	font-size: 22px;
+	font-weight: 700;
+	line-height: 1.05;
+	text-transform: uppercase;
+	margin: 0;
+}
+.author-file-bio {
+	font-size: 11px;
+	line-height: 1.55;
+	color: #5a5748;
+	margin: 0;
+}
+.author-file-sep {
+	height: 1px;
+	background: rgba(38, 38, 30, 0.18);
+}
+.author-file-stat-num {
+	font-family: var(--font-display), serif;
+	font-size: 28px;
+	font-weight: 700;
+	display: block;
+	line-height: 1;
+}
+.author-file-stat-label {
+	font-size: 10px;
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+	opacity: 0.65;
+}
+.author-file-meta {
+	font-size: 10px;
+	letter-spacing: 0.4px;
+	text-transform: uppercase;
+	opacity: 0.7;
+	margin: 0;
+}
+.author-file-link {
+	font-size: 11px;
+	letter-spacing: 0.3px;
+	text-decoration: underline;
+	color: #3d3b30;
+}
 
-    .folders { width:142px; gap:6px; padding-bottom:6px; background-color:#d7ccb8; font-family: var(--font-label), "Arial Narrow", sans-serif; }
+/* Column wrapper owns the width and background; .folders below is only the
+       scrolling list, so the player pinned under it stays put while the
+       category folders scroll. */
+.folders-col {
+	flex-shrink: 0;
+	width: 142px;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	background-color: #d7ccb8;
+}
 
-    .folder-header {
-      flex-shrink:0; display:flex; align-items:center; justify-content:space-between; gap:8px;
-      padding:10px 12px; margin:6px 6px 0 0;
-      background:#efece2; border:1px solid rgba(38,38,30,.18); border-radius:0 10px 10px 0;
-    }
-    .folder-header-label { font-size:11px; font-weight:700; letter-spacing:.5px; color:#3d3b30; text-transform:uppercase; }
-    .folder-header-num {
-      font-size:10px; font-family:monospace; color:#3d3b30;
-      padding:2px 6px; border:1px solid rgba(38,38,30,.25); border-radius:4px;
-    }
+.folders {
+	gap: 6px;
+	padding-bottom: 6px;
+	font-family: var(--font-label), 'Arial Narrow', sans-serif;
+}
 
-    .folder {
-      --tone-raw: #d7d2c3; --ink-on-tone-raw: #2a281f;
-      --tone: var(--tone-raw); --ink-on-tone: var(--ink-on-tone-raw);
-      --edge: color-mix(in srgb, var(--tone) 60%, black);
-      position:relative; display:block; flex: 0 0 auto; min-height:64px;
-      margin:0 6px 0 0; padding:10px 34px 22px 12px;
-      color: var(--ink-on-tone, #2a281f);
-      background:
-        repeating-linear-gradient(95deg, rgba(44,42,33,.035) 0 1px, transparent 1px 4px), var(--tone);
-      border: 1px solid var(--edge);
-      border-radius: 0 10px 10px 0;
-      box-shadow: 2px 3px 6px rgba(45,40,27,.24);
-      text-decoration:none;
-      transition: background-color .15s ease, color .15s ease;
-    }
-    .folder:hover, .folder.active {
-      background:
-        repeating-linear-gradient(95deg, rgba(244,241,234,.06) 0 1px, transparent 1px 4px), var(--ink-on-tone, #2a281f);
-      color: var(--tone);
-    }
-    .folder-active-dot {
-      position:absolute; top:-5px; right:-5px; z-index:1;
-      width:11px; height:11px; border-radius:50%;
-      background:#f4f1ea; border:1px solid rgba(0,0,0,.3);
-      box-shadow:0 1px 3px rgba(0,0,0,.35);
-    }
-    .folder-icon {
-      position:absolute; top:10px; right:10px;
-      display:flex; align-items:center; justify-content:center;
-      width:24px; height:24px;
-      border:1px solid color-mix(in srgb, currentColor 35%, transparent);
-      border-radius:6px;
-    }
-    .folder-label {
-      display:block; font-size:12px; font-weight:700; letter-spacing:.3px; line-height:1.25;
-      text-transform:uppercase; padding-top:2px;
-    }
-    .folder-num { position:absolute; bottom:8px; right:10px; font-size:10px; font-family:monospace; opacity:.8; }
+.folder-header {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 10px 12px;
+	margin: 6px 6px 0 0;
+	background: #efece2;
+	border: 1px solid rgba(38, 38, 30, 0.18);
+	border-radius: 0 10px 10px 0;
+}
+.folder-header-label {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	color: #3d3b30;
+	text-transform: uppercase;
+}
+.folder-header-num {
+	font-size: 10px;
+	font-family: monospace;
+	color: #3d3b30;
+	padding: 2px 6px;
+	border: 1px solid rgba(38, 38, 30, 0.25);
+	border-radius: 4px;
+}
 
-    .mobile-category-chip {
-      --tone-raw: #d7d2c3; --ink-on-tone-raw: #2a281f;
-      background-color: var(--tone-raw); color: var(--ink-on-tone-raw);
-    }
+.folder {
+	--tone-raw: #d7d2c3;
+	--ink-on-tone-raw: #2a281f;
+	--tone: var(--tone-raw);
+	--ink-on-tone: var(--ink-on-tone-raw);
+	--edge: color-mix(in srgb, var(--tone) 60%, black);
+	position: relative;
+	display: block;
+	flex: 0 0 auto;
+	min-height: 64px;
+	margin: 0 6px 0 0;
+	padding: 10px 34px 22px 12px;
+	color: var(--ink-on-tone, #2a281f);
+	background:
+		repeating-linear-gradient(95deg, rgba(44, 42, 33, 0.035) 0 1px, transparent 1px 4px),
+		var(--tone);
+	border: 1px solid var(--edge);
+	border-radius: 0 10px 10px 0;
+	box-shadow: 2px 3px 6px rgba(45, 40, 27, 0.24);
+	text-decoration: none;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease;
+}
+.folder:hover,
+.folder.active {
+	background:
+		repeating-linear-gradient(95deg, rgba(244, 241, 234, 0.06) 0 1px, transparent 1px 4px),
+		var(--ink-on-tone, #2a281f);
+	color: var(--tone);
+}
+.folder-active-dot {
+	position: absolute;
+	top: -5px;
+	right: -5px;
+	z-index: 1;
+	width: 11px;
+	height: 11px;
+	border-radius: 50%;
+	background: #f4f1ea;
+	border: 1px solid rgba(0, 0, 0, 0.3);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.folder-icon {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+	border-radius: 6px;
+}
+.folder-label {
+	display: block;
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.3px;
+	line-height: 1.25;
+	text-transform: uppercase;
+	padding-top: 2px;
+}
+.folder-num {
+	position: absolute;
+	bottom: 8px;
+	right: 10px;
+	font-size: 10px;
+	font-family: monospace;
+	opacity: 0.8;
+}
 
-    /* Dark theme — sidebar reads as the same archival document with the
+.mobile-category-chip {
+	--tone-raw: #d7d2c3;
+	--ink-on-tone-raw: #2a281f;
+	background-color: var(--tone-raw);
+	color: var(--ink-on-tone-raw);
+}
+
+/* Dark theme — sidebar reads as the same archival document with the
        lights turned down: warm ivory type, charcoal paper, category tones
        darkened (not hue-shifted) so each tab stays recognizable from light
        mode. --tone/--ink-on-tone are never set inline (only the -raw
        variants are), so these overrides aren't fighting inline-style
        specificity. */
-    :root[data-theme='dark'] .masthead {
-      background: #20211e;
-      border-right-color: #3a3933;
-      box-shadow: none;
-    }
-    :root[data-theme='dark'] .masthead:before { opacity: .07; }
-    :root[data-theme='dark'] .title { color: #d2c8b5; }
-    :root[data-theme='dark'] .meta,
-    :root[data-theme='dark'] .file { color: #77746b; }
-    :root[data-theme='dark'] .theme-toggle-spine { color: #77746b; }
-    :root[data-theme='dark'] .theme-toggle-spine:hover { color: #d2c8b5; }
-    :root[data-theme='dark'] .barcode {
-      background-image: repeating-linear-gradient(90deg,#77746b 0 2px, transparent 2px 3px,#77746b 3px 4px,transparent 4px 6px,#77746b 6px 8px,transparent 8px 10px);
-    }
+:root[data-theme='dark'] .masthead {
+	background: #20211e;
+	border-right-color: #3a3933;
+	box-shadow: none;
+}
+:root[data-theme='dark'] .masthead:before {
+	opacity: 0.07;
+}
+:root[data-theme='dark'] .title {
+	color: #d2c8b5;
+}
+:root[data-theme='dark'] .meta,
+:root[data-theme='dark'] .file {
+	color: #77746b;
+}
+:root[data-theme='dark'] .theme-toggle-spine {
+	color: #77746b;
+}
+:root[data-theme='dark'] .theme-toggle-spine:hover {
+	color: #d2c8b5;
+}
+:root[data-theme='dark'] .barcode {
+	background-image: repeating-linear-gradient(
+		90deg,
+		#77746b 0 2px,
+		transparent 2px 3px,
+		#77746b 3px 4px,
+		transparent 4px 6px,
+		#77746b 6px 8px,
+		transparent 8px 10px
+	);
+}
 
-    :root[data-theme='dark'] .author-file {
-      background: #1a1a18; border-right-color: #3a3933; color: #e5ddcd;
-    }
-    :root[data-theme='dark'] .author-file-tag { color: #b8b0a0; }
-    :root[data-theme='dark'] .author-file-id { color: #77736a; border-color: #4a4942; }
-    :root[data-theme='dark'] .author-file-name { color: #e5ddcd; }
-    :root[data-theme='dark'] .author-file-bio { color: #989286; }
-    :root[data-theme='dark'] .author-file-sep { background: #3b3934; }
-    :root[data-theme='dark'] .author-file-stat-num { color: #e9e1d0; }
-    :root[data-theme='dark'] .author-file-stat-label,
-    :root[data-theme='dark'] .author-file-meta { color: #a39d90; }
-    :root[data-theme='dark'] .author-file-link { color: #d9d0be; }
+:root[data-theme='dark'] .author-file {
+	background: #1a1a18;
+	border-right-color: #3a3933;
+	color: #e5ddcd;
+}
+:root[data-theme='dark'] .author-file-tag {
+	color: #b8b0a0;
+}
+:root[data-theme='dark'] .author-file-id {
+	color: #77736a;
+	border-color: #4a4942;
+}
+:root[data-theme='dark'] .author-file-name {
+	color: #e5ddcd;
+}
+:root[data-theme='dark'] .author-file-bio {
+	color: #989286;
+}
+:root[data-theme='dark'] .author-file-sep {
+	background: #3b3934;
+}
+:root[data-theme='dark'] .author-file-stat-num {
+	color: #e9e1d0;
+}
+:root[data-theme='dark'] .author-file-stat-label,
+:root[data-theme='dark'] .author-file-meta {
+	color: #a39d90;
+}
+:root[data-theme='dark'] .author-file-link {
+	color: #d9d0be;
+}
 
-    :root[data-theme='dark'] .folders { background-color: #1a1a18; }
+:root[data-theme='dark'] .folders-col {
+	background-color: #1a1a18;
+}
 
-    :root[data-theme='dark'] .folder-header {
-      background: #24231f; border-color: #3a3933;
-    }
-    :root[data-theme='dark'] .folder-header-label { color: #d2c8b5; }
-    :root[data-theme='dark'] .folder-header-num { color: #b8b0a0; border-color: #4a4942; }
+:root[data-theme='dark'] .folder-header {
+	background: #24231f;
+	border-color: #3a3933;
+}
+:root[data-theme='dark'] .folder-header-label {
+	color: #d2c8b5;
+}
+:root[data-theme='dark'] .folder-header-num {
+	color: #b8b0a0;
+	border-color: #4a4942;
+}
 
-    :root[data-theme='dark'] .folder {
-      --tone: color-mix(in srgb, var(--tone-raw) 78%, black);
-      --ink-on-tone: #e8e2d3;
-      --edge: color-mix(in srgb, var(--tone) 55%, black);
-    }
-    :root[data-theme='dark'] .folder-active-dot {
-      background: #e9e1d0; border-color: rgba(0,0,0,.5);
-    }
+:root[data-theme='dark'] .folder {
+	--tone: color-mix(in srgb, var(--tone-raw) 78%, black);
+	--ink-on-tone: #e8e2d3;
+	--edge: color-mix(in srgb, var(--tone) 55%, black);
+}
+:root[data-theme='dark'] .folder-active-dot {
+	background: #e9e1d0;
+	border-color: rgba(0, 0, 0, 0.5);
+}
 
-    :root[data-theme='dark'] .mobile-category-chip {
-      background-color: color-mix(in srgb, var(--tone-raw) 78%, black);
-      color: #e8e2d3;
-    }
+:root[data-theme='dark'] .mobile-category-chip {
+	background-color: color-mix(in srgb, var(--tone-raw) 78%, black);
+	color: #e8e2d3;
+}
 
-    .article-card {
-      border-color: #c8c4ba;
-      transition: background-color .2s ease, border-color .2s ease, transform .2s ease;
-    }
-    .article-card:hover { border-color: #aaa69c; transform: translateY(-1px); }
+.article-card {
+	border-color: #c8c4ba;
+	transition:
+		background-color 0.2s ease,
+		border-color 0.2s ease,
+		transform 0.2s ease;
+}
+.article-card:hover {
+	border-color: #aaa69c;
+	transform: translateY(-1px);
+}
 
-    :root[data-theme='dark'] .article-card {
-      background-color: #171817; border-color: #484741;
-    }
-    :root[data-theme='dark'] .article-card:hover {
-      background-color: #1c1d1b; border-color: #666157;
-    }
+:root[data-theme='dark'] .article-card {
+	background-color: #171817;
+	border-color: #484741;
+}
+:root[data-theme='dark'] .article-card:hover {
+	background-color: #1c1d1b;
+	border-color: #666157;
+}
 
-    .no-image-placeholder {
-      background-color: #ece7d8;
-      border: 1px dashed #c8c4ba;
-    }
-    :root[data-theme='dark'] .no-image-placeholder {
-      background-color: #151615;
-      border-color: #383833;
-    }
+.no-image-placeholder {
+	background-color: #ece7d8;
+	border: 1px dashed #c8c4ba;
+}
+:root[data-theme='dark'] .no-image-placeholder {
+	background-color: #151615;
+	border-color: #383833;
+}
 
-    .archive-empty {
-      color: #8a8479;
-      letter-spacing: .1em;
-    }
-    :root[data-theme='dark'] .archive-empty { color: #77746b; }
+.archive-empty {
+	color: #8a8479;
+	letter-spacing: 0.1em;
+}
+:root[data-theme='dark'] .archive-empty {
+	color: #77746b;
+}
 
-    .view-toggle-btn {
-      border-radius: var(--radius-control);
-      border: 1px solid #c8c4ba;
-      color: #716c62;
-    }
-    .view-toggle-btn:hover { border-color: #aaa69c; }
-    .view-toggle-btn.is-active {
-      background-color: #f4f1ea;
-      border-color: #c8c4ba;
-      color: #211f1c;
-    }
-    :root[data-theme='dark'] .view-toggle-btn {
-      border-color: #484741;
-      color: #aaa394;
-    }
-    :root[data-theme='dark'] .view-toggle-btn:hover { border-color: #666157; }
-    :root[data-theme='dark'] .view-toggle-btn.is-active {
-      background-color: #1c1d1b;
-      border-color: #666157;
-      color: #f0e8d7;
-    }
+.view-toggle-btn {
+	border-radius: var(--radius-control);
+	border: 1px solid #c8c4ba;
+	color: #716c62;
+}
+.view-toggle-btn:hover {
+	border-color: #aaa69c;
+}
+.view-toggle-btn.is-active {
+	background-color: #f4f1ea;
+	border-color: #c8c4ba;
+	color: #211f1c;
+}
+:root[data-theme='dark'] .view-toggle-btn {
+	border-color: #484741;
+	color: #aaa394;
+}
+:root[data-theme='dark'] .view-toggle-btn:hover {
+	border-color: #666157;
+}
+:root[data-theme='dark'] .view-toggle-btn.is-active {
+	background-color: #1c1d1b;
+	border-color: #666157;
+	color: #f0e8d7;
+}
 
-    .list-thumb {
-      border-radius: var(--radius-image);
-      overflow: hidden;
-    }
+.list-thumb {
+	border-radius: var(--radius-image);
+	overflow: hidden;
+}
 
-    .mobile-drawer {
-      border-left: 1px solid #c8c4ba;
-      box-shadow: -8px 0 24px rgba(20,18,14,.15);
-    }
-    :root[data-theme='dark'] .mobile-drawer {
-      border-left-color: #34342f;
-      box-shadow: -8px 0 24px rgba(0,0,0,.4);
-    }
+.mobile-drawer {
+	border-left: 1px solid #c8c4ba;
+	box-shadow: -8px 0 24px rgba(20, 18, 14, 0.15);
+}
+:root[data-theme='dark'] .mobile-drawer {
+	border-left-color: #34342f;
+	box-shadow: -8px 0 24px rgba(0, 0, 0, 0.4);
+}
 
-    .scroll-top-btn {
-      background-color: var(--color-paper);
-      border: 1px solid #c8c4ba;
-      color: #716c62;
-      box-shadow: 0 2px 8px rgba(20,18,14,.15);
-      transition: border-color .2s ease, color .2s ease, transform .2s ease;
-    }
-    .scroll-top-btn:hover { border-color: #aaa69c; color: #211f1c; transform: translateY(-2px); }
-    :root[data-theme='dark'] .scroll-top-btn {
-      border-color: #484741; color: #aaa394;
-      box-shadow: 0 2px 8px rgba(0,0,0,.4);
-    }
-    :root[data-theme='dark'] .scroll-top-btn:hover { border-color: #666157; color: #f0e8d7; }
+.scroll-top-btn {
+	background-color: var(--color-paper);
+	border: 1px solid #c8c4ba;
+	color: #716c62;
+	box-shadow: 0 2px 8px rgba(20, 18, 14, 0.15);
+	transition:
+		border-color 0.2s ease,
+		color 0.2s ease,
+		transform 0.2s ease;
+}
+.scroll-top-btn:hover {
+	border-color: #aaa69c;
+	color: #211f1c;
+	transform: translateY(-2px);
+}
+:root[data-theme='dark'] .scroll-top-btn {
+	border-color: #484741;
+	color: #aaa394;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+:root[data-theme='dark'] .scroll-top-btn:hover {
+	border-color: #666157;
+	color: #f0e8d7;
+}
+
+/* ── Sidebar turntable player ─────────────────────────────────────────
+       Every colour the player and its SVG use is funnelled through these
+       custom properties, so the dark theme is one variable block at the
+       bottom rather than a parallel copy of every rule. */
+.dd-player {
+	--dd-ink: #3d3b30;
+	--dd-ink-strong: #1c1a17;
+	--dd-muted: #6f6b5c;
+	--dd-line: rgba(38, 38, 30, 0.18);
+	--dd-edge: rgba(38, 38, 30, 0.28);
+	--dd-vinyl: #1f1d19;
+	--dd-groove: rgba(233, 225, 208, 0.15);
+	--dd-sheen: rgba(233, 225, 208, 0.2);
+	--dd-label-edge: rgba(28, 26, 23, 0.35);
+	--dd-spindle: #f4f1ea;
+	--dd-arm-ink: #2a281f;
+	--dd-arm-fill: #cfc6b2;
+	margin-top: auto;
+	flex-shrink: 0;
+	border-top: 1px solid var(--dd-line);
+	font-family: var(--font-label), 'Arial Narrow', sans-serif;
+	color: var(--dd-ink);
+}
+
+.dd-player-panel {
+	padding: 9px 11px 5px;
+	background-image: repeating-linear-gradient(
+		95deg,
+		rgba(44, 42, 33, 0.04) 0 1px,
+		transparent 1px 4px
+	);
+}
+
+.dd-player-label {
+	margin: 0 0 3px;
+	font-size: 9px;
+	letter-spacing: 0.9px;
+	text-transform: uppercase;
+	opacity: 0.6;
+}
+/* Static colour shift, not motion — the playing indicator that survives
+       prefers-reduced-motion once the record stops spinning. */
+.dd-player-label.is-live {
+	color: var(--color-accent-red);
+	opacity: 1;
+}
+.dd-player-title {
+	margin: 0;
+	font-family: var(--font-display), serif;
+	font-size: 15px;
+	font-weight: 700;
+	line-height: 1.15;
+}
+.dd-player-time {
+	margin: 6px 0 0;
+	font-size: 10px;
+	letter-spacing: 0.6px;
+	color: var(--dd-muted);
+	font-variant-numeric: tabular-nums;
+}
+.dd-player-unavailable {
+	margin: 6px 0 0;
+	font-size: 9px;
+	letter-spacing: 0.6px;
+	text-transform: uppercase;
+	color: var(--dd-muted);
+	opacity: 0.75;
+}
+
+.dd-controls {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+}
+.dd-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	color: var(--dd-ink);
+	background: none;
+	border: 1px solid var(--dd-edge);
+	border-radius: 50%;
+	cursor: pointer;
+	transition:
+		color 0.15s ease,
+		border-color 0.15s ease;
+}
+.dd-btn:hover {
+	color: var(--dd-ink-strong);
+	border-color: var(--dd-ink);
+}
+.dd-btn:focus-visible {
+	outline: 2px solid var(--color-accent-red);
+	outline-offset: 2px;
+}
+.dd-btn-play {
+	width: 30px;
+	height: 30px;
+}
+
+.dd-volume {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	margin-top: 8px;
+}
+
+/* Minimal thin-line slider to match the mute button and the (disabled)
+       progress bar — a plain track plus a small solid knob, no filled/coloured
+       track segment. Each browser engine needs its own thumb/track rules;
+       there is no shorthand that covers all three. */
+.dd-volume-slider {
+	-webkit-appearance: none;
+	appearance: none;
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 14px;
+	margin: 0;
+	background: transparent;
+	cursor: pointer;
+}
+.dd-volume-slider:focus-visible {
+	outline: 2px solid var(--color-accent-red);
+	outline-offset: 2px;
+}
+
+.dd-volume-slider::-webkit-slider-runnable-track {
+	height: 2px;
+	background: var(--dd-edge);
+	border-radius: 1px;
+}
+.dd-volume-slider::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	margin-top: -3.5px;
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	background: var(--color-accent-red);
+}
+
+.dd-volume-slider::-moz-range-track {
+	height: 2px;
+	background: var(--dd-edge);
+	border-radius: 1px;
+}
+.dd-volume-slider::-moz-range-thumb {
+	width: 9px;
+	height: 9px;
+	border: none;
+	border-radius: 50%;
+	background: var(--color-accent-red);
+}
+
+/* viewBox is 142x124 at 1:1 with the column width, so the SVG scales as
+       one piece and the record stays a true circle. The disc is larger than
+       the viewBox and is clipped by its left and bottom edges. */
+.dd-turntable svg {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+.dd-vinyl {
+	fill: var(--dd-vinyl);
+}
+.dd-groove {
+	fill: none;
+	stroke: var(--dd-groove);
+	stroke-width: 1;
+}
+.dd-sheen {
+	fill: none;
+	stroke: var(--dd-sheen);
+	stroke-width: 6;
+	stroke-linecap: round;
+}
+.dd-label {
+	fill: var(--color-accent-red);
+}
+.dd-label-edge {
+	fill: none;
+	stroke: var(--dd-label-edge);
+	stroke-width: 1;
+}
+.dd-spindle {
+	fill: var(--dd-spindle);
+}
+.dd-label-text {
+	fill: #000;
+	font-family: var(--font-label), 'Arial Narrow', sans-serif;
+	font-size: 8.5px;
+	font-weight: 700;
+	letter-spacing: 0.2px;
+}
+
+.dd-ring-track {
+	fill: none;
+	stroke: var(--dd-edge);
+	stroke-width: 2;
+}
+.dd-ring-fill {
+	fill: none;
+	stroke: var(--color-accent-red);
+	stroke-width: 2.5;
+	stroke-linecap: round;
+	transform-box: view-box;
+	transform-origin: 40px 92px;
+	transform: rotate(-90deg);
+}
+
+.dd-arm-plinth {
+	fill: var(--dd-arm-fill);
+	stroke: var(--dd-arm-ink);
+	stroke-width: 1.2;
+}
+.dd-arm {
+	stroke: var(--dd-arm-ink);
+	stroke-width: 1.8;
+	stroke-linecap: round;
+}
+.dd-arm-weight {
+	fill: var(--dd-arm-fill);
+	stroke: var(--dd-arm-ink);
+	stroke-width: 1.2;
+}
+.dd-arm-head {
+	fill: var(--dd-arm-fill);
+	stroke: var(--dd-arm-ink);
+	stroke-width: 1.2;
+	stroke-linejoin: round;
+}
+.dd-arm-pivot {
+	fill: var(--dd-arm-fill);
+	stroke: var(--dd-arm-ink);
+	stroke-width: 1.2;
+}
+.dd-arm-pivot-dot {
+	fill: var(--dd-arm-ink);
+}
+
+/* Animation stays attached and is only play-state-toggled, so pausing
+       freezes the record where it is instead of snapping it back to 0deg. */
+.dd-disc {
+	transform-box: view-box;
+	transform-origin: 40px 92px;
+	animation: dd-spin 4.2s linear infinite;
+	animation-play-state: paused;
+}
+.dd-disc.is-spinning {
+	animation-play-state: running;
+}
+
+/* The rotate() itself is set inline per-frame from playback progress; only
+       the pivot and the easing live here. */
+.dd-tonearm {
+	transform-box: view-box;
+	transform-origin: 122px 22px;
+	transition: transform 0.6s ease;
+}
+
+@keyframes dd-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dd-disc,
+	.dd-disc.is-spinning {
+		animation: none;
+	}
+	/* Arm and ring still track progress — they just stop easing. */
+	.dd-tonearm {
+		transition: none;
+	}
+}
+
+:root[data-theme='dark'] .dd-player {
+	--dd-ink: #e5ddcd;
+	--dd-ink-strong: #f0e8d7;
+	--dd-muted: #989286;
+	--dd-line: #3b3934;
+	--dd-edge: #4a4942;
+	/* Disc is inverted from light mode here: ivory vinyl with dark grooves,
+         rather than dark vinyl with light grooves. Deliberate — a plain
+         near-black disc read as a dead hole against the dark theme's own
+         near-black background, so contrast comes from the disc itself here
+         instead of from a light backing on dark. */
+	--dd-vinyl: #e5ddcd;
+	--dd-groove: rgba(26, 24, 20, 0.22);
+	--dd-sheen: rgba(26, 24, 20, 0.16);
+	--dd-label-edge: rgba(0, 0, 0, 0.5);
+	--dd-spindle: #1c1a17;
+	--dd-arm-ink: #8d887c;
+	--dd-arm-fill: #26261f;
+}
+:root[data-theme='dark'] .dd-player-panel {
+	background-image: repeating-linear-gradient(
+		95deg,
+		rgba(233, 225, 208, 0.025) 0 1px,
+		transparent 1px 4px
+	);
+}
+
+/* ── Mobile floating turntable ─────────────────────────────────────────
+       Standalone, uncropped disc (unlike the sidebar's corner-cropped one) —
+       different composition, so it gets its own geometry classes for the
+       parts that bake in coordinates (.dd-mobile-disc, .dd-mobile-tonearm).
+       Colour-only classes (.dd-vinyl, .dd-groove, .dd-arm, etc.) are shared
+       with the desktop player unchanged, driven by this scope's own --dd-*
+       values.
+
+       Not itself positioned — it exists only to hand these --dd-* tokens
+       and the base font/colour down to the FAB and panel, which are each
+       independently position:fixed below. The panel's top/left are set
+       inline in JS, computed relative to the FAB's actual (possibly
+       dragged) rect, so it can't be a normal-flow child of one shared
+       fixed-anchored wrapper. */
+.dd-mobile-player {
+	--dd-ink: #20201d;
+	--dd-muted: #77736a;
+	--dd-edge: #c8c3b8;
+	--dd-paper: #f2efe6;
+	--dd-vinyl: #1f1d19;
+	--dd-groove: rgba(233, 225, 208, 0.15);
+	--dd-sheen: rgba(233, 225, 208, 0.2);
+	--dd-label-edge: rgba(28, 26, 23, 0.35);
+	--dd-spindle: #f4f1ea;
+	--dd-arm-ink: #2a281f;
+	--dd-arm-fill: #cfc6b2;
+	font-family: var(--font-label), 'Arial Narrow', sans-serif;
+	color: var(--dd-ink);
+}
+
+.dd-mobile-disc-wrap svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+.dd-mobile-disc-sm {
+	width: 52px;
+	height: 52px;
+}
+.dd-mobile-disc-lg {
+	width: 128px;
+	height: 128px;
+}
+
+.dd-mobile-fab {
+	/* Base resting position — the drag transform (set inline, see the
+	   component) shifts it from here, same as when this lived on the
+	   wrapper; consolidated here now that the panel needs to be positioned
+	   independently rather than as this element's normal-flow sibling. */
+	position: fixed;
+	right: calc(18px + env(safe-area-inset-right, 0px));
+	bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+	z-index: 40;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 64px;
+	height: 64px;
+	padding: 6px;
+	background: var(--dd-paper);
+	border: 1px solid var(--dd-edge);
+	border-radius: 50%;
+	box-shadow: 0 4px 14px rgba(20, 18, 14, 0.22);
+	cursor: grab;
+	/* No transition on transform — dragging needs the bubble to track the
+	   pointer 1:1, not ease toward it. Border-color (hover) still eases. */
+	transition: border-color 0.15s ease;
+	/* Claims the gesture for dragging instead of letting the browser start a
+	   page scroll/pull-to-refresh once the pointer moves. */
+	touch-action: none;
+}
+.dd-mobile-fab:hover {
+	border-color: var(--dd-ink);
+}
+.dd-mobile-fab:focus-visible {
+	outline: 2px solid var(--color-accent-red);
+	outline-offset: 2px;
+}
+.dd-mobile-fab.is-dragging {
+	cursor: grabbing;
+	box-shadow: 0 8px 20px rgba(20, 18, 14, 0.35);
+}
+
+/* Theme-reactive, same as .dd-mobile-fab — inherits --dd-ink/--dd-paper/etc
+   from .dd-mobile-player below rather than fixing its own palette, so the
+   whole player (collapsed and expanded alike) follows the site's light/dark
+   toggle instead of one part of it staying fixed. */
+.dd-mobile-panel {
+	/* top/left are computed in JS relative to the FAB's actual rect (which
+	   moves when dragged) and set as an inline style — position:fixed both
+	   anchors those to the viewport and, same as position:relative did
+	   before, gives .dd-mobile-backdrop something to fill via inset:0. */
+	position: fixed;
+	/* Higher than .dd-mobile-fab's 40 — both are independently fixed now, and
+	   without this the FAB (later in the DOM) wins any tie and paints over
+	   the panel wherever their rects happen to touch, e.g. right after the
+	   FAB's been dragged near the panel's edge. The panel opening should
+	   always sit in front of the bubble, not behind it. */
+	z-index: 41;
+	width: 284px;
+	padding: 16px;
+	background: var(--dd-paper);
+	color: var(--dd-ink);
+	border: 1px solid var(--dd-edge);
+	border-radius: 16px;
+	box-shadow: 0 8px 24px rgba(20, 18, 14, 0.28);
+}
+
+/* Full-panel button, stacked below .dd-mobile-panel-content so tapping
+       the visible background collapses the player without intercepting taps
+       meant for the chip/disc/controls above it. */
+.dd-mobile-backdrop {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	width: 100%;
+	padding: 0;
+	margin: 0;
+	background: none;
+	border: none;
+	border-radius: 16px;
+	cursor: pointer;
+}
+.dd-mobile-backdrop:focus-visible {
+	outline: 2px solid var(--color-accent-red);
+	outline-offset: -2px;
+}
+
+.dd-mobile-panel-content {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	/* Lets every click reach the backdrop button underneath by default —
+         an element still captures hits even where its own background is
+         transparent, so without this the chip and disc would silently eat
+         taps meant to collapse the panel. Only .dd-mobile-ctrl and
+         .dd-mobile-close opt back in below, since those are the only children
+         that need their own click. */
+	pointer-events: none;
+}
+
+.dd-mobile-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.dd-mobile-close {
+	pointer-events: auto;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	background: none;
+	border: 1px solid transparent;
+	border-radius: 50%;
+	color: var(--dd-muted);
+	cursor: pointer;
+	transition:
+		color 0.15s ease,
+		border-color 0.15s ease;
+}
+.dd-mobile-close:hover {
+	color: var(--dd-ink);
+	border-color: var(--dd-edge);
+}
+.dd-mobile-close:focus-visible {
+	outline: 2px solid var(--color-accent-red);
+	outline-offset: 2px;
+}
+
+.dd-mobile-chip {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	flex: 1 1 auto;
+	gap: 8px;
+}
+.dd-mobile-chip-eq {
+	display: flex;
+	align-items: flex-end;
+	flex-shrink: 0;
+	gap: 1.5px;
+	height: 11px;
+}
+.dd-mobile-chip-eq i {
+	display: block;
+	width: 1.5px;
+	background: #8a8578;
+	opacity: 0.6;
+}
+.dd-mobile-chip-eq.is-live i {
+	background: var(--color-accent-red);
+	opacity: 1;
+}
+.dd-mobile-chip-text {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	gap: 1px;
+	line-height: 1.15;
+}
+/* Same proportions as the desktop player's .dd-player-label/.dd-player-title. */
+.dd-mobile-chip-label {
+	margin: 0 0 2px;
+	font-size: 9px;
+	letter-spacing: 0.9px;
+	text-transform: uppercase;
+	opacity: 0.6;
+}
+.dd-mobile-chip-title {
+	margin: 0;
+	font-family: var(--font-display), serif;
+	font-size: 15px;
+	font-weight: 700;
+	line-height: 1.15;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dd-mobile-body {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+}
+
+.dd-mobile-stack {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+}
+
+.dd-mobile-stack-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.dd-mobile-ctrl {
+	pointer-events: auto;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	background: var(--dd-paper);
+	border: 1px solid var(--dd-edge);
+	border-radius: 50%;
+	color: var(--dd-ink);
+	cursor: pointer;
+	transition:
+		color 0.15s ease,
+		border-color 0.15s ease;
+	box-shadow: 0 2px 6px rgba(20, 18, 14, 0.18);
+}
+.dd-mobile-ctrl:hover {
+	border-color: var(--dd-ink);
+}
+.dd-mobile-ctrl:focus-visible {
+	outline: 2px solid var(--color-accent-red);
+	outline-offset: 2px;
+}
+/* Bigger and filled — reads as the primary control, same idea as the
+       desktop player's play button. */
+.dd-mobile-ctrl-play {
+	width: 58px;
+	height: 58px;
+	background: var(--dd-ink);
+	border-color: var(--dd-ink);
+	color: var(--dd-paper);
+}
+
+/* No margin/width of its own — spacing comes from .dd-mobile-panel-content's
+   own gap, and .dd-volume-slider (shared with the desktop player, reused
+   as-is since it only reads --dd-edge/--color-accent-red, both correctly
+   scoped here too) already flexes to fill whatever width it's given. */
+.dd-mobile-volume {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	pointer-events: auto;
+}
+
+.dd-mobile-time {
+	margin: 0;
+	font-size: 10px;
+	letter-spacing: 0.5px;
+	color: var(--dd-muted);
+	font-variant-numeric: tabular-nums;
+}
+.dd-mobile-unavailable {
+	text-transform: uppercase;
+	letter-spacing: 0.6px;
+	opacity: 0.85;
+}
+
+.dd-mobile-disc {
+	transform-box: view-box;
+	transform-origin: 42px 56px;
+	animation: dd-spin 4.2s linear infinite;
+	animation-play-state: paused;
+}
+
+/* Sized in the disc SVG's own units (viewBox 100 = 128px rendered on the
+   expanded panel's disc, a 1.28x scale), so 4.8 lands around 6px actual —
+   legibly small rather than desktop's 8.5px, since this label is roughly
+   half the size. Rotates with the disc, same as desktop's. */
+.dd-mobile-label-text {
+	fill: #000;
+	font-family: var(--font-label), 'Arial Narrow', sans-serif;
+	font-size: 4.8px;
+	font-weight: 700;
+	letter-spacing: 0.1px;
+}
+.dd-mobile-disc.is-spinning {
+	animation-play-state: running;
+}
+
+.dd-mobile-tonearm {
+	transform-box: view-box;
+	transform-origin: 86px 20px;
+	transition: transform 300ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dd-mobile-disc,
+	.dd-mobile-disc.is-spinning {
+		animation: none;
+	}
+	.dd-mobile-tonearm {
+		transition: none;
+	}
+}
+
+:root[data-theme='dark'] .dd-mobile-player {
+	--dd-ink: #e5ddcd;
+	--dd-muted: #989286;
+	--dd-edge: #4a4942;
+	--dd-paper: #1a1a18;
+	--dd-vinyl: #e5ddcd;
+	--dd-groove: rgba(26, 24, 20, 0.22);
+	--dd-sheen: rgba(26, 24, 20, 0.16);
+	--dd-label-edge: rgba(0, 0, 0, 0.5);
+	--dd-spindle: #1c1a17;
+	--dd-arm-ink: #8d887c;
+	--dd-arm-fill: #26261f;
+}
+:root[data-theme='dark'] .dd-mobile-fab,
+:root[data-theme='dark'] .dd-mobile-panel,
+:root[data-theme='dark'] .dd-mobile-ctrl {
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] .dd-mobile-fab.is-dragging {
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+}

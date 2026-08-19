@@ -17,6 +17,12 @@
 #   docker compose -f docker-compose.prod.yml run --rm api /app/efbundle --connection "$CONNECTION_STRING"
 #   docker compose -f docker-compose.prod.yml up -d
 #
+# One-time setup before the first `up -d`: create the audio-files bind-mount
+# source yourself (`mkdir -p ~/digitaldustlibrary/audio-files`) rather than
+# letting Compose auto-create it — an auto-created bind-mount directory ends
+# up owned by root, which would block `deploy` from scp'ing tracks into it
+# directly.
+#
 # Secrets come from a sibling `.env` file that lives ONLY on the droplet —
 # never committed, never passed through CI/GitHub Actions. Created once by
 # hand during initial server setup (see docs/deployment.md). Expected keys:
@@ -94,6 +100,15 @@ services:
       - api_uploads:/app/wwwroot/uploads
       # Named volume, not a bind mount — uploaded media (see MediaEndpoints.cs)
       # needs to survive container recreation on every deploy.
+      - ./audio-files:/app/wwwroot/audio
+      # A plain bind mount to a real host folder (~/digitaldustlibrary/audio-files),
+      # deliberately NOT a named volume like api_uploads above. The sidebar
+      # turntable's tracks (see AudioTrackScanner.cs / GET /api/public/audio)
+      # are curated by hand — scp a file into this folder, named
+      # "Artist - Title.ext", and it shows up on the next page load. No git
+      # commit, no deploy, no Docker volume indirection to dig through; the
+      # host folder IS the source of truth, same spirit as admin-static/'s
+      # bind mount in the shared Caddy stack.
     networks:
       - default
       - caddy_net

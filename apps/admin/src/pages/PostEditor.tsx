@@ -8,6 +8,8 @@ import { useMedia } from '@/lib/api/media'
 import { useCategories } from '@/lib/api/categories'
 import { useAuth } from '@/hooks/useAuth'
 import { TipTapEditor } from '@/components/shared/TipTapEditor'
+import { TagInput, type TagOption } from '@/components/shared/TagInput'
+import { useTags, useCreateTag } from '@/lib/api/tags'
 import { MediaLibrary } from './MediaLibrary'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -39,12 +41,17 @@ export function PostEditor({ postId }: { postId?: string }) {
   // IsDeleted is excluded; hidden-but-not-deleted categories stay assignable
   // (e.g. staging drafts in a category ahead of its public launch).
   const assignableCategories = categories.filter((category) => !category.isDeleted)
+  const { data: allTagsRaw = [] } = useTags()
+  const allTags: TagOption[] = allTagsRaw.map((t) => ({ id: t.id, name: t.name }))
+  const createTag = useCreateTag()
   const createPost = useCreatePost()
   const updatePost = useUpdatePost()
 
   const [body, setBody] = useState(existing?.bodyHtml ?? '')
   const [featuredImageId, setFeaturedImageId] = useState<string | null>(existing?.featuredImageId ?? null)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [tags, setTags] = useState<TagOption[]>(existing?.tags.map((t) => ({ id: t.id, name: t.name })) ?? [])
+  const [isResolvingTags, setIsResolvingTags] = useState(false)
 
   const { register, handleSubmit, control, reset, getValues, setValue } = useForm<PostForm>({
     resolver: zodResolver(postSchema),
@@ -68,6 +75,7 @@ export function PostEditor({ postId }: { postId?: string }) {
       })
       setBody(existing.bodyHtml)
       setFeaturedImageId(existing.featuredImageId)
+      setTags(existing.tags.map((t) => ({ id: t.id, name: t.name })))
     }
   }, [existing, reset])
 
@@ -86,16 +94,38 @@ export function PostEditor({ postId }: { postId?: string }) {
 
   const featuredImage = mediaAssets.find((m) => m.id === featuredImageId)
 
-  function save(values: PostForm, status: 'draft' | 'pending_review' | 'published') {
-    const payload = { ...values, bodyHtml: body, featuredImageId, status }
-    if (existing) {
-      updatePost.mutate({ id: existing.id, ...payload }, { onSuccess: () => navigate({ to: '/posts' }) })
-    } else {
-      createPost.mutate(payload, { onSuccess: () => navigate({ to: '/posts' }) })
+  async function resolveTagIds(): Promise<string[]> {
+    const resolved = await Promise.all(
+      tags.map((tag) => (tag.isNew ? createTag.mutateAsync({ name: tag.name }) : Promise.resolve(tag))),
+    )
+    return resolved.map((tag) => tag.id)
+  }
+
+  async function save(values: PostForm, status: 'draft' | 'pending_review' | 'published') {
+    setIsResolvingTags(true)
+    try {
+      const tagIds = await resolveTagIds()
+      const payload = { ...values, bodyHtml: body, featuredImageId, status, tagIds }
+      if (existing) {
+        updatePost.mutate({ id: existing.id, ...payload }, { onSuccess: () => navigate({ to: '/posts' }) })
+      } else {
+        createPost.mutate(payload, { onSuccess: () => navigate({ to: '/posts' }) })
+      }
+    } finally {
+      setIsResolvingTags(false)
     }
   }
 
-  const isSaving = createPost.isPending || updatePost.isPending
+  // `isResolvingTags` covers the window between clicking Save/Publish and
+  // `createPost.mutate()`/`updatePost.mutate()` actually firing — during
+  // that window `resolveTagIds()` may be awaiting a real `POST /api/tags`
+  // round-trip for any freshly-typed tag, and neither `createPost.isPending`
+  // nor `updatePost.isPending` flips true until after that resolves. Without
+  // this, the buttons stay clickable for the whole tag-creation round-trip
+  // and a second click before it finishes fires a second, independent
+  // `save()` call — `POST /api/posts` has no idempotency guard, so that
+  // creates two separate draft posts instead of one.
+  const isSaving = createPost.isPending || updatePost.isPending || isResolvingTags
   const canPublishDirectly = user?.role === 'editor' || user?.role === 'owner'
 
   return (
@@ -137,6 +167,11 @@ export function PostEditor({ postId }: { postId?: string }) {
             </Select>
           )}
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Tags</Label>
+        <TagInput value={tags} onChange={setTags} allTags={allTags} />
       </div>
 
       <div className="space-y-2">

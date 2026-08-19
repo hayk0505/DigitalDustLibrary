@@ -64,6 +64,7 @@ export const postHandlers = [
       authorName: findUserById(userId)?.name ?? '',
       updatedAt: new Date().toISOString(),
       publishedAt: null,
+      tags: body.tags ?? [],
       latestReviewNote: null,
     }
     posts.push(created)

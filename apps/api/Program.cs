@@ -188,6 +188,19 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/uploads",
 });
 
+// Serves the sidebar turntable's tracks from wwwroot/audio — bind-mounted to
+// a plain host folder in prod (docker-compose.prod.yml), never a Docker
+// volume, specifically so new tracks can be scp'd straight in without a
+// deploy. See AudioTrackScanner / PublicEndpoints's GET /api/public/audio
+// for how the playlist itself gets built from whatever's sitting here.
+var audioPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "audio");
+Directory.CreateDirectory(audioPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(audioPath),
+    RequestPath = "/audio",
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -223,6 +236,7 @@ app.MapAuthEndpoints();
 app.MapPostEndpoints();
 app.MapMediaEndpoints();
 app.MapCategoryEndpoints();
+app.MapTagEndpoints();
 app.MapApplicationEndpoints();
 app.MapUserEndpoints();
 app.MapSettingsEndpoints();

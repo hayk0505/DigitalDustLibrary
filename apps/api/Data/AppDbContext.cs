@@ -10,6 +10,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
     public DbSet<ReviewNote> ReviewNotes => Set<ReviewNote>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Tag> Tags => Set<Tag>();
+    public DbSet<PostTag> PostTags => Set<PostTag>();
     public DbSet<AuthorApplication> AuthorApplications => Set<AuthorApplication>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<InviteToken> InviteTokens => Set<InviteToken>();
@@ -69,6 +71,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Category>(e =>
         {
             e.HasIndex(c => c.Slug).IsUnique();
+        });
+
+        modelBuilder.Entity<Tag>(e =>
+        {
+            e.HasIndex(t => t.Slug).IsUnique();
+        });
+
+        modelBuilder.Entity<PostTag>(e =>
+        {
+            e.HasKey(pt => new { pt.PostId, pt.TagId });
+            e.HasOne(pt => pt.Post)
+                .WithMany(p => p.PostTags)
+                .HasForeignKey(pt => pt.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(pt => pt.Tag)
+                .WithMany()
+                .HasForeignKey(pt => pt.TagId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<AuthorApplication>(e =>

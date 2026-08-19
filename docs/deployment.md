@@ -273,6 +273,39 @@ First deploy will fail if `Migrations/` doesn't exist in the repo yet or if
 `apps/api` doesn't build — those are prerequisites independent of this
 pipeline (see `apps/api/README.md`).
 
+## Sidebar turntable audio
+
+The blog's sidebar audio player used to source tracks from
+`apps/blog/static/audio/`, scanned at build time. That required every track
+to be committed to git, which doesn't scale for multi-megabyte audio files —
+tracks now live only on the droplet and are fetched at request time from
+`GET /api/public/audio` (see `AudioTrackScanner.cs`).
+
+**One-time setup** (already done if this section postdates that work, but
+listed here for a rebuild-from-scratch scenario): create the bind-mount
+source yourself before the first `up -d`, as `deploy`, not root:
+
+```bash
+mkdir -p ~/digitaldustlibrary/audio-files
+```
+
+Compose would auto-create it on first `up -d` if it's missing, but that
+leaves it root-owned, which blocks `deploy` from scp'ing into it directly —
+see `docker-compose.prod.yml`'s comment on the `api` service's volumes.
+
+**Adding a track**: scp a file straight into that folder, named
+`Artist - Title.ext` (e.g. `Everyone You Know - Crying on the Weekend.flac`).
+No git commit, no deploy — it shows up on the blog's next page load.
+
+```bash
+scp "Artist - Title.flac" deploy@<droplet-ip>:~/digitaldustlibrary/audio-files/
+```
+
+Recognised extensions: `.mp3`, `.m4a`, `.aac`, `.ogg`, `.oga`, `.opus`,
+`.wav`, `.flac`, `.webm` — anything else is ignored by the scan. A filename
+without the ` - ` separator falls back to a title-cased title and "Unknown
+Artist", same as the old build-time scanner did.
+
 ## Rollback
 
 If a deploy breaks something, on the droplet:

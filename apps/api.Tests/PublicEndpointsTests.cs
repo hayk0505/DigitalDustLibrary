@@ -223,4 +223,77 @@ public class PublicEndpointsTests(ApiFactory factory)
         Assert.Equal(777, found.Position);
         Assert.Equal(1, found.PostCount);
     }
+
+    [Fact]
+    public async Task GetTags_ReturnsPublishedPostCountOnly()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = TagTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Public Tag Author {suffix}", $"public-tag-author-{suffix}@example.com", Role.Author);
+        var tag = await TagTestHelpers.CreateTagAsync(editor, $"Public Tag {suffix}");
+        var publishedPost = await PostTestHelpers.CreatePostAsync(factory, author.Id, $"Public Tagged {suffix}", PostStatus.PendingReview);
+        await DbTestHelpers.AddPostTagAsync(factory, publishedPost.Id, tag.Id);
+        await editor.PostAsync($"/api/posts/{publishedPost.Id}/approve", null);
+        var draftPost = await PostTestHelpers.CreatePostAsync(factory, author.Id, $"Draft Tagged {suffix}", PostStatus.Draft);
+        await DbTestHelpers.AddPostTagAsync(factory, draftPost.Id, tag.Id);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync("/api/public/tags");
+
+        response.EnsureSuccessStatusCode();
+        var tags = await response.Content.ReadFromJsonAsync<List<PublicTagDto>>(AuthHelper.JsonOptions);
+        var found = tags!.Single(t => t.Slug == tag.Slug);
+        Assert.Equal(1, found.PostCount);
+    }
+
+    [Fact]
+    public async Task GetPosts_WithTagFilter_ReturnsOnlyThatTagsPosts()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = TagTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Tag Filter Author {suffix}", $"tag-filter-author-{suffix}@example.com", Role.Author);
+        var tagA = await TagTestHelpers.CreateTagAsync(editor, $"Filter Tag A {suffix}");
+        var tagB = await TagTestHelpers.CreateTagAsync(editor, $"Filter Tag B {suffix}");
+        var postInA = await PostTestHelpers.CreatePostAsync(factory, author.Id, $"Tagged A {suffix}", PostStatus.PendingReview);
+        await DbTestHelpers.AddPostTagAsync(factory, postInA.Id, tagA.Id);
+        await editor.PostAsync($"/api/posts/{postInA.Id}/approve", null);
+        var postInB = await PostTestHelpers.CreatePostAsync(factory, author.Id, $"Tagged B {suffix}", PostStatus.PendingReview);
+        await DbTestHelpers.AddPostTagAsync(factory, postInB.Id, tagB.Id);
+        await editor.PostAsync($"/api/posts/{postInB.Id}/approve", null);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/posts?tag={tagA.Slug}");
+
+        response.EnsureSuccessStatusCode();
+        var posts = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        Assert.Contains(posts!, p => p.Title == $"Tagged A {suffix}");
+        Assert.DoesNotContain(posts!, p => p.Title == $"Tagged B {suffix}");
+    }
+
+    [Fact]
+    public async Task GetPostBySlug_IncludesTags()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = TagTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Slug Tags Author {suffix}", $"slug-tags-author-{suffix}@example.com", Role.Author);
+        var tag = await TagTestHelpers.CreateTagAsync(editor, $"Slug Tag {suffix}");
+        var post = await PostTestHelpers.CreatePostAsync(factory, author.Id, $"Slug Tags Post {suffix}", PostStatus.PendingReview);
+        await DbTestHelpers.AddPostTagAsync(factory, post.Id, tag.Id);
+        await editor.PostAsync($"/api/posts/{post.Id}/approve", null);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var slug = (await db.Posts.SingleAsync(p => p.Id == post.Id)).Slug;
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/posts/{slug}");
+
+        response.EnsureSuccessStatusCode();
+        var dto = await response.Content.ReadFromJsonAsync<PublicPostDto>(AuthHelper.JsonOptions);
+        Assert.Single(dto!.Tags);
+        Assert.Equal(tag.Slug, dto.Tags[0].Slug);
+    }
 }

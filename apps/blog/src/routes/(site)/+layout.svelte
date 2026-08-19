@@ -4,10 +4,20 @@
 	import MobileCategoryRail from '$lib/components/layout/MobileCategoryRail.svelte';
 	import CategorySidebar from '$lib/components/home/CategorySidebar.svelte';
 	import ScrollToTopButton from '$lib/components/shared/ScrollToTopButton.svelte';
+	import TurntableAudio from '$lib/components/shared/TurntableAudio.svelte';
+	import MobileTurntablePlayer from '$lib/components/shared/MobileTurntablePlayer.svelte';
+	import { turntable } from '$lib/state/turntable.svelte';
 
-	let { children } = $props();
-	
+	let { children, data } = $props();
+
 	const isArticlePage = $derived(page.url.pathname.startsWith('/articles/'));
+
+	// Client-only by construction — Svelte 5 effects never run during SSR —
+	// so this can't leak one user's playlist into another's SSR output on the
+	// shared Workers isolate. See turntable.svelte.ts's class comment.
+	$effect(() => {
+		turntable.setTracks(data.tracks);
+	});
 </script>
 
 <div class="flex">
@@ -27,4 +37,6 @@
 	</div>
 </div>
 
+<TurntableAudio />
+<MobileTurntablePlayer />
 <ScrollToTopButton />

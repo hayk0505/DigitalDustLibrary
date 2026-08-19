@@ -16,7 +16,7 @@ public static class PostEndpoints
         // GET /api/posts?mine=true — matches mocks/handlers/posts.ts.
         group.MapGet("/", async (bool? mine, ClaimsPrincipal user, AppDbContext db) =>
         {
-            var query = db.Posts.Include(p => p.Author).Include(p => p.Category).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer).AsQueryable();
+            var query = db.Posts.Include(p => p.Author).Include(p => p.Category).Include(p => p.PostTags).ThenInclude(pt => pt.Tag).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer).AsQueryable();
 
             if (mine == true)
             {
@@ -47,6 +47,17 @@ public static class PostEndpoints
             if (request.CategoryId is not null && !await db.Categories.AnyAsync(c => c.Id == request.CategoryId.Value && !c.IsDeleted))
             {
                 return Results.Json(new { message = "The specified category does not exist." }, statusCode: 400);
+            }
+
+            List<Tag> tags = [];
+            if (request.TagIds is { Count: > 0 })
+            {
+                tags = await db.Tags.Where(t => request.TagIds.Contains(t.Id)).ToListAsync();
+                var missingTagIds = request.TagIds.Except(tags.Select(t => t.Id)).ToList();
+                if (missingTagIds.Count > 0)
+                {
+                    return Results.Json(new { message = $"Unknown tag id(s): {string.Join(", ", missingTagIds)}" }, statusCode: 400);
+                }
             }
 
             var title = request.Title ?? "Untitled draft";
@@ -100,6 +111,13 @@ public static class PostEndpoints
 
             db.Posts.Add(post);
             await db.SaveChangesAsync();
+
+            if (tags.Count > 0)
+            {
+                db.PostTags.AddRange(tags.Select(t => new PostTag { PostId = post.Id, TagId = t.Id }));
+                await db.SaveChangesAsync();
+            }
+
             return Results.Created($"/api/posts/{post.Id}", post.ToDto());
         });
 
@@ -111,7 +129,7 @@ public static class PostEndpoints
         // PATCHing status directly, bypassing review entirely.
         group.MapPatch("/{id:guid}", async (Guid id, UpdatePostRequest request, AppDbContext db, ClaimsPrincipal user) =>
         {
-            var post = await db.Posts.Include(p => p.Author).Include(p => p.Category).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer)
+            var post = await db.Posts.Include(p => p.Author).Include(p => p.Category).Include(p => p.PostTags).ThenInclude(pt => pt.Tag).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer)
                 .FirstOrDefaultAsync(p => p.Id == id);
             if (post is null) return Results.Json(new { message = "Not found" }, statusCode: 404);
 
@@ -163,6 +181,17 @@ public static class PostEndpoints
                 }
                 post.CategoryId = request.CategoryId.Value;
             }
+            if (request.TagIds is not null)
+            {
+                var tags = await db.Tags.Where(t => request.TagIds.Contains(t.Id)).ToListAsync();
+                var missingTagIds = request.TagIds.Except(tags.Select(t => t.Id)).ToList();
+                if (missingTagIds.Count > 0)
+                {
+                    return Results.Json(new { message = $"Unknown tag id(s): {string.Join(", ", missingTagIds)}" }, statusCode: 400);
+                }
+                db.PostTags.RemoveRange(post.PostTags);
+                post.PostTags = tags.Select(t => new PostTag { PostId = post.Id, TagId = t.Id, Tag = t }).ToList();
+            }
             if (request.Status is not null)
             {
                 post.Status = request.Status.Value;
@@ -177,7 +206,7 @@ public static class PostEndpoints
         // POST /api/posts/{id}/approve
         group.MapPost("/{id:guid}/approve", async (Guid id, AppDbContext db, ClaimsPrincipal user) =>
         {
-            var post = await db.Posts.Include(p => p.Author).Include(p => p.Category).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer)
+            var post = await db.Posts.Include(p => p.Author).Include(p => p.Category).Include(p => p.PostTags).ThenInclude(pt => pt.Tag).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer)
                 .FirstOrDefaultAsync(p => p.Id == id);
             if (post is null) return Results.Json(new { message = "Not found" }, statusCode: 404);
             if (post.Status != PostStatus.PendingReview)
@@ -207,7 +236,7 @@ public static class PostEndpoints
                 return Results.Json(new { message = "A comment is required when requesting changes." }, statusCode: 400);
             }
 
-            var post = await db.Posts.Include(p => p.Author).Include(p => p.Category).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer)
+            var post = await db.Posts.Include(p => p.Author).Include(p => p.Category).Include(p => p.PostTags).ThenInclude(pt => pt.Tag).Include(p => p.ReviewNotes).ThenInclude(r => r.Reviewer)
                 .FirstOrDefaultAsync(p => p.Id == id);
             if (post is null) return Results.Json(new { message = "Not found" }, statusCode: 404);
             if (post.Status != PostStatus.PendingReview)

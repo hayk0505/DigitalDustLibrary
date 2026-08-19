@@ -1,6 +1,7 @@
 using DigitalDustLibrary.Api.Contracts;
 using DigitalDustLibrary.Api.Data;
 using DigitalDustLibrary.Api.Models;
+using DigitalDustLibrary.Api.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace DigitalDustLibrary.Api.Endpoints;
@@ -11,7 +12,7 @@ public static class PublicEndpoints
     {
         var group = app.MapGroup("/api/public").WithTags("Public").AllowAnonymous();
 
-        group.MapGet("/posts", async (string? category, AppDbContext db) =>
+        group.MapGet("/posts", async (string? category, string? tag, AppDbContext db) =>
         {
             // PublishedAt != null alongside the status check: the only two
             // write paths (PATCH's self-publish, /approve) always set both
@@ -24,9 +25,11 @@ public static class PublicEndpoints
             // state (its date-based sort position and dispatch number would
             // be meaningless).
             var query = db.Posts.Include(p => p.Author).Include(p => p.FeaturedImage).Include(p => p.Category)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
                 .Where(p => p.Status == PostStatus.Published && p.PublishedAt != null);
 
             if (category is not null) query = query.Where(p => p.Category!.Slug == category);
+            if (tag is not null) query = query.Where(p => p.PostTags.Any(pt => pt.Tag!.Slug == tag));
 
             var posts = await query.OrderByDescending(p => p.PublishedAt).ToListAsync();
             var dispatchNumbers = await BuildDispatchNumbersAsync(db);
@@ -37,6 +40,7 @@ public static class PublicEndpoints
         group.MapGet("/posts/{slug}", async (string slug, AppDbContext db) =>
         {
             var post = await db.Posts.Include(p => p.Author).Include(p => p.FeaturedImage).Include(p => p.Category)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
                 .FirstOrDefaultAsync(p => p.Slug == slug && p.Status == PostStatus.Published && p.PublishedAt != null);
             if (post is null) return Results.Json(new { message = "Not found" }, statusCode: 404);
 
@@ -62,11 +66,41 @@ public static class PublicEndpoints
             return Results.Ok(categories.Select(c => c.ToPublicDto(postCounts.GetValueOrDefault(c.Id))));
         });
 
+        group.MapGet("/tags", async (AppDbContext db) =>
+        {
+            var tags = await db.Tags.OrderBy(t => t.Name).ToListAsync();
+            var postCounts = await db.PostTags
+                .Where(pt => pt.Post!.Status == PostStatus.Published)
+                .GroupBy(pt => pt.TagId)
+                .Select(g => new { TagId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.TagId, x => x.Count);
+
+            return Results.Ok(tags.Select(t => t.ToPublicDto(postCounts.GetValueOrDefault(t.Id))));
+        });
+
         group.MapGet("/authors/{handle}", async (string handle, AppDbContext db) =>
         {
             var author = await db.Users.FirstOrDefaultAsync(u => u.Handle == handle);
             if (author is null) return Results.Json(new { message = "Not found" }, statusCode: 404);
             return Results.Ok(author.ToPublicDto());
+        });
+
+        // Sidebar turntable playlist — scans wwwroot/audio (bind-mounted to a
+        // plain host folder in prod, see docker-compose.prod.yml) rather than
+        // reading from a database. Tracks are added by scp'ing a file onto the
+        // droplet and naming it "Artist - Title.ext", nothing more — see
+        // AudioTrackScanner for the parsing rules. Absolute URLs are built from
+        // ApiPublicOrigin, not the incoming request's Host, for the same reason
+        // MediaEndpoints.cs does: the blog calls this cross-origin, and the one
+        // origin that actually serves /audio/* is this API's own public origin
+        // regardless of which Host header a given request arrived with.
+        group.MapGet("/audio", (IWebHostEnvironment env, IConfiguration configuration) =>
+        {
+            var audioDir = Path.Combine(env.ContentRootPath, "wwwroot", "audio");
+            var origin = configuration["ApiPublicOrigin"];
+            var tracks = AudioTrackScanner.Scan(audioDir)
+                .Select(t => t with { Src = $"{origin}{t.Src}" });
+            return Results.Ok(tracks);
         });
     }
 
