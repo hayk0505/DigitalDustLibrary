@@ -2,30 +2,14 @@
 	import { Pause, Play, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-svelte';
 	import { turntable, formatTime } from '$lib/state/turntable.svelte';
 
-	// Groove rings, outermost first. Hand-picked rather than evenly stepped so
-	// the spacing reads as etched grooves instead of a target.
 	const grooves = [73, 69, 65, 60, 55, 50, 45, 39, 33];
 
-	// Tonearm angles in degrees, solved from the SVG geometry below (pivot
-	// 122,22; record centre 40,92; arm length 92). 0 lands the stylus on the
-	// outer groove (r=72), ARM_END puts it at the run-out beside the label
-	// (r=34), and ARM_PARKED lifts it clear of the disc entirely (r=86 against
-	// a radius of 78). Playback interpolates between the first two, so the arm
-	// crawls inward across the record as the track runs.
 	const ARM_PARKED = -8.93;
 	const ARM_END = 23.94;
 	const armAngle = $derived(turntable.armEngaged ? ARM_END * turntable.fraction : ARM_PARKED);
 
-	// Elapsed ring is stroked on the disc's own rim (r=78), so it crops with
-	// the record.
 	const RING = 2 * Math.PI * 78;
 
-	// SVG <text> doesn't wrap, so the artist is broken into lines by character
-	// budget rather than real measurement (which isn't available during SSR).
-	// The label is only 56px across; at 8.5px mono each glyph advances ~5.1px,
-	// and the worst case (an outer line in a 3-line block, closer to the label
-	// rim) fits 8 of them — used as a flat budget for all lines to keep the
-	// wrap simple.
 	const LABEL_CHARS = 8;
 	const LABEL_LINES = 3;
 	const LINE_HEIGHT = 10;
@@ -37,7 +21,6 @@
 		for (const word of text.trim().toUpperCase().split(/\s+/)) {
 			if (!word) continue;
 			const candidate = line ? `${line} ${word}` : word;
-			// `!line` keeps a single over-long word rather than dropping it.
 			if (candidate.length <= LABEL_CHARS || !line) {
 				line = candidate;
 			} else {
@@ -59,13 +42,8 @@
 {#if turntable.current}
 	<section class="dd-player" aria-label="Turntable player">
 		<div class="dd-player-panel">
-			<!-- Turns rust-red while playing. That colour shift is the static
-			     playing indicator that survives prefers-reduced-motion once the
-			     record stops spinning. -->
 			<p class="dd-player-label" class:is-live={turntable.isPlaying}>Now Playing</p>
 			<h2 class="dd-player-title">{turntable.current.title}</h2>
-			<!-- The artist is shown on the vinyl label below, but that whole
-			     illustration is aria-hidden, so keep it here for screen readers. -->
 			<p class="sr-only">{turntable.current.artist}</p>
 
 			{#if turntable.unavailable}
@@ -133,14 +111,8 @@
 					min="0"
 					max="1"
 					step="0.01"
-					bind:value={turntable.volume}
-					oninput={() => {
-						// Dragging the slider back up should always restore sound, even
-						// if silence currently comes from the mute flag rather than a
-						// zero level — otherwise raising it while muted looks like the
-						// slider has no effect.
-						if (turntable.volume > 0) turntable.muted = false;
-					}}
+					value={turntable.volume}
+					oninput={(e) => turntable.setVolume(+e.currentTarget.value)}
 					aria-label="Volume"
 					title="Volume"
 				/>
@@ -148,17 +120,12 @@
 		</div>
 
 		<div class="dd-turntable" aria-hidden="true">
-			<!-- Record is 156px across in a 142px column and sits low-left, so it
-			     runs off the left edge and past the bottom — the cropped framing
-			     from the reference. The tonearm stays clear at upper right. -->
 			<svg viewBox="0 0 142 124" fill="none" xmlns="http://www.w3.org/2000/svg">
 				<g class="dd-disc" class:is-spinning={turntable.isPlaying}>
 					<circle cx="40" cy="92" r="78" class="dd-vinyl" />
 					{#each grooves as r (r)}
 						<circle cx="40" cy="92" {r} class="dd-groove" />
 					{/each}
-					<!-- Light catching the disc, so it reads as pressed vinyl rather
-					     than a flat black circle. Rotates with the record. -->
 					<path d="M -33.3 65.3 A 78 78 0 0 1 66.7 18.7" class="dd-sheen" />
 
 					<circle
@@ -183,9 +150,6 @@
 					{/if}
 				</g>
 
-				<!-- Elapsed ring, stroked along the disc's own rim. Outside the
-				     rotating group deliberately: on the disc it would spin with the
-				     record and stop reading as a gauge. -->
 				<circle cx="40" cy="92" r="78" class="dd-ring-track" />
 				<circle
 					cx="40"

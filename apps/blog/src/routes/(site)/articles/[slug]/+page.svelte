@@ -4,6 +4,7 @@
 	import ArticleTopBar from '$lib/components/article/ArticleTopBar.svelte';
 	import FeaturedImage from '$lib/components/article/FeaturedImage.svelte';
 	import RelatedArticles from '$lib/components/article/RelatedArticles.svelte';
+	import ShareLinks from '$lib/components/article/ShareLinks.svelte';
 	import ReaderHeader from '$lib/components/reader/ReaderHeader.svelte';
 	import ReaderRail from '$lib/components/reader/ReaderRail.svelte';
 	import ReaderTopBar from '$lib/components/reader/ReaderTopBar.svelte';
@@ -71,22 +72,34 @@
 		<ReaderNavBarMobile shareUrl={page.url.href} prevPost={data.prevPost} nextPost={data.nextPost} />
 	</div>
 {:else}
-	<ArticleTopBar shareUrl={page.url.href} />
+	<ArticleTopBar />
 
-	<article class="mx-auto max-w-3xl  py-10">
-		<ArticleMeta post={data.post} />
+	<article class="mx-auto max-w-3xl pt-5">
+		<div class="flex items-center justify-between">
+			<a
+				href="/"
+				onclick={(e) => {
+					if (history.length > 1) {
+						e.preventDefault();
+						history.back();
+					}
+				}}
+				class="font-label text-xs tracking-widest text-ink/70 uppercase hover:text-ink"
+			>
+				← Back
+			</a>
+			<ShareLinks url={page.url.href} />
+		</div>
+		<div class="mt-4">
+			<ArticleMeta post={data.post} />
+		</div>
 		<div class="mt-8">
 			<FeaturedImage url={data.post.featuredImageUrl} />
 		</div>
 		<ArticleBody html={data.post.bodyHtml} />
 	</article>
 
-	<!-- Not shown in Reader Mode — see the branch above and app.css's Reader
-	     Mode section, which is deliberately a quiet, standalone reading
-	     surface with everything but the article itself stripped away.
-	     No px-6 here — <main> in (site)/+layout.svelte already supplies
-	     the page's horizontal padding, same as <article> above relies on. -->
-	<div class="mx-auto max-w-3xl pb-10">
+ 	<div class="mx-auto max-w-3xl pb-10">
 		<RelatedArticles posts={data.relatedPosts} />
 	</div>
 {/if}

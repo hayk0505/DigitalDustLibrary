@@ -144,6 +144,14 @@
 	const grooves = [34, 31, 28, 25, 22, 19, 16];
 	const RING = 2 * Math.PI * 38;
 
+	// Collapsed-bubble-only geometry, own viewBox (0 0 80 80) rather than a
+	// scaled-down version of the panel's — the tonearm reads as noise at
+	// ~58px so it's dropped here in favour of a static "signal pin" accent,
+	// and the freed-up space is used for the wave-arc rings instead. Disc
+	// centre (52,52) r=22, offset toward the bottom-right so those two
+	// accents have room in the top-left/top-right corners.
+	const fabGrooves = [19, 17, 15, 13, 11];
+
 	// Artist name on the label — only for the expanded panel's 128px disc.
 	// The collapsed bubble's disc renders at ~15px across (label radius 14 in
 	// a 100-unit viewBox, scaled to a 52px bubble); no font size reads at
@@ -381,18 +389,12 @@
 
 						<input
 							type="range"
-							class="dd-volume-slider"
+							class="dd-volume-slider dd-volume-slider-mobile"
 							min="0"
 							max="1"
 							step="0.01"
-							bind:value={turntable.volume}
-							oninput={() => {
-								// Dragging back up should always restore sound, even if
-								// silence currently comes from the mute flag rather than a
-								// zero level — otherwise raising it while muted looks like
-								// the slider has no effect. Same rule as the desktop slider.
-								if (turntable.volume > 0) turntable.muted = false;
-							}}
+							value={turntable.volume}
+							oninput={(e) => turntable.setVolume(+e.currentTarget.value)}
 							aria-label="Volume"
 							title="Volume"
 						/>
@@ -429,34 +431,38 @@
 			title={expanded ? 'Close turntable player' : 'Open turntable player'}
 		>
 			<div class="dd-mobile-disc-wrap dd-mobile-disc-sm" aria-hidden="true">
-				<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<g class="dd-mobile-disc" class:is-spinning={turntable.isPlaying}>
-						<circle cx="42" cy="56" r="38" class="dd-vinyl" />
-						{#each grooves as r (r)}
-							<circle cx="42" cy="56" {r} class="dd-groove" />
+				<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<g class="dd-mobile-fab-waves" class:is-live={turntable.isPlaying}>
+						<path d="M 24.4 47.1 A 28 28 0 0 1 47.1 24.4" class="dd-mobile-fab-wave" />
+						<path d="M 18.5 46.1 A 34 34 0 0 1 46.1 18.5" class="dd-mobile-fab-wave" />
+						<path d="M 12.6 45.0 A 40 40 0 0 1 45.1 12.6" class="dd-mobile-fab-wave" />
+					</g>
+
+					<g
+						class="dd-mobile-disc"
+						class:is-spinning={turntable.isPlaying}
+						style="transform-origin: 52px 52px;"
+					>
+						<circle cx="52" cy="52" r="22" class="dd-vinyl" />
+						{#each fabGrooves as r (r)}
+							<circle cx="52" cy="52" {r} class="dd-groove" />
 						{/each}
-						<path d="M 6.3 43.0 A 38 38 0 0 1 55.0 20.3" class="dd-sheen" />
+						<path d="M 31.3 44.5 A 22 22 0 0 1 59.5 31.3" class="dd-sheen" />
 						<circle
-							cx="42"
-							cy="56"
-							r="14"
+							cx="52"
+							cy="52"
+							r="8"
 							class="dd-label"
 							style:fill={turntable.current.labelColor}
 						/>
-						<circle cx="42" cy="56" r="14" class="dd-label-edge" />
-						<circle cx="42" cy="56" r="1.6" class="dd-spindle" />
+						<circle cx="52" cy="52" r="8" class="dd-label-edge" />
+						<circle cx="52" cy="52" r="1.2" class="dd-spindle" />
 					</g>
 
-					<rect x="78" y="12" width="16" height="16" rx="3" class="dd-arm-plinth" />
-
-					<g class="dd-mobile-tonearm" style="transform: rotate({armAngle}deg)">
-						<line x1="86" y1="20" x2="88.3" y2="10.3" class="dd-arm" />
-						<rect x="84.5" y="6.8" width="7" height="7" rx="1.5" class="dd-arm-weight" />
-						<line x1="86" y1="20" x2="74" y2="70" class="dd-arm" />
-						<rect x="70" y="66" width="8" height="8" rx="1.5" class="dd-arm-head" />
-						<circle cx="86" cy="20" r="4.5" class="dd-arm-pivot" />
-						<circle cx="86" cy="20" r="1.6" class="dd-arm-pivot-dot" />
-					</g>
+					<!-- Static "signal pin" accent, not a functional tonearm — see the
+					     fabGrooves comment above for why. -->
+					<line x1="65" y1="36" x2="73" y2="19" class="dd-arm" />
+					<rect x="70" y="16" width="6" height="6" rx="1.5" class="dd-arm-head" />
 				</svg>
 			</div>
 		</button>

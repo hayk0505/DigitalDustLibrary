@@ -1,21 +1,10 @@
 <script lang="ts">
 	import { List, Share2, Sun, Moon } from 'lucide-svelte';
-	import { getTheme, setTheme, type Theme } from '$lib/utils/theme';
+	import { themeState } from '$lib/state/theme.svelte';
 	import ReaderTextSettingsPanel from './ReaderTextSettingsPanel.svelte';
 	import ReaderContentsPanel from './ReaderContentsPanel.svelte';
 
 	let { shareUrl }: { shareUrl: string } = $props();
-
-	let theme = $state<Theme>('light');
-
-	$effect(() => {
-		theme = getTheme();
-	});
-
-	function toggleTheme() {
-		theme = theme === 'dark' ? 'light' : 'dark';
-		setTheme(theme);
-	}
 
 	const linkedInHref = $derived(
 		`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
@@ -53,17 +42,17 @@
 
 		<button
 			type="button"
-			onclick={toggleTheme}
+			onclick={() => themeState.toggle()}
 			class="dd-reader-rail-btn"
-			aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+			aria-label={themeState.current === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
 			title="Theme"
 		>
-			{#if theme === 'dark'}
+			{#if themeState.current === 'dark'}
 				<Moon class="h-4 w-4" aria-hidden="true" />
 			{:else}
 				<Sun class="h-4 w-4" aria-hidden="true" />
 			{/if}
-			{theme === 'dark' ? 'Dark' : 'Light'}
+			{themeState.current === 'dark' ? 'Dark' : 'Light'}
 		</button>
 	</div>
 

@@ -8,11 +8,18 @@ namespace DigitalDustLibrary.Api.Endpoints;
 
 public static class PublicEndpoints
 {
+    // Caps on /search input. Both are deliberately generous relative to any
+    // real search a reader would type — they exist to bound the worst case
+    // (one ILIKE chain per term across every published post's BodyHtml), not
+    // to police normal queries.
+    private const int MaxQueryLength = 100;
+    private const int MaxQueryTerms = 10;
+
     public static void MapPublicEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/public").WithTags("Public").AllowAnonymous();
 
-        group.MapGet("/posts", async (string? category, string? tag, AppDbContext db) =>
+        group.MapGet("/posts", async (string? category, string? tag, int? limit, AppDbContext db) =>
         {
             // PublishedAt != null alongside the status check: the only two
             // write paths (PATCH's self-publish, /approve) always set both
@@ -31,7 +38,8 @@ public static class PublicEndpoints
             if (category is not null) query = query.Where(p => p.Category!.Slug == category);
             if (tag is not null) query = query.Where(p => p.PostTags.Any(pt => pt.Tag!.Slug == tag));
 
-            var posts = await query.OrderByDescending(p => p.PublishedAt).ToListAsync();
+            var ordered = query.OrderByDescending(p => p.PublishedAt);
+            var posts = await (limit.HasValue && limit.Value > 0 ? ordered.Take(limit.Value) : ordered).ToListAsync();
             var dispatchNumbers = await BuildDispatchNumbersAsync(db);
 
             return Results.Ok(posts.Select(p => p.ToPublicDto(dispatchNumbers[p.Id])));
@@ -46,6 +54,66 @@ public static class PublicEndpoints
 
             var dispatchNumbers = await BuildDispatchNumbersAsync(db);
             return Results.Ok(post.ToPublicDto(dispatchNumbers[post.Id]));
+        });
+
+        group.MapGet("/search", async (string? q, AppDbContext db) =>
+        {
+            var query = (q ?? "").Trim();
+            if (query.Length < 2) return Results.Ok(Array.Empty<PublicPostDto>());
+
+            // Bounded before anything is split: this endpoint is anonymous and
+            // already expensive (every term ILIKEs the full BodyHtml of every
+            // published post), so a pathological query — bounded only by
+            // Kestrel's 8KB request line — could otherwise chain hundreds of
+            // terms × 6 ILIKE conditions into one statement. Truncating the
+            // query string itself (rather than only one of the two split sites)
+            // is what keeps the WHERE clause and ScoreMatch looking at the same
+            // term set; the capped array is computed once here and handed to
+            // ScoreMatch instead of being re-split there.
+            if (query.Length > MaxQueryLength) query = query[..MaxQueryLength];
+
+            // Matched per-word (AND across words, OR across fields per word)
+            // rather than as one contiguous phrase — a query like "distributed
+            // consensus" must still match "distributed consensus algorithms",
+            // and a query's words don't all need to land in the same field.
+            var terms = query.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
+                .Take(MaxQueryTerms)
+                .ToArray();
+
+            var candidateQuery = db.Posts
+                .Include(p => p.Author).Include(p => p.FeaturedImage).Include(p => p.Category)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .Where(p => p.Status == PostStatus.Published && p.PublishedAt != null);
+
+            foreach (var term in terms)
+            {
+                // ILIKE treats %, _ and \ as pattern syntax, so a literal % in a
+                // user's query would otherwise match everything rather than a
+                // percent sign. Escaping here (not in ScoreMatch, which uses
+                // plain string.Contains and has no pattern syntax to confuse)
+                // keeps the SQL side matching the literal characters typed.
+                var pattern = $"%{EscapeLikePattern(term)}%";
+                candidateQuery = candidateQuery.Where(p =>
+                    EF.Functions.ILike(p.Title, pattern) ||
+                    EF.Functions.ILike(p.Excerpt, pattern) ||
+                    EF.Functions.ILike(p.BodyHtml, pattern) ||
+                    EF.Functions.ILike(p.Category!.Name, pattern) ||
+                    EF.Functions.ILike(p.Author!.Name, pattern) ||
+                    p.PostTags.Any(pt => EF.Functions.ILike(pt.Tag!.Name, pattern)));
+            }
+
+            var posts = await candidateQuery.ToListAsync();
+
+            var dispatchNumbers = await BuildDispatchNumbersAsync(db);
+
+            var ranked = posts
+                .Select(p => (Post: p, Score: ScoreMatch(p, terms)))
+                .OrderByDescending(x => x.Score)
+                .ThenByDescending(x => x.Post.PublishedAt)
+                .Take(50)
+                .Select(x => x.Post.ToPublicDto(dispatchNumbers[x.Post.Id]));
+
+            return Results.Ok(ranked);
         });
 
         // Ordered by Position — the blog renders columns in this order and
@@ -125,4 +193,37 @@ public static class PublicEndpoints
         }
         return numbers;
     }
+
+    // Weighted, case-insensitive substring match across every searchable field
+    // — a post can rank on more than one field (and more than one query word)
+    // at once, so weights sum rather than short-circuiting on the first hit.
+    // Scored per query word (matching the per-word WHERE clause above) rather
+    // than against the query as one contiguous phrase, so a title containing
+    // every word of the query still outranks a body-only match even when the
+    // words aren't adjacent in the title. Takes the already-split, already-
+    // capped terms rather than re-splitting the query, so scoring can never
+    // consider a term the WHERE clause didn't filter on.
+    private static int ScoreMatch(Post p, string[] terms)
+    {
+        var score = 0;
+        foreach (var term in terms)
+        {
+            if (Contains(p.Title, term)) score += 50;
+            if (Contains(p.Category?.Name, term)) score += 30;
+            if (p.PostTags.Any(pt => Contains(pt.Tag?.Name, term))) score += 30;
+            if (Contains(p.Excerpt, term)) score += 20;
+            if (Contains(p.Author?.Name, term)) score += 15;
+            if (Contains(p.BodyHtml, term)) score += 5;
+        }
+        return score;
+    }
+
+    private static bool Contains(string? haystack, string needle) =>
+        haystack is not null && haystack.Contains(needle, StringComparison.OrdinalIgnoreCase);
+
+    // Backslash is Postgres's default ILIKE escape character, so escaping it
+    // first (before % and _) is required — otherwise the backslashes this
+    // method adds would themselves get escaped on the second pass.
+    private static string EscapeLikePattern(string term) =>
+        term.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 }

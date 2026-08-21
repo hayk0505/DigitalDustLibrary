@@ -41,16 +41,21 @@ const ICONS: IconType[] = [
 ];
 
 // Muted "file folder" tones — deliberately unrelated to Category.color
-// (the bright accent used for dots/hover elsewhere on the site).
+// (the bright accent used for dots/hover elsewhere on the site). Darkened
+// below getCategoryTextColor's 0.13 luminance threshold on purpose, so the
+// folder label always resolves to the light/white ink branch — see that
+// function's comment for why the color itself stays dynamic rather than a
+// hardcoded white (admin-set custom folderColor can still be a light hex,
+// and would correctly fall back to dark text).
 const TAB_COLORS = [
-	'#7C8B96', // slate blue-gray
-	'#C9A063', // kraft tan
+	'#545F66', // slate blue-gray
+	'#6F5836', // kraft tan
 	'#3A3A36', // charcoal
-	'#5B6B4E', // olive green
-	'#B8A47E', // khaki
-	'#8B5E3C', // warm brown
-	'#6B7A8F', // dusty blue
-	'#9C8465' // muted taupe
+	'#536147', // olive green
+	'#675C47', // khaki
+	'#7C5435', // warm brown
+	'#525E6E', // dusty blue
+	'#6A5A45' // muted taupe
 ];
 
 export function getCategoryIcon(slug: string): IconType {

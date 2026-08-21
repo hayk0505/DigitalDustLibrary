@@ -296,4 +296,223 @@ public class PublicEndpointsTests(ApiFactory factory)
         Assert.Single(dto!.Tags);
         Assert.Equal(tag.Slug, dto.Tags[0].Slug);
     }
+
+    [Fact]
+    public async Task Search_QueryUnderTwoChars_ReturnsEmptyWithoutMatchingAnything()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Short Query Author {suffix}", $"short-query-author-{suffix}@example.com", Role.Author);
+        var post = await PostTestHelpers.CreatePostAsync(factory, author.Id, $"a{suffix}", PostStatus.PendingReview);
+        await editor.PostAsync($"/api/posts/{post.Id}/approve", null);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync("/api/public/search?q=a");
+
+        response.EnsureSuccessStatusCode();
+        var results = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        Assert.Empty(results!);
+    }
+
+    [Fact]
+    public async Task Search_MatchesTitle()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Title Match Author {suffix}", $"title-match-author-{suffix}@example.com", Role.Author);
+        var post = await PostTestHelpers.CreatePostAsync(factory, author.Id, $"Machine Learning Systems {suffix}", PostStatus.PendingReview);
+        await editor.PostAsync($"/api/posts/{post.Id}/approve", null);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/search?q={Uri.EscapeDataString($"Machine Learning {suffix}")}");
+
+        response.EnsureSuccessStatusCode();
+        var results = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        Assert.Contains(results!, p => p.Title == $"Machine Learning Systems {suffix}");
+    }
+
+    [Fact]
+    public async Task Search_MatchesExcerpt()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Excerpt Match Author {suffix}", $"excerpt-match-author-{suffix}@example.com", Role.Author);
+        var post = await PostTestHelpers.CreatePostAsync(
+            factory, author.Id, $"Untitled {suffix}", PostStatus.PendingReview,
+            excerpt: $"A deep dive into distributed consensus algorithms {suffix}.");
+        await editor.PostAsync($"/api/posts/{post.Id}/approve", null);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/search?q={Uri.EscapeDataString($"distributed consensus {suffix}")}");
+
+        response.EnsureSuccessStatusCode();
+        var results = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        Assert.Contains(results!, p => p.Title == $"Untitled {suffix}");
+    }
+
+    [Fact]
+    public async Task Search_MatchesBody()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Body Match Author {suffix}", $"body-match-author-{suffix}@example.com", Role.Author);
+        var post = await PostTestHelpers.CreatePostAsync(
+            factory, author.Id, $"Untitled Body {suffix}", PostStatus.PendingReview,
+            bodyHtml: $"<p>This article discusses quantum annealing {suffix} in depth.</p>");
+        await editor.PostAsync($"/api/posts/{post.Id}/approve", null);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/search?q={Uri.EscapeDataString($"quantum annealing {suffix}")}");
+
+        response.EnsureSuccessStatusCode();
+        var results = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        Assert.Contains(results!, p => p.Title == $"Untitled Body {suffix}");
+    }
+
+    [Fact]
+    public async Task Search_MatchesCategoryName()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Category Match Author {suffix}", $"category-match-author-{suffix}@example.com", Role.Author);
+        var category = await CategoryTestHelpers.CreateCategoryAsync(editor, $"Systems Thinking {suffix}", $"systems-thinking-{suffix}");
+        var post = await PostTestHelpers.CreatePostAsync(
+            factory, author.Id, $"Untitled Category {suffix}", PostStatus.PendingReview, categoryId: category.Id);
+        await editor.PostAsync($"/api/posts/{post.Id}/approve", null);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/search?q={Uri.EscapeDataString($"Systems Thinking {suffix}")}");
+
+        response.EnsureSuccessStatusCode();
+        var results = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        Assert.Contains(results!, p => p.Title == $"Untitled Category {suffix}");
+    }
+
+    [Fact]
+    public async Task Search_MatchesAuthorName()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Distinctive Author Name {suffix}", $"author-match-author-{suffix}@example.com", Role.Author);
+        var post = await PostTestHelpers.CreatePostAsync(factory, author.Id, $"Untitled Author {suffix}", PostStatus.PendingReview);
+        await editor.PostAsync($"/api/posts/{post.Id}/approve", null);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/search?q={Uri.EscapeDataString($"Distinctive Author Name {suffix}")}");
+
+        response.EnsureSuccessStatusCode();
+        var results = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        Assert.Contains(results!, p => p.Title == $"Untitled Author {suffix}");
+    }
+
+    [Fact]
+    public async Task Search_MatchesTagName()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = TagTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Tag Match Author {suffix}", $"tag-match-author-{suffix}@example.com", Role.Author);
+        var tag = await TagTestHelpers.CreateTagAsync(editor, $"Distributed Systems {suffix}");
+        var post = await PostTestHelpers.CreatePostAsync(factory, author.Id, $"Untitled Tag {suffix}", PostStatus.PendingReview);
+        await DbTestHelpers.AddPostTagAsync(factory, post.Id, tag.Id);
+        await editor.PostAsync($"/api/posts/{post.Id}/approve", null);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/search?q={Uri.EscapeDataString($"Distributed Systems {suffix}")}");
+
+        response.EnsureSuccessStatusCode();
+        var results = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        Assert.Contains(results!, p => p.Title == $"Untitled Tag {suffix}");
+    }
+
+    [Fact]
+    public async Task Search_TitleMatchOutranksBodyOnlyMatch()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Ranking Author {suffix}", $"ranking-author-{suffix}@example.com", Role.Author);
+        var titleMatch = await PostTestHelpers.CreatePostAsync(
+            factory, author.Id, $"Nebula Cartography {suffix}", PostStatus.PendingReview);
+        await editor.PostAsync($"/api/posts/{titleMatch.Id}/approve", null);
+        var bodyOnlyMatch = await PostTestHelpers.CreatePostAsync(
+            factory, author.Id, $"Unrelated Title {suffix}", PostStatus.PendingReview,
+            bodyHtml: $"<p>Somewhere in here: Nebula Cartography {suffix}.</p>");
+        await editor.PostAsync($"/api/posts/{bodyOnlyMatch.Id}/approve", null);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/search?q={Uri.EscapeDataString($"Nebula Cartography {suffix}")}");
+
+        response.EnsureSuccessStatusCode();
+        var results = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        var titleIndex = results!.FindIndex(p => p.Title == $"Nebula Cartography {suffix}");
+        var bodyIndex = results!.FindIndex(p => p.Title == $"Unrelated Title {suffix}");
+        Assert.True(titleIndex >= 0 && bodyIndex >= 0 && titleIndex < bodyIndex);
+    }
+
+    [Fact]
+    public async Task Search_ExcludesUnpublishedPosts()
+    {
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Draft Search Author {suffix}", $"draft-search-author-{suffix}@example.com", Role.Author);
+        await PostTestHelpers.CreatePostAsync(factory, author.Id, $"Draft Nebula {suffix}", PostStatus.Draft);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/search?q={Uri.EscapeDataString($"Draft Nebula {suffix}")}");
+
+        response.EnsureSuccessStatusCode();
+        var results = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        Assert.DoesNotContain(results!, p => p.Title == $"Draft Nebula {suffix}");
+    }
+
+    [Fact]
+    public async Task GetPosts_WithLimit_ReturnsAtMostThatManyMostRecent()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Limit Author {suffix}", $"limit-author-{suffix}@example.com", Role.Author);
+        for (var i = 0; i < 3; i++)
+        {
+            var post = await PostTestHelpers.CreatePostAsync(factory, author.Id, $"Limit Post {i} {suffix}", PostStatus.PendingReview);
+            await editor.PostAsync($"/api/posts/{post.Id}/approve", null);
+        }
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync("/api/public/posts?limit=2");
+
+        response.EnsureSuccessStatusCode();
+        var posts = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        var matching = posts!.Where(p => p.Title.Contains(suffix)).ToList();
+        Assert.Equal(2, matching.Count);
+    }
+
+    [Fact]
+    public async Task GetPosts_WithNegativeLimit_IgnoresLimitReturnsUnboundedList()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Negative Limit Author {suffix}", $"negative-limit-author-{suffix}@example.com", Role.Author);
+        for (var i = 0; i < 3; i++)
+        {
+            var post = await PostTestHelpers.CreatePostAsync(factory, author.Id, $"Negative Limit Post {i} {suffix}", PostStatus.PendingReview);
+            await editor.PostAsync($"/api/posts/{post.Id}/approve", null);
+        }
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync("/api/public/posts?limit=-1");
+
+        response.EnsureSuccessStatusCode();
+        var posts = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        var matching = posts!.Where(p => p.Title.Contains(suffix)).ToList();
+        Assert.Equal(3, matching.Count);
+    }
 }

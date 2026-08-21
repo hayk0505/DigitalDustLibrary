@@ -17,13 +17,18 @@ public static class PostTestHelpers
     // caller of this helper actually cares which category, only that one
     // exists.
     public static async Task<Post> CreatePostAsync(
-        ApiFactory factory, Guid authorId, string title, PostStatus status = PostStatus.Draft, Guid? categoryId = null)
+        ApiFactory factory, Guid authorId, string title, PostStatus status = PostStatus.Draft,
+        Guid? categoryId = null, string? excerpt = null, string? bodyHtml = null)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var slug = await SlugGenerator.GenerateUniqueAsync(title, s => db.Posts.AnyAsync(p => p.Slug == s));
         var resolvedCategoryId = categoryId ?? (await CreateThrowawayCategoryAsync(db)).Id;
-        var post = new Post { Title = title, Slug = slug, AuthorId = authorId, Status = status, CategoryId = resolvedCategoryId };
+        var post = new Post
+        {
+            Title = title, Slug = slug, AuthorId = authorId, Status = status, CategoryId = resolvedCategoryId,
+            Excerpt = excerpt ?? "", BodyHtml = bodyHtml ?? "",
+        };
         db.Posts.Add(post);
         await db.SaveChangesAsync();
         return post;

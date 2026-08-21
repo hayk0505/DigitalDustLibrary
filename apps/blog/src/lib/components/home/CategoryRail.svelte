@@ -11,22 +11,14 @@
 	<h1 class="title">DIGITAL DUST <span class="text-accent-red uppercase">Library</span></h1>
 
 	<p class="meta">Field notes on what the internet leaves behind<br>Type. Image. Emotion</p>
-
-	<!-- Theme toggle used to live here (.theme-toggle-spine) — moved to the
-	     top-right of the header (BlogTopNav/ArticleTopBar), as an icon
-	     matching mobile's, since this rail is desktop-only chrome and
-	     desktop had no other theme access before this. -->
 	<div class="file"></div><div class="barcode" aria-hidden="true"></div>
 </section>
 
 <AuthorFile />
-
-<!-- The player sits outside the <nav>, which is the scroll container, so a long
-     category list scrolls behind it instead of pushing it off-screen. -->
 <div class="folders-col">
 	<nav class="folders scrollbar-hide flex min-h-0 flex-1 flex-col overflow-y-auto" aria-label="Categories">
 		<div class="folder-header">
-			<span class="folder-header-label">Archive Log</span>
+			<a href="/archive" class="folder-header-label hover:text-accent-red">Archive</a>
 			<span class="folder-header-num">01-A</span>
 		</div>
 		{#each categories as category (category.slug)}
@@ -49,6 +41,5 @@
 			</a>
 		{/each}
 	</nav>
-
 	<TurntablePlayer />
 </div>

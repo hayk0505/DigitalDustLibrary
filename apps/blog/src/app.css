@@ -17,8 +17,6 @@
 	--font-display: 'Cormorant Garamond', ui-serif, serif;
 	--font-label: 'IBM Plex Mono', ui-monospace, monospace;
 
-	/* Shared geometry — same in both themes; only color/surface changes
-	   between light and dark. */
 	--radius-card: 10px;
 	--radius-image: 7px;
 	--radius-control: 3px;
@@ -43,12 +41,6 @@ body {
 	color: color-mix(in srgb, var(--hover-color) 85%, white);
 }
 
-/* Category "accent color" (dispatch numbers, dots, underlines) — same
-   mechanism as --hover-color above: the raw hex is embedded as a custom
-   property via inline style (works for both the hashed default palette and
-   any admin-set folderColor), so a plain [data-theme] selector can still
-   re-derive a dark-appropriate variant from it without a second server
-   round-trip or a duplicated color table. */
 .accent-text {
 	color: var(--accent);
 }
@@ -65,15 +57,6 @@ body {
 	background-color: color-mix(in srgb, var(--accent) 82%, white);
 }
 
-/* @tailwindcss/typography's prose-neutral sets its own fixed --tw-prose-*
-   palette, tuned for a white page — it has no awareness of this project's
-   [data-theme='dark'] attribute (nothing here uses Tailwind's dark: variant),
-   so article body text stayed at light-mode gray on the near-black dark
-   background and became unreadable. These values are the plugin's own
-   prose-invert palette for prose-neutral (copied from its compiled output),
-   not hand-picked — they're what prose-neutral itself ships for dark
-   backgrounds, we're just applying them via our own theme switch instead of
-   Tailwind's. */
 :root[data-theme='dark'] .article-body {
 	--tw-prose-body: oklch(87% 0 0);
 	--tw-prose-headings: #fff;
@@ -244,12 +227,10 @@ body {
 	color: #3d3b30;
 }
 
-/* Column wrapper owns the width and background; .folders below is only the
-       scrolling list, so the player pinned under it stays put while the
-       category folders scroll. */
 .folders-col {
 	flex-shrink: 0;
-	width: 142px;
+	width: 10vw;
+	max-width: 140px;
 	min-height: 0;
 	display: flex;
 	flex-direction: column;
@@ -363,28 +344,55 @@ body {
 	opacity: 0.8;
 }
 
-.mobile-category-chip {
-	--tone-raw: #d7d2c3;
-	--ink-on-tone-raw: #2a281f;
-	background-color: var(--tone-raw);
-	color: var(--ink-on-tone-raw);
+.mobile-category-tab {
+	display: flex;
+	flex: 1 1 68px;
+	min-width: 68px;
+	flex-direction: column;
+	align-items: center;
+	gap: 5px;
+	padding: 2px 4px 4px;
+	text-decoration: none;
 }
 
-/* Softened relative to the chip's own ink color (which stays full-contrast
-   for the icon and position number) -- text-only, and mobile-only, per
-   request. Blending toward white rather than picking a flat gray keeps it
-   working for both branches of getCategoryTextColor's dark/light choice
-   (category-visuals.ts), whichever a given category's tone lands on. */
-.mobile-category-chip-label {
-	color: color-mix(in srgb, var(--ink-on-tone-raw) 78%, white);
+.mobile-category-tab-icon {
+	--tone: var(--tone-raw, #d7d2c3);
+	--ink-on-tone: var(--ink-on-tone-raw, #2a281f);
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	border-radius: 35%;
+	background-color: var(--tone);
+	color: var(--ink-on-tone);
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease;
 }
 
-/* Dark theme — sidebar reads as the same archival document with the
-       lights turned down: warm ivory type, charcoal paper, category tones
-       darkened (not hue-shifted) so each tab stays recognizable from light
-       mode. --tone/--ink-on-tone are never set inline (only the -raw
-       variants are), so these overrides aren't fighting inline-style
-       specificity. */
+.mobile-category-tab-label {
+	font-family: var(--font-label), 'Arial Narrow', sans-serif;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.4px;
+	line-height: 1.25;
+	text-align: center;
+	text-transform: uppercase;
+	color: color-mix(in srgb, var(--color-ink) 55%, transparent);
+	transition: color 0.15s ease;
+}
+
+.mobile-category-tab.active .mobile-category-tab-icon {
+	background-color: var(--ink-on-tone);
+	color: var(--tone);
+}
+.mobile-category-tab.active .mobile-category-tab-label {
+	color: var(--color-ink);
+	font-weight: 700;
+}
+
 :root[data-theme='dark'] .masthead {
 	background: #20211e;
 	border-right-color: #3a3933;
@@ -470,18 +478,12 @@ body {
 	border-color: rgba(0, 0, 0, 0.5);
 }
 
-:root[data-theme='dark'] .mobile-category-chip {
-	background-color: color-mix(in srgb, var(--tone-raw) 78%, black);
-	color: #e8e2d3;
-}
-/* Without this, .mobile-category-chip-label's light-mode rule (which reads
-   --ink-on-tone-raw, the per-category inline value) would win here too,
-   since it's a more specific descendant selector than .mobile-category-chip
-   -- overriding this override right back to whatever a given category's
-   raw ink happened to be, instead of the uniform cream used for every
-   category in dark mode. */
-:root[data-theme='dark'] .mobile-category-chip-label {
-	color: color-mix(in srgb, #e8e2d3 75%, transparent);
+/* Same dark-theme adjustment as .folder's own --tone/--ink-on-tone override
+   elsewhere in this file — kept in sync with it rather than introducing a
+   separate formula. */
+:root[data-theme='dark'] .mobile-category-tab-icon {
+	--tone: color-mix(in srgb, var(--tone-raw) 78%, black);
+	--ink-on-tone: #e8e2d3;
 }
 
 .article-card {
@@ -587,10 +589,40 @@ body {
 	color: #f0e8d7;
 }
 
-/* ── Sidebar turntable player ─────────────────────────────────────────
-       Every colour the player and its SVG use is funnelled through these
-       custom properties, so the dark theme is one variable block at the
-       bottom rather than a parallel copy of every rule. */
+.search-btn {
+	background: transparent;
+	color: #716c62;
+	transition:
+		color 0.2s ease;
+}
+.search-btn:hover {
+	border-color: #aaa69c;
+	color: #211f1c;
+}
+.search-btn:focus-visible {
+	outline: none;
+	outline-offset: -2px;
+}
+:root[data-theme='dark'] .search-btn {
+	border-color: #484741;
+	color: #aaa394;
+}
+:root[data-theme='dark'] .search-btn:hover {
+	border-color: #666157;
+	color: #f0e8d7;
+}
+
+.search-panel {
+	background: var(--color-paper);
+	border: 1px solid #c8c4ba;
+	border-radius: var(--radius-card);
+	box-shadow: 0 2px 8px rgba(20, 18, 14, 0.15);
+}
+:root[data-theme='dark'] .search-panel {
+	border-color: #484741;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
 .dd-player {
 	--dd-ink: #3d3b30;
 	--dd-ink-strong: #1c1a17;
@@ -627,8 +659,6 @@ body {
 	text-transform: uppercase;
 	opacity: 0.6;
 }
-/* Static colour shift, not motion — the playing indicator that survives
-       prefers-reduced-motion once the record stops spinning. */
 .dd-player-label.is-live {
 	color: var(--color-accent-red);
 	opacity: 1;
@@ -699,10 +729,6 @@ body {
 	margin-top: 8px;
 }
 
-/* Minimal thin-line slider to match the mute button and the (disabled)
-       progress bar — a plain track plus a small solid knob, no filled/coloured
-       track segment. Each browser engine needs its own thumb/track rules;
-       there is no shorthand that covers all three. */
 .dd-volume-slider {
 	-webkit-appearance: none;
 	appearance: none;
@@ -745,9 +771,25 @@ body {
 	background: var(--color-accent-red);
 }
 
-/* viewBox is 142x124 at 1:1 with the column width, so the SVG scales as
-       one piece and the record stays a true circle. The disc is larger than
-       the viewBox and is clipped by its left and bottom edges. */
+.dd-volume-slider-mobile {
+	height: 28px;
+}
+.dd-volume-slider-mobile::-webkit-slider-runnable-track {
+	height: 3px;
+}
+.dd-volume-slider-mobile::-webkit-slider-thumb {
+	margin-top: -8.5px;
+	width: 20px;
+	height: 20px;
+}
+.dd-volume-slider-mobile::-moz-range-track {
+	height: 3px;
+}
+.dd-volume-slider-mobile::-moz-range-thumb {
+	width: 20px;
+	height: 20px;
+}
+
 .dd-turntable svg {
 	display: block;
 	width: 100%;
@@ -832,8 +874,38 @@ body {
 	fill: var(--dd-arm-ink);
 }
 
-/* Animation stays attached and is only play-state-toggled, so pausing
-       freezes the record where it is instead of snapping it back to 0deg. */
+.dd-mobile-fab-wave {
+	fill: none;
+	stroke: var(--dd-muted);
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-dasharray: 3 5;
+	opacity: 0.16;
+	animation: dd-fab-wave-pulse 2.6s ease-in-out infinite;
+	animation-play-state: paused;
+}
+.dd-mobile-fab-waves.is-live .dd-mobile-fab-wave {
+	animation-play-state: running;
+}
+.dd-mobile-fab-wave:nth-child(1) {
+	animation-delay: 0s;
+}
+.dd-mobile-fab-wave:nth-child(2) {
+	animation-delay: 0.35s;
+}
+.dd-mobile-fab-wave:nth-child(3) {
+	animation-delay: 0.7s;
+}
+@keyframes dd-fab-wave-pulse {
+	0%,
+	100% {
+		opacity: 0.14;
+	}
+	50% {
+		opacity: 0.6;
+	}
+}
+
 .dd-disc {
 	transform-box: view-box;
 	transform-origin: 40px 92px;
@@ -844,8 +916,6 @@ body {
 	animation-play-state: running;
 }
 
-/* The rotate() itself is set inline per-frame from playback progress; only
-       the pivot and the easing live here. */
 .dd-tonearm {
 	transform-box: view-box;
 	transform-origin: 122px 22px;
@@ -863,9 +933,12 @@ body {
 	.dd-disc.is-spinning {
 		animation: none;
 	}
-	/* Arm and ring still track progress — they just stop easing. */
 	.dd-tonearm {
 		transition: none;
+	}
+	.dd-mobile-fab-wave {
+		animation: none;
+		opacity: 0.3;
 	}
 }
 
@@ -875,11 +948,6 @@ body {
 	--dd-muted: #989286;
 	--dd-line: #3b3934;
 	--dd-edge: #4a4942;
-	/* Disc is inverted from light mode here: ivory vinyl with dark grooves,
-         rather than dark vinyl with light grooves. Deliberate — a plain
-         near-black disc read as a dead hole against the dark theme's own
-         near-black background, so contrast comes from the disc itself here
-         instead of from a light backing on dark. */
 	--dd-vinyl: #e5ddcd;
 	--dd-groove: rgba(26, 24, 20, 0.22);
 	--dd-sheen: rgba(26, 24, 20, 0.16);
@@ -896,20 +964,6 @@ body {
 	);
 }
 
-/* ── Mobile floating turntable ─────────────────────────────────────────
-       Standalone, uncropped disc (unlike the sidebar's corner-cropped one) —
-       different composition, so it gets its own geometry classes for the
-       parts that bake in coordinates (.dd-mobile-disc, .dd-mobile-tonearm).
-       Colour-only classes (.dd-vinyl, .dd-groove, .dd-arm, etc.) are shared
-       with the desktop player unchanged, driven by this scope's own --dd-*
-       values.
-
-       Not itself positioned — it exists only to hand these --dd-* tokens
-       and the base font/colour down to the FAB and panel, which are each
-       independently position:fixed below. The panel's top/left are set
-       inline in JS, computed relative to the FAB's actual (possibly
-       dragged) rect, so it can't be a normal-flow child of one shared
-       fixed-anchored wrapper. */
 .dd-mobile-player {
 	--dd-ink: #20201d;
 	--dd-muted: #77736a;
@@ -932,8 +986,8 @@ body {
 	height: 100%;
 }
 .dd-mobile-disc-sm {
-	width: 52px;
-	height: 52px;
+	width: 58px;
+	height: 58px;
 }
 .dd-mobile-disc-lg {
 	width: 128px;
@@ -941,10 +995,6 @@ body {
 }
 
 .dd-mobile-fab {
-	/* Base resting position — the drag transform (set inline, see the
-	   component) shifts it from here, same as when this lived on the
-	   wrapper; consolidated here now that the panel needs to be positioned
-	   independently rather than as this element's normal-flow sibling. */
 	position: fixed;
 	right: calc(18px + env(safe-area-inset-right, 0px));
 	bottom: calc(72px + env(safe-area-inset-bottom, 0px));
@@ -952,19 +1002,15 @@ body {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 64px;
-	height: 64px;
+	width: 70px;
+	height: 70px;
 	padding: 6px;
 	background: var(--dd-paper);
 	border: 1px solid var(--dd-edge);
-	border-radius: 50%;
+	border-radius: 20px;
 	box-shadow: 0 4px 14px rgba(20, 18, 14, 0.22);
 	cursor: grab;
-	/* No transition on transform — dragging needs the bubble to track the
-	   pointer 1:1, not ease toward it. Border-color (hover) still eases. */
 	transition: border-color 0.15s ease;
-	/* Claims the gesture for dragging instead of letting the browser start a
-	   page scroll/pull-to-refresh once the pointer moves. */
 	touch-action: none;
 }
 .dd-mobile-fab:hover {
@@ -979,21 +1025,8 @@ body {
 	box-shadow: 0 8px 20px rgba(20, 18, 14, 0.35);
 }
 
-/* Theme-reactive, same as .dd-mobile-fab — inherits --dd-ink/--dd-paper/etc
-   from .dd-mobile-player below rather than fixing its own palette, so the
-   whole player (collapsed and expanded alike) follows the site's light/dark
-   toggle instead of one part of it staying fixed. */
 .dd-mobile-panel {
-	/* top/left are computed in JS relative to the FAB's actual rect (which
-	   moves when dragged) and set as an inline style — position:fixed both
-	   anchors those to the viewport and, same as position:relative did
-	   before, gives .dd-mobile-backdrop something to fill via inset:0. */
 	position: fixed;
-	/* Higher than .dd-mobile-fab's 40 — both are independently fixed now, and
-	   without this the FAB (later in the DOM) wins any tie and paints over
-	   the panel wherever their rects happen to touch, e.g. right after the
-	   FAB's been dragged near the panel's edge. The panel opening should
-	   always sit in front of the bubble, not behind it. */
 	z-index: 41;
 	width: 284px;
 	padding: 16px;
@@ -1004,9 +1037,6 @@ body {
 	box-shadow: 0 8px 24px rgba(20, 18, 14, 0.28);
 }
 
-/* Full-panel button, stacked below .dd-mobile-panel-content so tapping
-       the visible background collapses the player without intercepting taps
-       meant for the chip/disc/controls above it. */
 .dd-mobile-backdrop {
 	position: absolute;
 	inset: 0;
@@ -1030,12 +1060,6 @@ body {
 	display: flex;
 	flex-direction: column;
 	gap: 14px;
-	/* Lets every click reach the backdrop button underneath by default —
-         an element still captures hits even where its own background is
-         transparent, so without this the chip and disc would silently eat
-         taps meant to collapse the panel. Only .dd-mobile-ctrl and
-         .dd-mobile-close opt back in below, since those are the only children
-         that need their own click. */
 	pointer-events: none;
 }
 
@@ -1103,7 +1127,6 @@ body {
 	gap: 1px;
 	line-height: 1.15;
 }
-/* Same proportions as the desktop player's .dd-player-label/.dd-player-title. */
 .dd-mobile-chip-label {
 	margin: 0 0 2px;
 	font-size: 9px;
@@ -1166,8 +1189,6 @@ body {
 	outline: 2px solid var(--color-accent-red);
 	outline-offset: 2px;
 }
-/* Bigger and filled — reads as the primary control, same idea as the
-       desktop player's play button. */
 .dd-mobile-ctrl-play {
 	width: 58px;
 	height: 58px;
@@ -1176,10 +1197,6 @@ body {
 	color: var(--dd-paper);
 }
 
-/* No margin/width of its own — spacing comes from .dd-mobile-panel-content's
-   own gap, and .dd-volume-slider (shared with the desktop player, reused
-   as-is since it only reads --dd-edge/--color-accent-red, both correctly
-   scoped here too) already flexes to fill whatever width it's given. */
 .dd-mobile-volume {
 	display: flex;
 	align-items: center;
@@ -1208,10 +1225,6 @@ body {
 	animation-play-state: paused;
 }
 
-/* Sized in the disc SVG's own units (viewBox 100 = 128px rendered on the
-   expanded panel's disc, a 1.28x scale), so 4.8 lands around 6px actual —
-   legibly small rather than desktop's 8.5px, since this label is roughly
-   half the size. Rotates with the disc, same as desktop's. */
 .dd-mobile-label-text {
 	fill: #000;
 	font-family: var(--font-label), 'Arial Narrow', sans-serif;
@@ -1261,36 +1274,16 @@ body {
 	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
 }
 
-/* ============================================================================
-   Reader Mode — strips the persistent blog chrome so an article reads like
-   a standalone document instead of another page of the site. See
-   $lib/state/reader-mode.svelte.ts, app.html's inline script, and
-   articles/[slug]/+page.svelte's readerMode.active branch.
-   ============================================================================ */
-
-/* Pre-hydration flash guard: app.html's inline script stamps this attribute
-   from localStorage before the page paints, so a returning reader-mode
-   user's very first frame already has the chrome hidden — no flash while
-   Svelte boots and its own state catches up. Deliberately plain/unlayered
-   (like the dark-mode .prose overrides above): Tailwind's own utilities
-   live in @layer utilities, and unlayered rules always beat layered ones
-   regardless of specificity, so this can't lose to a utility class applied
-   to the same element. */
 :root[data-reader-mode='on'] .dd-chrome {
 	display: none !important;
 }
 
 .dd-reader-mode {
-	/* Shared by .dd-reader-header/.dd-reader-navbar (which each set their own
-	   height to one of these) and .dd-reader-rail (which subtracts both from
-	   its own sticky offset/height so it never overlaps either bar) -- one
-	   place to change if either bar's size ever does. */
 	--dd-reader-header-height: 48px;
 	--dd-reader-navbar-height: 44px;
 	min-height: 100vh;
 }
 
-/* ── Desktop rail ─────────────────────────────────────────────────────── */
 
 .dd-reader-rail {
 	display: none;
@@ -1320,8 +1313,6 @@ body {
 	gap: 22px;
 }
 
-/* Sized for ReaderTopBar's mobile use — the desktop rail no longer has a
-   mark of its own, that moved to ReaderHeader (see .dd-reader-header-mark). */
 .dd-reader-mark {
 	width: 30px;
 	height: 30px;
@@ -1374,7 +1365,6 @@ body {
 	);
 }
 
-/* ── Mobile top bar ───────────────────────────────────────────────────── */
 
 .dd-reader-topbar {
 	position: sticky;
@@ -1412,8 +1402,6 @@ body {
 .dd-reader-topbar-btn.dd-reader-aa {
 	font-size: 17px;
 }
-
-/* ── Article surface ──────────────────────────────────────────────────── */
 
 .dd-reader-article {
 	margin-left: auto;
@@ -1456,29 +1444,12 @@ body {
 	color: color-mix(in srgb, var(--color-ink) 55%, transparent);
 }
 
-/* Overrides @tailwindcss/typography's own rem-based .prose sizing, same
-   unlayered-beats-layered mechanism as the dark-mode --tw-prose-* block
-   above. Line-height only visibly affects paragraphs: Typography sets its
-   own tighter line-heights directly on headings/code, which is the right
-   call for a "reading" line-height control anyway — it's about body copy. */
 .dd-reader-article .article-body {
 	margin-top: 36px;
 	font-size: var(--reader-font-size, 19px);
 	line-height: var(--reader-line-height, 1.75);
 }
 
-/* ── Bottom nav bar ───────────────────────────────────────────────────── */
-
-/* No backdrop-filter here, deliberately — ReaderNavBarMobile's Contents
-   button opens a `position: fixed` panel that's rendered as a plain DOM
-   child of this element (ReaderContentsPanel isn't portaled out), and any
-   filter/backdrop-filter/transform on an ancestor creates a new containing
-   block for fixed-position descendants. With blur here, the panel's
-   computed `top` was being measured from this bar's own box instead of the
-   viewport — it opened, just ~800px off-screen below the fold, which read
-   as "the button does nothing." A higher background opacity stands in for
-   the lost blur. If a blur effect comes back, it has to live on a
-   non-ancestor layer (e.g. a decorative ::before), not this element. */
 .dd-reader-navbar {
 	position: fixed;
 	left: 0;
@@ -1488,9 +1459,6 @@ body {
 	display: none;
 	align-items: center;
 	gap: 36px;
-	/* Fixed, not padding-driven — .dd-reader-rail's own height calc (above)
-	   subtracts this exact value via --dd-reader-navbar-height so its
-	   bottom section clears this bar instead of rendering underneath it. */
 	height: var(--dd-reader-navbar-height);
 	padding: 0 24px;
 	border-top: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent);
@@ -1546,10 +1514,6 @@ body {
 	opacity: 0.8;
 }
 
-/* Mobile-only cluster (ReaderNavBarMobile) -- prev/next collapse to plain
-   arrows around the reading percentage instead of the desktop nav bar's
-   full "Prev Article"/"Next Article" links, since a mobile row doesn't
-   have room for five separate labelled items. */
 .dd-reader-navbar-progress-group {
 	display: flex;
 	align-items: center;
@@ -1566,8 +1530,6 @@ body {
 .dd-reader-navbar-arrow:hover {
 	color: var(--color-accent-red);
 }
-
-/* ── Floating panels (text settings, contents) ───────────────────────── */
 
 .dd-reader-panel-backdrop {
 	position: fixed;
@@ -1619,12 +1581,6 @@ body {
 	opacity: 1;
 }
 
-/* Grid, not each .dd-reader-panel-row sizing its own label/slider split --
-   with "Size" vs "Line height" vs "Width" all different lengths,
-   independent flex rows gave each slider a different leftover width. One
-   shared grid sizes the label column to the widest label present (auto,
-   not a guessed px value) and gives every slider the same 1fr column, so
-   they render the same width regardless of their own label's length. */
 .dd-reader-panel-rows {
 	display: grid;
 	grid-template-columns: max-content 1fr;
@@ -1632,10 +1588,7 @@ body {
 	column-gap: 20px;
 	row-gap: 16px;
 }
-/* display:contents removes this element's own box so its label/input
-   become direct children of the grid above (and thus land in its two
-   columns) -- inheritable properties (font, color, etc.) still cascade
-   through to them same as normal. */
+
 .dd-reader-panel-row {
 	display: contents;
 	font-family: var(--font-label);
@@ -1652,13 +1605,6 @@ body {
 	min-width: 0;
 }
 
-/* Custom slider — replaces the browser's default range styling with a
-   flat track + filled progress + round thumb (see the reference redesign).
-   Firefox has a native filled-progress pseudo-element (::-moz-range-
-   progress); WebKit/Chromium don't, so the fill there is painted as a
-   value-dependent gradient on the track itself, driven by --range-percent
-   (set inline per input in ReaderTextSettingsPanel.svelte, since only the
-   component knows the current value against its min/max). */
 .dd-reader-panel input[type='range'] {
 	-webkit-appearance: none;
 	appearance: none;
@@ -1710,10 +1656,6 @@ body {
 }
 @media (min-width: 768px) {
 	.dd-reader-panel-row-desktop-only {
-		/* contents, not flex — .dd-reader-panel-row's own base display is
-		   contents now (see above), and this row needs to match that to
-		   keep participating in the shared grid instead of becoming its
-		   own flex box. */
 		display: contents;
 	}
 }
@@ -1753,37 +1695,12 @@ body {
 	color: var(--color-accent-red);
 }
 
-/* Reader Mode also needs to escape <main>'s normal-layout padding/
-   max-width (mx-auto max-w-6xl px-6 pb-8 md:pt-6, set in (site)/
-   +layout.svelte) -- right for every other page, but the rail/topbar/
-   article column here already do their own spacing and are laid out
-   assuming they run flush to the true viewport edges (see .dd-reader-
-   rail's own sticky/full-height box, for one -- with <main>'s padding
-   still in effect it was inset an extra 24px on each side, on top of
-   its own padding).
-
-   Scoped with :has(), not the data-reader-mode attribute alone: that
-   flag persists across navigation by design (see reader-mode.svelte.ts
-   -- nothing resets it just because you followed a link out of the
-   article), so a plain attribute selector would strip every other
-   page's padding too, the moment you left an article without
-   explicitly exiting Reader Mode first. :has() only matches while
-   <main> actually contains reader-mode markup, so it stops applying
-   the instant that's no longer true, regardless of the flag's own
-   value. */
 main:has(.dd-reader-mode) {
 	padding: 0;
 	max-width: none;
 	margin: 0;
 }
 
-/* -- Desktop header -------------------------------------------------- */
-
-/* Spans the full width, above both the rail and the article column --
-   see .dd-reader-mode's --dd-reader-header-height, which .dd-reader-rail
-   reads to sit below this instead of overlapping it. Sticky, like
-   ArticleTopBar in the normal view, so it stays reachable (Exit Reader)
-   on a long scroll without needing to go back to the rail. */
 .dd-reader-header {
 	display: none;
 	position: sticky;
@@ -1806,10 +1723,6 @@ main:has(.dd-reader-mode) {
 	}
 }
 
-/* Left and right sections get equal flex-basis regardless of their own
-   content width, so the centered title lands at the bar's true midpoint
-   rather than being pulled off-center by 'Reader Mode' vs 'Exit Reader'
-   being different lengths. */
 .dd-reader-header-brand,
 .dd-reader-header-exit {
 	display: flex;

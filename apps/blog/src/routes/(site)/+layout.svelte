@@ -8,6 +8,7 @@
 	import MobileTurntablePlayer from '$lib/components/shared/MobileTurntablePlayer.svelte';
 	import { turntable } from '$lib/state/turntable.svelte';
 	import { readerMode } from '$lib/state/reader-mode.svelte';
+	import { themeState } from '$lib/state/theme.svelte';
 
 	let { children, data } = $props();
 
@@ -27,6 +28,13 @@
 	// affect; see reader-mode.svelte.ts.
 	$effect(() => {
 		readerMode.load();
+	});
+
+	// Client-only, same reasoning as readerMode.load() above — brings the
+	// shared theme state in sync with whatever app.html's inline script
+	// already applied to <html data-theme> pre-hydration.
+	$effect(() => {
+		themeState.load();
 	});
 </script>
 

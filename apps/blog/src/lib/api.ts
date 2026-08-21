@@ -43,12 +43,25 @@ function toPost(api: ApiPost): Post {
 	};
 }
 
-export async function fetchPosts(fetchFn: typeof fetch, categorySlug?: string): Promise<Post[]> {
-	const url = categorySlug
-		? `${API_URL}/posts?category=${encodeURIComponent(categorySlug)}`
-		: `${API_URL}/posts`;
+export async function fetchPosts(
+	fetchFn: typeof fetch,
+	categorySlug?: string,
+	limit?: number
+): Promise<Post[]> {
+	const params = new URLSearchParams();
+	if (categorySlug) params.set('category', categorySlug);
+	if (limit) params.set('limit', String(limit));
+	const qs = params.toString();
+	const url = qs ? `${API_URL}/posts?${qs}` : `${API_URL}/posts`;
 	const response = await fetchFn(url);
 	if (!response.ok) throw new Error(`Failed to fetch posts: ${response.status}`);
+	const posts: ApiPost[] = await response.json();
+	return posts.map(toPost);
+}
+
+export async function fetchSearchResults(fetchFn: typeof fetch, q: string): Promise<Post[]> {
+	const response = await fetchFn(`${API_URL}/search?q=${encodeURIComponent(q)}`);
+	if (!response.ok) throw new Error(`Failed to fetch search results: ${response.status}`);
 	const posts: ApiPost[] = await response.json();
 	return posts.map(toPost);
 }

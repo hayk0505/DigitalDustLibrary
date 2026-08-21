@@ -34,6 +34,13 @@ class TurntablePlayerState {
 	volume = $state(0.5);
 	muted = $state(false);
 
+	// Web Audio routing, built once the <audio> element exists (see
+	// initAudioGraph below). Not $state — nothing renders off these, they're
+	// pure playback plumbing — and deliberately not exposed outside this
+	// class.
+	#audioContext: AudioContext | null = null;
+	#gainNode: GainNode | null = null;
+
 	// Starts empty and is filled in once the fetch in (site)/+layout.ts
 	// resolves — see setTracks below. Reactive ($state, not a plain field)
 	// so the player UI updates the moment tracks arrive instead of only on
@@ -97,7 +104,63 @@ class TurntablePlayerState {
 		this.play();
 	}
 
+	// Called by TurntableAudio.svelte's effect once the <audio> element
+	// exists. Routes it through a GainNode instead of relying on
+	// HTMLMediaElement.volume: iOS Safari (and iOS Chrome, same engine)
+	// silently ignores that property — it stays pinned at 1, hardware
+	// buttons only, by design — but does not restrict Web Audio gain, so
+	// this is the one mechanism that gives real continuous volume control on
+	// every platform instead of branching iOS from the rest. Guarded so it
+	// only ever runs once per element: createMediaElementSource throws if
+	// called twice on the same <audio>, and the element persists across
+	// track changes (only its src attribute changes — see the class comment
+	// up top), so the effect firing again on an unrelated update is a no-op
+	// here rather than a re-init.
+	initAudioGraph(el: HTMLAudioElement) {
+		if (this.#gainNode) return;
+		const AudioContextCtor =
+			window.AudioContext ??
+			(window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+		if (!AudioContextCtor) return;
+		this.#audioContext = new AudioContextCtor();
+		const source = this.#audioContext.createMediaElementSource(el);
+		this.#gainNode = this.#audioContext.createGain();
+		this.#gainNode.gain.value = this.isSilent ? 0 : this.volume;
+		source.connect(this.#gainNode).connect(this.#audioContext.destination);
+	}
+
+	// Single point where volume/mute state gets pushed to the actual audio
+	// output — via the GainNode when the graph above exists, or the native
+	// .volume property as a fallback on the vanishingly rare browser with no
+	// Web Audio support at all (that fallback just inherits iOS's
+	// restriction rather than working around it, same as before this fix).
+	#applyGain() {
+		const level = this.isSilent ? 0 : this.volume;
+		if (this.#gainNode) {
+			this.#gainNode.gain.value = level;
+		} else if (this.audio) {
+			this.audio.volume = level;
+		}
+	}
+
+	setVolume(v: number) {
+		this.volume = v;
+		// Dragging the slider back up should always restore sound, even if
+		// silence currently comes from the mute flag rather than a zero
+		// level — otherwise raising it while muted looks like the slider has
+		// no effect.
+		if (v > 0) this.muted = false;
+		this.#applyGain();
+	}
+
 	play() {
+		// Must happen on a user-gesture call path (togglePlay/prev/next, or
+		// goTo's autoplay from those) — browsers create a fresh AudioContext
+		// suspended until resumed from one, and initAudioGraph above may run
+		// before any gesture (as soon as tracks load). onended's autoplay
+		// call is fine too: by the time a track ends, the context was
+		// already resumed by whatever gesture started playback.
+		this.#audioContext?.resume();
 		this.audio?.play().catch(() => {
 			this.unavailable = true;
 		});
@@ -123,6 +186,33 @@ class TurntablePlayerState {
 		this.goTo(this.index + 1, this.isPlaying);
 	}
 
+	// Lock-screen / notification media controls and hardware media-key
+	// support (headphone/Bluetooth play-pause-skip buttons) — NOT volume,
+	// which no web page can intercept; the OS handles that on its own
+	// regardless of this API. Called once from TurntableAudio.svelte's
+	// effect; the handlers close over `this` rather than any per-call
+	// value, so registering them once for the page's lifetime is enough.
+	registerMediaSession() {
+		if (!('mediaSession' in navigator)) return;
+		navigator.mediaSession.setActionHandler('play', () => this.play());
+		navigator.mediaSession.setActionHandler('pause', () => this.audio?.pause());
+		navigator.mediaSession.setActionHandler('previoustrack', () => this.prev());
+		navigator.mediaSession.setActionHandler('nexttrack', () => this.next());
+	}
+
+	// Reruns whenever the current track or play state changes — see the
+	// effect in TurntableAudio.svelte that calls this. No artwork: the
+	// tracks have no cover images, only the SVG vinyl label's fill color,
+	// which isn't a usable MediaMetadata image source.
+	syncMediaSession() {
+		if (!('mediaSession' in navigator) || !this.current) return;
+		navigator.mediaSession.metadata = new MediaMetadata({
+			title: this.current.title,
+			artist: this.current.artist
+		});
+		navigator.mediaSession.playbackState = this.isPlaying ? 'playing' : 'paused';
+	}
+
 	toggleMute() {
 		// Judged on the audible result (isSilent), not the muted flag alone —
 		// otherwise dragging the slider to 0 and then clicking mute would flip
@@ -134,6 +224,7 @@ class TurntablePlayerState {
 		} else {
 			this.muted = true;
 		}
+		this.#applyGain();
 	}
 }
 
