@@ -20,7 +20,16 @@
 	$effect(() => {
 		turntable.syncMediaSession();
 	});
+
+	// See resumeAudioContext's comment in turntable.svelte.ts — iOS suspends
+	// the Web Audio graph while backgrounded, this brings it back the moment
+	// the page is foregrounded again (unlocking the screen included).
+	function onVisibilityChange() {
+		if (document.visibilityState === 'visible') turntable.resumeAudioContext();
+	}
 </script>
+
+<svelte:document onvisibilitychange={onVisibilityChange} />
 
 {#if turntable.current}
 	<audio

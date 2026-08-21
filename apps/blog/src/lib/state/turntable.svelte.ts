@@ -129,6 +129,19 @@ class TurntablePlayerState {
 		source.connect(this.#gainNode).connect(this.#audioContext.destination);
 	}
 
+	// Called by TurntableAudio.svelte's visibilitychange listener. iOS Safari
+	// suspends the AudioContext's actual processing while the page is
+	// backgrounded (screen locked) — the <audio> element itself keeps
+	// playing and reporting real currentTime/Media Session state throughout
+	// (that's why the lock screen still shows accurate title/progress), but
+	// the GainNode graph goes silent until something resumes the context.
+	// Doesn't guarantee sound *while* still locked (that's iOS's own policy,
+	// not something a page can override) — this just makes the return-to-
+	// audible on unlock immediate and reliable rather than incidental.
+	resumeAudioContext() {
+		this.#audioContext?.resume();
+	}
+
 	// Single point where volume/mute state gets pushed to the actual audio
 	// output — via the GainNode when the graph above exists, or the native
 	// .volume property as a fallback on the vanishingly rare browser with no
@@ -161,15 +174,30 @@ class TurntablePlayerState {
 		// call is fine too: by the time a track ends, the context was
 		// already resumed by whatever gesture started playback.
 		this.#audioContext?.resume();
+		// Restores whatever pause() below zeroed — see its comment.
+		this.#applyGain();
 		this.audio?.play().catch(() => {
 			this.unavailable = true;
 		});
 	}
 
+	// Single pause path — togglePlay and the Media Session pause handler
+	// both route through this rather than calling audio.pause() directly,
+	// so this fix reaches both. iOS Safari sometimes keeps rendering
+	// (looping) a stray buffered render-quantum from the MediaElementSource
+	// for a moment after the underlying element pauses — a WebKit Web Audio
+	// quirk, not something audio.pause() alone stops. Zeroing gain first
+	// means nothing audible can leak through regardless of what WebKit's
+	// graph does internally; play() above restores the real level.
+	pause() {
+		if (this.#gainNode) this.#gainNode.gain.value = 0;
+		this.audio?.pause();
+	}
+
 	togglePlay() {
 		if (!this.audio) return;
 		if (this.audio.paused) this.play();
-		else this.audio.pause();
+		else this.pause();
 	}
 
 	prev() {
@@ -195,7 +223,7 @@ class TurntablePlayerState {
 	registerMediaSession() {
 		if (!('mediaSession' in navigator)) return;
 		navigator.mediaSession.setActionHandler('play', () => this.play());
-		navigator.mediaSession.setActionHandler('pause', () => this.audio?.pause());
+		navigator.mediaSession.setActionHandler('pause', () => this.pause());
 		navigator.mediaSession.setActionHandler('previoustrack', () => this.prev());
 		navigator.mediaSession.setActionHandler('nexttrack', () => this.next());
 	}
