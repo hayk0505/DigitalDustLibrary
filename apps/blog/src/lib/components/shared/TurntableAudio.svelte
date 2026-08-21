@@ -26,6 +26,7 @@
 	<audio
 		bind:this={turntable.audio}
 		src={turntable.current.src}
+		crossorigin="anonymous"
 		preload="metadata"
 		bind:currentTime={turntable.currentTime}
 		bind:duration={turntable.duration}

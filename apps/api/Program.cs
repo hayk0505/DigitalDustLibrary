@@ -172,6 +172,22 @@ if (app.Environment.IsProduction())
     app.UseForwardedHeaders(forwardedHeadersOptions);
 }
 
+// Must run before both UseStaticFiles calls below, not just before the API
+// endpoints further down: ASP.NET Core's static-file middleware short-
+// circuits the pipeline on a match (it never calls next()), so a CORS
+// middleware registered after it never gets a chance to attach
+// Access-Control-Allow-Origin to a static-file response. That silently
+// starved /uploads and /audio of CORS headers entirely — invisible for
+// /uploads (plain <img> rendering doesn't require CORS) but fatal for
+// /audio once the turntable player started routing playback through Web
+// Audio's createMediaElementSource: without a valid CORS response, the
+// browser deliberately outputs silence instead of the real audio, rather
+// than throwing (a security measure, not a bug) — see
+// TurntableAudio.svelte's crossorigin="anonymous" for the other half of
+// this fix, since the element also needs to request as CORS-enabled for
+// the server's header to matter.
+app.UseCors();
+
 // Serves uploaded media from wwwroot/uploads (see MediaEndpoints.cs). Uses an
 // explicit PhysicalFileProvider scoped to just this folder rather than the
 // bare UseStaticFiles() default (env.WebRootFileProvider): that default is
@@ -250,7 +266,6 @@ if (app.Environment.IsDevelopment())
     await DbSeeder.EnsureSiteSettingsAsync(db);
 }
 
-app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
