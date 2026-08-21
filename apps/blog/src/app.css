@@ -367,9 +367,11 @@ body {
 	border-radius: 35%;
 	background-color: var(--tone);
 	color: var(--ink-on-tone);
+	border: 2px solid transparent;
 	transition:
 		background-color 0.15s ease,
-		color 0.15s ease;
+		color 0.15s ease,
+		border-color 0.15s ease;
 }
 
 .mobile-category-tab-label {
@@ -387,6 +389,7 @@ body {
 .mobile-category-tab.active .mobile-category-tab-icon {
 	background-color: var(--ink-on-tone);
 	color: var(--tone);
+	border-color: currentColor;
 }
 .mobile-category-tab.active .mobile-category-tab-label {
 	color: var(--color-ink);
