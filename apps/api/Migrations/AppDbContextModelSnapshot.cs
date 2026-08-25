@@ -271,6 +271,10 @@ namespace DigitalDustLibrary.Api.Migrations
                     b.Property<Guid?>("FeaturedImageId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("Format")
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
                     b.Property<string>("MetaDescription")
                         .IsRequired()
                         .HasColumnType("text");

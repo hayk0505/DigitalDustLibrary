@@ -1,12 +1,16 @@
 <script lang="ts">
 	import type { Post } from '$lib/data';
+	import { getCategoryTabColor } from '$lib/utils/category-visuals';
 	import ArticleGridCard from './ArticleGridCard.svelte';
 
-	let { posts, color }: { posts: Post[]; color: string } = $props();
+	let { posts, color }: { posts: Post[]; color?: string } = $props();
 </script>
 
 <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 	{#each posts as post (post.slug)}
-		<ArticleGridCard {post} {color} />
+		<ArticleGridCard
+			{post}
+			color={color ?? post.categoryFolderColor ?? getCategoryTabColor(post.categorySlug)}
+		/>
 	{/each}
 </div>

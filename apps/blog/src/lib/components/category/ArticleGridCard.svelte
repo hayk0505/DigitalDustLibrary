@@ -14,6 +14,8 @@
 >
 	<div class="flex items-center gap-2 font-label text-[11px] tracking-widest text-ink/60 uppercase">
 		<CategoryDot {color} />
+		{post.format}
+		<span class="text-ink/30">·</span>
 		{formatDispatchDate(post.publishedAt)}
 		<span class="text-ink/30">·</span>
 		{post.readingMinutes} min
@@ -24,12 +26,22 @@
 			<img src={post.featuredImageUrl} alt="" class="h-full w-full object-cover" />
 		</div>
 	{:else}
-		<div class="no-image-placeholder rounded-image mt-3 flex aspect-[4/3] w-full items-center justify-center">
+		<div
+			class="no-image-placeholder rounded-image mt-3 flex aspect-[4/3] w-full items-center justify-center"
+		>
 			<span class="font-label text-[10px] tracking-widest text-ink/40 uppercase">No image</span>
 		</div>
 	{/if}
 
 	<h3 class="mt-3 font-display text-lg font-bold text-ink">{post.title}</h3>
+
+	{#if post.tags.length > 0}
+		<div class="mt-2 flex flex-wrap gap-1.5">
+			{#each post.tags as tag (tag.slug)}
+				<span class="tag-chip">{tag.name}</span>
+			{/each}
+		</div>
+	{/if}
 
 	<div class="mt-3 flex items-center justify-between gap-2 border-t border-ink/10 pt-3">
 		<div class="flex min-w-0 items-center gap-2">

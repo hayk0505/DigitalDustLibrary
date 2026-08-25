@@ -28,7 +28,7 @@
 </script>
 
 <SeoHead
-	title="Become an Author — Digital Dust Library"
+	title="Become an Author"
 	description="Digital Dust Library is opening up to outside contributors — find out how to apply."
 	url={page.url.href}
 />

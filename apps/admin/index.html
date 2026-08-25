@@ -3,6 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Internal tool, not public content — see docs/deployment.md's SEO
+         notes. Meta-tag noindex rather than (or in addition to) robots.txt,
+         since a meta tag guarantees non-indexing even if a crawler ignores
+         robots.txt or discovers this URL via an external link. -->
+    <meta name="robots" content="noindex, nofollow" />
     <script>
       if (localStorage.getItem('dd-admin-theme') === 'dark') {
         document.documentElement.classList.add('dark')

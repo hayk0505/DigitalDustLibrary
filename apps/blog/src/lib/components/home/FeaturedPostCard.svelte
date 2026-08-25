@@ -1,8 +1,12 @@
 <script lang="ts">
 	import type { Post } from '$lib/data';
 	import AuthorByline from '../shared/AuthorByline.svelte';
+	import InlineProgressBar from '../shared/InlineProgressBar.svelte';
+	import { readingHistory } from '$lib/state/reading-history.svelte';
 
 	let { post, color }: { post: Post; color: string } = $props();
+
+	const progress = $derived(readingHistory.getProgress(post.slug));
 </script>
 
 <a
@@ -22,4 +26,9 @@
 		<AuthorByline author={{ name: post.authorName, handle: post.authorHandle }} />
 		<span class="font-label text-xs text-ink/50">{post.readingMinutes} min</span>
 	</div>
+	{#if progress !== null}
+		<div class="absolute inset-x-0 bottom-0">
+			<InlineProgressBar {progress} />
+		</div>
+	{/if}
 </a>

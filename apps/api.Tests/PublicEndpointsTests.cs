@@ -31,16 +31,6 @@ public class PublicEndpointsTests(ApiFactory factory)
         Assert.DoesNotContain(posts!, p => p.Title == $"Secret Draft {suffix}");
     }
 
-    // Regression test for a real prod incident: a Post row somehow ended up
-    // Status=Published with PublishedAt=null (the only two write paths,
-    // PATCH's self-publish and /approve, always set both together — how this
-    // happened is still unconfirmed, but it happened), and
-    // Mapping.ToPublicDto's `p.PublishedAt!.Value` force-unwrap threw
-    // InvalidOperationException for every single request to GET
-    // /api/public/posts, taking down the entire public blog homepage (no
-    // global exception middleware exists yet, so this surfaced as a bare
-    // 500 with no body). A single corrupt row must never be able to break
-    // the public listing for every visitor.
     [Fact]
     public async Task GetPosts_PublishedPostWithNullPublishedAt_IsExcludedNotThrown()
     {
@@ -197,6 +187,30 @@ public class PublicEndpointsTests(ApiFactory factory)
         var posts = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
         Assert.Contains(posts!, p => p.Title == $"In A {suffix}");
         Assert.DoesNotContain(posts!, p => p.Title == $"In B {suffix}");
+    }
+
+    [Fact]
+    public async Task GetPosts_WithFormatFilter_ReturnsOnlyThatFormatsPosts()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Format Filter Author {suffix}", $"format-filter-author-{suffix}@example.com", Role.Author);
+        var mini = await PostTestHelpers.CreatePostAsync(
+            factory, author.Id, $"Mini Filter {suffix}", PostStatus.PendingReview, format: PostFormat.Mini);
+        await editor.PostAsync($"/api/posts/{mini.Id}/approve", null);
+        var shelf = await PostTestHelpers.CreatePostAsync(
+            factory, author.Id, $"Shelf Filter {suffix}", PostStatus.PendingReview, format: PostFormat.Shelf);
+        await editor.PostAsync($"/api/posts/{shelf.Id}/approve", null);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync("/api/public/posts?format=mini");
+
+        response.EnsureSuccessStatusCode();
+        var posts = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        Assert.Contains(posts!, p => p.Title == $"Mini Filter {suffix}");
+        Assert.DoesNotContain(posts!, p => p.Title == $"Shelf Filter {suffix}");
+        Assert.All(posts!, p => Assert.Equal(PostFormat.Mini, p.Format));
     }
 
     [Fact]
@@ -514,5 +528,32 @@ public class PublicEndpointsTests(ApiFactory factory)
         var posts = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
         var matching = posts!.Where(p => p.Title.Contains(suffix)).ToList();
         Assert.Equal(3, matching.Count);
+    }
+
+    [Fact]
+    public async Task GetPosts_DispatchNumbersAreScopedByCategoryAndFormat()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+        var suffix = PostTestHelpers.UniqueSuffix();
+        var author = await UserTestHelpers.CreateUserAsync(
+            factory, $"Dispatch Format Author {suffix}", $"dispatch-format-author-{suffix}@example.com", Role.Author);
+        var category = await CategoryTestHelpers.CreateCategoryAsync(editor, $"Dispatch Format {suffix}", $"dispatch-format-{suffix}");
+
+        var mini = await PostTestHelpers.CreatePostAsync(
+            factory, author.Id, $"Mini One {suffix}", PostStatus.PendingReview, categoryId: category.Id, format: PostFormat.Mini);
+        await editor.PostAsync($"/api/posts/{mini.Id}/approve", null);
+        var shelf = await PostTestHelpers.CreatePostAsync(
+            factory, author.Id, $"Shelf One {suffix}", PostStatus.PendingReview, categoryId: category.Id, format: PostFormat.Shelf);
+        await editor.PostAsync($"/api/posts/{shelf.Id}/approve", null);
+
+        var client = factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/posts?category={category.Slug}");
+
+        response.EnsureSuccessStatusCode();
+        var posts = await response.Content.ReadFromJsonAsync<List<PublicPostDto>>(AuthHelper.JsonOptions);
+        var miniDto = posts!.Single(p => p.Title == $"Mini One {suffix}");
+        var shelfDto = posts!.Single(p => p.Title == $"Shelf One {suffix}");
+        Assert.Equal(1, miniDto.DispatchNumber);
+        Assert.Equal(1, shelfDto.DispatchNumber);
     }
 }

@@ -35,6 +35,17 @@ export function useUpdatePost() {
   })
 }
 
+export function useDeletePost() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiFetch<void>(`/posts/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] })
+      toast.success('Post deleted')
+    },
+  })
+}
+
 export function useApprovePost() {
   const queryClient = useQueryClient()
   return useMutation({

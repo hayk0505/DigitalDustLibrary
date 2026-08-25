@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import type { Category } from '@/lib/types'
 
@@ -137,6 +137,7 @@ function CategoryRowActions({ category }: { category: Category }) {
   const update = useUpdateCategory()
   const remove = useDeleteCategory()
   const [editOpen, setEditOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   if (category.isDeleted) {
     return (
@@ -150,9 +151,9 @@ function CategoryRowActions({ category }: { category: Category }) {
 
   const locked = category.postCount > 0
 
-  function handleDelete() {
-    if (!window.confirm(`Permanently delete "${category.name}"? This cannot be undone.`)) return
+  function confirmDelete() {
     remove.mutate(category.id)
+    setConfirmOpen(false)
   }
 
   return (
@@ -170,10 +171,24 @@ function CategoryRowActions({ category }: { category: Category }) {
         Archive
       </Button>
       <span title={locked ? 'Reassign posts first' : undefined} className="inline-flex">
-        <Button size="sm" variant="destructive" disabled={locked} onClick={handleDelete}>
+        <Button size="sm" variant="destructive" disabled={locked} onClick={() => setConfirmOpen(true)}>
           Delete
         </Button>
       </span>
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogTitle>Delete category</DialogTitle>
+          <DialogDescription>
+            Permanently delete "{category.name}"? This cannot be undone.
+          </DialogDescription>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setConfirmOpen(false)}>Cancel</Button>
+            <Button variant="destructive" disabled={remove.isPending} onClick={confirmDelete}>
+              {remove.isPending ? 'Deleting…' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

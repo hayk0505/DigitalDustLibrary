@@ -27,7 +27,6 @@ public static class MediaEndpoints
     {
         var group = app.MapGroup("/api/media").WithTags("Media").RequireAuthorization();
 
-        // GET /api/media?search=... — matches mocks/handlers/media.ts.
         group.MapGet("/", async (string? search, AppDbContext db) =>
         {
             var query = db.MediaAssets.AsQueryable();
@@ -39,20 +38,6 @@ public static class MediaEndpoints
             return Results.Ok(assets.Select(m => m.ToDto()));
         });
 
-        // POST /api/media — decodes the client's data URL and writes it to disk
-        // under wwwroot/uploads (served by app.UseStaticFiles() in Program.cs),
-        // returning a real static URL instead of persisting the data: URI itself.
-        // The returned URL is built from the configured ApiPublicOrigin, not the
-        // incoming request's Scheme/Host — apps/admin's API client defaults to a
-        // relative `/api` base URL (no VITE_API_BASE_URL set in prod), so an
-        // upload made through the admin UI arrives with Host:
-        // admin.digitaldustlibrary.com, not api.digitaldustlibrary.com. Caddy's
-        // admin.* site block only proxies /api/* to this container — /uploads/*
-        // isn't proxied there, so a request-derived URL would point at a path
-        // that 404s (or worse, silently falls through to the admin SPA's
-        // try_files fallback and serves index.html). ApiPublicOrigin is always
-        // the one host that actually serves /uploads/*, regardless of which
-        // origin the upload request itself came in through.
         group.MapPost("/", async (
             CreateMediaRequest request,
             ClaimsPrincipal user,
@@ -103,5 +88,20 @@ public static class MediaEndpoints
             await db.SaveChangesAsync();
             return Results.Created($"/api/media/{asset.Id}", asset.ToDto());
         });
+
+        group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db, IWebHostEnvironment env) =>
+        {
+            var asset = await db.MediaAssets.FindAsync(id);
+            if (asset is null) return Results.Json(new { message = "Not found" }, statusCode: 404);
+
+            var storedFilename = asset.Url.Split('/').Last();
+            var filePath = Path.Combine(env.ContentRootPath, "wwwroot", "uploads", storedFilename);
+            if (File.Exists(filePath)) File.Delete(filePath);
+
+            db.MediaAssets.Remove(asset);
+            await db.SaveChangesAsync();
+            return Results.NoContent();
+        })
+        .RequireAuthorization("EditorOrOwner");
     }
 }

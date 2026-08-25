@@ -2,10 +2,6 @@ using DigitalDustLibrary.Api.Models;
 
 namespace DigitalDustLibrary.Api.Contracts;
 
-// These records mirror apps/admin/src/lib/types.ts field-for-field. If you change
-// a shape here, change it there too (or better: generate types.ts from this API's
-// OpenAPI spec via NSwag/openapi-typescript once packages/shared-types exists,
-// per CLAUDE.md's monorepo plan, so the two can't drift silently).
 
 public record UserDto(Guid Id, string Name, string Email, Role Role);
 
@@ -32,7 +28,8 @@ public record PostDto(
     string AuthorName,
     DateTimeOffset UpdatedAt,
     DateTimeOffset? PublishedAt,
-    ReviewNoteDto? LatestReviewNote);
+    ReviewNoteDto? LatestReviewNote,
+    PostFormat Format);
 
 public record MediaAssetDto(Guid Id, string Filename, MediaTag Tag, int Width, int Height, string Url);
 
@@ -47,7 +44,8 @@ public record CreatePostRequest(
     Guid? FeaturedImageId,
     Guid? CategoryId,
     PostStatus? Status,
-    List<Guid>? TagIds = null);
+    List<Guid>? TagIds = null,
+    PostFormat? Format = null);
 
 public record UpdatePostRequest(
     string? Title,
@@ -58,15 +56,13 @@ public record UpdatePostRequest(
     Guid? FeaturedImageId,
     Guid? CategoryId,
     PostStatus? Status,
-    List<Guid>? TagIds = null);
+    List<Guid>? TagIds = null,
+    PostFormat? Format = null);
 
 public record RequestChangesRequest(string Comment);
 
 public record CreateMediaRequest(string Filename, string DataUrl, MediaTag Tag, int Width, int Height);
 
-// PostCount isn't a column on Category — it's computed per-request (how many
-// posts currently reference this category), which is also what decides whether
-// a hard DELETE is allowed. See CategoryEndpoints.
 public record CategoryDto(Guid Id, string Name, string Slug, string Description, string Color, string? FolderColor, int Position, bool IsVisible, bool IsDeleted, int PostCount);
 
 public record TagDto(Guid Id, string Name, string Slug, int PostCount);
@@ -85,15 +81,6 @@ public record MergeTagRequest(Guid TargetTagId);
 
 public record CreateCategoryRequest(string Name, string Slug, string Description, string Color, int? Position, string? FolderColor = null);
 
-// Same partial-update shape as UpdatePostRequest: only fields you send get
-// changed. IsVisible and IsDeleted are separate flags on purpose (see
-// Category.cs) — toggling one doesn't touch the other. There's no separate
-// "restore" endpoint; setting IsDeleted back to false via this same PATCH does it.
-// Description/Color/Position default to null (unlike Name/Slug/IsVisible/
-// IsDeleted above, an intentional asymmetry) purely so every existing
-// 4-positional-arg test call site (new UpdateCategoryRequest(a, b, c, d))
-// keeps compiling without being touched by this change. FolderColor joins
-// them at the end for the same reason.
 public record UpdateCategoryRequest(
     string? Name, string? Slug, bool? IsVisible, bool? IsDeleted,
     string? Description = null, string? Color = null, int? Position = null, string? FolderColor = null);
@@ -126,7 +113,8 @@ public record PublicPostDto(
     string Slug, string Title, string BodyHtml, string Excerpt, string SeoTitle, string MetaDescription,
     string? FeaturedImageUrl, string CategorySlug, string CategoryName, string CategoryColor, string? CategoryFolderColor,
     List<PublicTagRefDto> Tags,
-    string AuthorHandle, string AuthorName, DateTimeOffset PublishedAt, int ReadingMinutes, int DispatchNumber);
+    string AuthorHandle, string AuthorName, DateTimeOffset PublishedAt, int ReadingMinutes, int DispatchNumber,
+    PostFormat Format);
 
 public record PublicAuthorDto(string Handle, string Name, string? Bio, DateTimeOffset CreatedAt);
 
@@ -136,16 +124,6 @@ public static class Mapping
 {
     public static UserDto ToDto(this ApplicationUser u) => new(u.Id, u.Name, u.Email, u.Role);
 
-    // Unlike AuthorName below (genuinely empty on create — no ApplicationUser
-    // is ever loaded anywhere in that flow), a just-created post's Tags comes
-    // back correctly POPULATED even though post.PostTags is never explicitly
-    // re-Include()d after PostEndpoints' POST handler does its
-    // AddRange+SaveChangesAsync for the join rows. This works because the
-    // Tag entities were already loaded (and are still tracked) in the same
-    // AppDbContext via the TagIds validation query, so when the new PostTag
-    // rows are added, EF Core's automatic relationship fixup wires up
-    // post.PostTags (and each PostTag.Tag navigation) against those tracked
-    // Tag/Post entities in-memory, with no extra query needed.
     public static PostDto ToDto(this Post p) => new(
         p.Id, p.Title, p.Slug, p.BodyHtml, p.Excerpt, p.SeoTitle, p.MetaDescription,
         p.FeaturedImageId, p.CategoryId, p.Category?.Name ?? "", p.Category?.Color ?? "", p.Category?.FolderColor,
@@ -153,7 +131,8 @@ public static class Mapping
         p.Status, p.AuthorId, p.Author?.Name ?? "", p.UpdatedAt, p.PublishedAt,
         p.ReviewNotes.OrderByDescending(r => r.CreatedAt).FirstOrDefault() is { } latest
             ? new ReviewNoteDto(latest.Id, latest.Comment, latest.Reviewer?.Name ?? "", latest.CreatedAt)
-            : null);
+            : null,
+        p.Format);
 
     public static MediaAssetDto ToDto(this MediaAsset m) => new(m.Id, m.Filename, m.Tag, m.Width, m.Height, m.Url);
 
@@ -181,15 +160,13 @@ public static class Mapping
         p.FeaturedImage?.Url, p.Category?.Slug ?? "", p.Category?.Name ?? "", p.Category?.Color ?? "", p.Category?.FolderColor,
         p.PostTags.Select(pt => new PublicTagRefDto(pt.Tag!.Name, pt.Tag.Slug)).ToList(),
         p.Author?.Handle ?? "", p.Author?.Name ?? "",
-        p.PublishedAt!.Value, EstimateReadingMinutes(p.BodyHtml), dispatchNumber);
+        p.PublishedAt!.Value, EstimateReadingMinutes(p.BodyHtml), dispatchNumber, p.Format);
 
     public static PublicAuthorDto ToPublicDto(this ApplicationUser u) => new(u.Handle, u.Name, u.Bio, u.CreatedAt);
 
     public static PublicCategoryDto ToPublicDto(this Category c, int postCount) =>
         new(c.Name, c.Slug, c.Description, c.Color, c.FolderColor, c.Position, postCount);
 
-    // Same word-count/200wpm formula as apps/admin/src/lib/formatting.ts's
-    // estimateReadTime — computed here so the blog never has to duplicate it.
     private static int EstimateReadingMinutes(string bodyHtml)
     {
         var text = System.Text.RegularExpressions.Regex.Replace(bodyHtml, "<[^>]*>", " ");

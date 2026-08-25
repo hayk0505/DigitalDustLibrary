@@ -37,17 +37,23 @@ export type Post = {
 	publishedAt: string;
 	readingMinutes: number;
 	dispatchNumber: number;
+	format: 'mini' | 'shelf';
 	tags: PostTag[];
 };
 
-// Sidebar turntable track — see GET /api/public/audio (PublicEndpoints.cs)
-// and AudioTrackScanner.cs for how these get built from whatever's sitting
-// in the droplet's audio-files/ folder. No local static/audio/ scan anymore;
-// see $lib/api.ts's fetchPlaylist and $lib/data/playlist.ts.
+
 export type Track = {
 	id: string;
 	title: string;
 	artist: string;
 	src: string;
 	labelColor?: string;
+};
+
+export type SiteSettings = {
+	siteTitle: string;
+	tagline: string;
+	defaultMetaDescription: string;
+	linkedInUrl: string;
+	xUrl: string;
 };

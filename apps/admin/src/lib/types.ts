@@ -9,6 +9,8 @@ export interface User {
 
 export type PostStatus = 'draft' | 'pending_review' | 'changes_requested' | 'published'
 
+export type PostFormat = 'mini' | 'shelf'
+
 export interface ReviewNote {
   id: string
   comment: string
@@ -28,12 +30,8 @@ export interface Post {
   categoryName: string
   categoryColor: string
   categoryFolderColor: string | null
+  format: PostFormat
   tags: { id: string; name: string; slug: string }[]
-  // Write-only: not returned by the API, mirrors CreatePostRequest/
-  // UpdatePostRequest.TagIds. Kept on this response-shaped interface (rather
-  // than a separate request type, which this codebase doesn't have for
-  // Post) purely so PostEditor.tsx's save payload — { ...values, tagIds }
-  // — type-checks against useCreatePost/useUpdatePost's Partial<Post> param.
   tagIds?: string[]
   status: PostStatus
   authorId: string

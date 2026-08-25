@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { PostEditor } from '@/pages/PostEditor'
+import { PostViewer } from '@/pages/PostViewer'
 
 export const Route = createFileRoute('/_authenticated/posts/$postId')({
   component: PostIdRoute,
@@ -7,5 +7,5 @@ export const Route = createFileRoute('/_authenticated/posts/$postId')({
 
 function PostIdRoute() {
   const { postId } = Route.useParams()
-  return <PostEditor postId={postId} />
+  return <PostViewer postId={postId} />
 }

@@ -29,6 +29,7 @@ function makePost(overrides: Partial<Post>): Post {
     categoryName: 'Tech',
     categoryColor: '#C9553D',
     categoryFolderColor: null,
+    format: 'shelf',
     status: 'draft',
     authorId: 'author-1',
     authorName: 'Some Author',

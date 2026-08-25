@@ -5,19 +5,18 @@
 	import logo from '$lib/assets/logo.svg';
 	import ThemeToggleButton from './ThemeToggleButton.svelte';
 	import MobileMenuButton from './MobileMenuButton.svelte';
+	import SavedArticlesLink from './SavedArticlesLink.svelte';
 	import SearchControl from '$lib/components/search/SearchControl.svelte';
 
-	// Mirrors the CATEGORIES_PER_PAGE/catPage math in (site)/+page.ts — both
-	// read the same categories list and the same ?catPage= URL param, so
-	// they can't drift out of sync despite computing independently. Kept
-	// independent (rather than threaded down as props) because this nav
-	// lives in the shared layout while the pagination is homepage-only.
 	const CATEGORIES_PER_PAGE = 3;
 
 	const categories = $derived(page.data.categories ?? []);
 	const totalCatPages = $derived(Math.max(1, Math.ceil(categories.length / CATEGORIES_PER_PAGE)));
 	const catPage = $derived(
-		Math.min(Math.max(0, Number(page.url.searchParams.get('catPage') ?? '0') || 0), totalCatPages - 1)
+		Math.min(
+			Math.max(0, Number(page.url.searchParams.get('catPage') ?? '0') || 0),
+			totalCatPages - 1
+		)
 	);
 	const showPager = $derived(page.url.pathname === '/' && categories.length > CATEGORIES_PER_PAGE);
 
@@ -29,14 +28,13 @@
 </script>
 
 <div class="border-b border-ink/10">
-	<div class="hidden items-center justify-between px-6 py-3 font-label text-xs tracking-widest uppercase md:flex sm:px-10">
+	<div
+		class="hidden items-center justify-between px-6 py-3 font-label text-xs tracking-widest uppercase md:flex sm:px-10"
+	>
 		<div class="flex items-center gap-6">
 			<a href="/" class="flex items-center leading-tight">
 				<img src={logo} alt="" class="h-8 w-8" />
 			</a>
-			<nav class="flex items-center gap-6">
-				<a href="/become-an-author" class="underline hover:text-accent-red">Become an author</a>
-			</nav>
 		</div>
 		<div class="flex items-center gap-4">
 			{#if showPager}
@@ -62,8 +60,9 @@
 					</button>
 				</div>
 			{/if}
-			<ThemeToggleButton />
 			<SearchControl />
+			<ThemeToggleButton />
+			<SavedArticlesLink />
 		</div>
 	</div>
 
@@ -72,8 +71,9 @@
 			<img src={logo} alt="" class="h-8 w-8" />
 		</a>
 		<div class="flex items-center gap-4">
-			<ThemeToggleButton iconClass="h-5 w-5" />
 			<SearchControl />
+			<ThemeToggleButton iconClass="h-5 w-5" />
+			<SavedArticlesLink iconClass="h-5 w-5" />
 			<MobileMenuButton iconClass="h-6 w-6" />
 		</div>
 	</div>

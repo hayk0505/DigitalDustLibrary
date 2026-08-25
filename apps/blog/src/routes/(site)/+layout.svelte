@@ -9,32 +9,33 @@
 	import { turntable } from '$lib/state/turntable.svelte';
 	import { readerMode } from '$lib/state/reader-mode.svelte';
 	import { themeState } from '$lib/state/theme.svelte';
+	import { savedArticles } from '$lib/state/saved-articles.svelte';
+	import { readingHistory } from '$lib/state/reading-history.svelte';
 
 	let { children, data } = $props();
 
 	const isArticlePage = $derived(page.url.pathname.startsWith('/articles/'));
+	const isHomePage = $derived(page.url.pathname === '/');
+	const isSavedPage = $derived(page.url.pathname === '/saved');
 
-	// Client-only by construction — Svelte 5 effects never run during SSR —
-	// so this can't leak one user's playlist into another's SSR output on the
-	// shared Workers isolate. See turntable.svelte.ts's class comment.
 	$effect(() => {
 		turntable.setTracks(data.tracks);
 	});
 
-	// Brings readerMode.active in sync with what app.html's inline script
-	// already decided (and already applied via the .dd-chrome CSS rule
-	// below, pre-hydration) — this component's own {#if}s never gate on
-	// readerMode.active directly, so there's nothing here for a flash to
-	// affect; see reader-mode.svelte.ts.
 	$effect(() => {
 		readerMode.load();
 	});
 
-	// Client-only, same reasoning as readerMode.load() above — brings the
-	// shared theme state in sync with whatever app.html's inline script
-	// already applied to <html data-theme> pre-hydration.
 	$effect(() => {
 		themeState.load();
+	});
+
+	$effect(() => {
+		savedArticles.load();
+	});
+
+	$effect(() => {
+		readingHistory.load();
 	});
 </script>
 
@@ -42,16 +43,22 @@
 	{#if page.data.categories}
 		<CategorySidebar categories={page.data.categories} />
 	{/if}
-	<div class="min-w-0 flex-1">
+	<div class="flex min-h-screen min-w-0 flex-1 flex-col">
 		{#if !isArticlePage}
 			<BlogTopNav />
-			{#if page.data.categories}
+			{#if page.data.categories && !isHomePage && !isSavedPage}
 				<MobileCategoryRail categories={page.data.categories} />
 			{/if}
 		{/if}
-		<main class="mx-auto max-w-6xl px-6 pb-8 md:pt-6">
+		<main class="mx-auto w-full max-w-6xl flex-1 px-6 pb-8 md:pt-6">
 			{@render children()}
 		</main>
+		<footer class="dd-chrome border-t border-ink/10 px-6 py-6">
+			<p class="mx-auto max-w-6xl text-xs text-ink/50">
+				© {new Date().getFullYear()}
+				{page.data.settings.siteTitle}. All rights reserved.
+			</p>
+		</footer>
 	</div>
 </div>
 

@@ -24,6 +24,8 @@ export function Settings() {
   const { data: settings, isLoading } = useSettings()
   const updateSettings = useUpdateSettings()
   const { data: activity = [], isLoading: activityLoading } = useActivity()
+  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const recentActivity = activity.filter((event) => new Date(event.createdAt).getTime() >= oneWeekAgo)
 
   const {
     register,
@@ -105,19 +107,23 @@ export function Settings() {
         {activityLoading ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : (
-          <div className="divide-y divide-border rounded-2xl border border-border bg-card">
-            {activity.map((event) => (
-              <div key={event.id} className="flex items-center gap-3 p-4">
-                <Avatar name={event.actorName} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-foreground">
-                    <span className="font-medium">{event.actorName}</span> {event.action}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{formatRelativeTime(event.createdAt)}</p>
+          <div className="max-h-96 overflow-y-auto rounded-2xl border border-border bg-card">
+            <div className="divide-y divide-border">
+              {recentActivity.map((event) => (
+                <div key={event.id} className="flex items-center gap-3 p-4">
+                  <Avatar name={event.actorName} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-foreground">
+                      <span className="font-medium">{event.actorName}</span> {event.action}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{formatRelativeTime(event.createdAt)}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-            {activity.length === 0 && <p className="p-6 text-center text-muted-foreground">No activity yet.</p>}
+              ))}
+              {recentActivity.length === 0 && (
+                <p className="p-6 text-center text-muted-foreground">No activity in the last week.</p>
+              )}
+            </div>
           </div>
         )}
       </div>

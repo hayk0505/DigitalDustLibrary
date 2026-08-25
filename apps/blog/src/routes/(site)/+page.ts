@@ -19,5 +19,22 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
 		posts: posts.filter((post) => post.categorySlug === category.slug)
 	}));
 
-	return { columns };
+	const allColumns = categories.map((category) => ({
+		category,
+		posts: posts.filter((post) => post.categorySlug === category.slug)
+	}));
+
+	const type = url.searchParams.get('type');
+	const showMinis = type !== 'shelf';
+	const showShelf = type !== 'mini';
+
+	return {
+		columns,
+		allColumns,
+		minis: posts.filter((post) => post.format === 'mini'),
+		shelfPosts: posts.filter((post) => post.format === 'shelf'),
+		showMinis,
+		showShelf,
+		typeParam: (type === 'mini' || type === 'shelf' ? type : 'all') as 'all' | 'mini' | 'shelf'
+	};
 };

@@ -16,11 +16,10 @@ public class Post
     public Guid AuthorId { get; set; }
     public ApplicationUser? Author { get; set; }
 
-    // Every post belongs to exactly one Category — non-nullable, same
-    // guarantee the old Pillar enum had. Nav property stays nullable (like
-    // Author above) since EF only populates it when .Include()d.
     public Guid CategoryId { get; set; }
     public Category? Category { get; set; }
+
+    public PostFormat Format { get; set; } = PostFormat.Shelf;
 
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;

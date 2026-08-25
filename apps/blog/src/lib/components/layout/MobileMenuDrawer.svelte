@@ -31,13 +31,20 @@
 	>
 		<div class="flex items-center justify-between border-b border-ink/10 px-5 py-4">
 			<span class="font-label text-xs tracking-widest text-ink/50 uppercase">Menu</span>
-			<button type="button" onclick={close} aria-label="Close menu" class="text-ink/60 hover:text-ink">
+			<button
+				type="button"
+				onclick={close}
+				aria-label="Close menu"
+				class="text-ink/60 hover:text-ink"
+			>
 				<X class="h-5 w-5" />
 			</button>
 		</div>
 		<nav class="flex flex-col px-5 py-4 font-label text-sm tracking-widest uppercase">
-			<a href="/archive" onclick={close} class="py-2.5 hover:text-accent-red">Archive</a>
-			<a href="/become-an-author" onclick={close} class="py-2.5 hover:text-accent-red">Become an author</a>
+			<!-- <a href="/archive" onclick={close} class="py-2.5 hover:text-accent-red">Archive</a>
+			<a href="/become-an-author" onclick={close} class="py-2.5 hover:text-accent-red"
+				>Become an author</a
+			> -->
 		</nav>
 	</div>
 {/if}

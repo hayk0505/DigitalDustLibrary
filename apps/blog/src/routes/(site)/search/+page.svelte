@@ -7,11 +7,7 @@
 	let { data }: { data: PageData } = $props();
 </script>
 
-<SeoHead
-	title="Search — Digital Dust Library"
-	description="Search the Digital Dust Library."
-	url={page.url.href}
-/>
+<SeoHead title="Search" description="Search the Digital Dust Library." url={page.url.href} />
 
 <span class="font-label text-xs tracking-widest text-ink/50 uppercase">Search Library</span>
 <h1 class="mt-1 font-display text-3xl font-bold">{data.query || 'Enter a search term'}</h1>

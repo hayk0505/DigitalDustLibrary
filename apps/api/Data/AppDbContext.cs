@@ -33,6 +33,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Post>(e =>
         {
             e.Property(p => p.Title).HasMaxLength(300);
+            e.Property(p => p.Format).HasDefaultValue(PostFormat.Shelf).ValueGeneratedNever();
             e.HasIndex(p => p.Slug).IsUnique();
             e.HasOne(p => p.Author)
                 .WithMany()

@@ -8,11 +8,7 @@
 	let { data }: { data: PageData } = $props();
 </script>
 
-<SeoHead
-	title="Archive — Digital Dust Library"
-	description="Every dispatch, most recent first."
-	url={page.url.href}
-/>
+<SeoHead title="Archive" description="Every dispatch, most recent first." url={page.url.href} />
 
 <h1 class="font-display text-3xl font-bold">Archive</h1>
 <p class="mt-2 text-ink/60">Every dispatch, most recent first.</p>

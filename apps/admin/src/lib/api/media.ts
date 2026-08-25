@@ -22,3 +22,14 @@ export function useUploadMedia() {
     },
   })
 }
+
+export function useDeleteMedia() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiFetch<void>(`/media/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['media'] })
+      toast.success('Asset deleted')
+    },
+  })
+}

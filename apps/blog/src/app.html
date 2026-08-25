@@ -1,6 +1,29 @@
 <!doctype html>
 <html lang="en">
 	<head>
+		<!-- Google Tag Manager. First thing in <head>, per Google's own
+		     placement guidance — before every other meta tag below. Deploys
+		     the Cloudflare Web Analytics beacon as a GTM Custom HTML tag
+		     (trigger: All Pages) rather than hardcoding it here directly,
+		     matching the pattern already used for haykbaroyan.com — GTM stays
+		     the one place tags get added, not the app shell.
+		     Own container for this project (GTM-NS975BS2), separate from
+		     haykbaroyan.com's container — different property. Blog only,
+		     deliberately not added to apps/admin — see docs/deployment.md's
+		     SEO notes. -->
+		<script>
+			(function (w, d, s, l, i) {
+				w[l] = w[l] || [];
+				w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+				var f = d.getElementsByTagName(s)[0],
+					j = d.createElement(s),
+					dl = l != 'dataLayer' ? '&l=' + l : '';
+				j.async = true;
+				j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+				f.parentNode.insertBefore(j, f);
+			})(window, document, 'script', 'dataLayer', 'GTM-NS975BS2');
+		</script>
+		<!-- End Google Tag Manager -->
 		<script>
 			(function () {
 				var stored = localStorage.getItem('dd-blog-theme');
@@ -28,6 +51,17 @@
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
+		<!-- Google Tag Manager (noscript) -->
+		<noscript
+			><iframe
+				src="https://www.googletagmanager.com/ns.html?id=GTM-NS975BS2"
+				height="0"
+				width="0"
+				style="display: none; visibility: hidden"
+				title="gtm"
+			></iframe></noscript
+		>
+		<!-- End Google Tag Manager (noscript) -->
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>

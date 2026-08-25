@@ -1,5 +1,5 @@
 import { API_URL, API_ORIGIN } from './config';
-import type { Author, Category, Post, PostTag, Track } from './data/types';
+import type { Author, Category, Post, PostTag, SiteSettings, Track } from './data/types';
 
 type ApiPost = {
 	slug: string;
@@ -18,6 +18,7 @@ type ApiPost = {
 	publishedAt: string;
 	readingMinutes: number;
 	dispatchNumber: number;
+	format: 'mini' | 'shelf';
 	tags: PostTag[];
 };
 
@@ -39,6 +40,7 @@ function toPost(api: ApiPost): Post {
 		publishedAt: api.publishedAt,
 		readingMinutes: api.readingMinutes,
 		dispatchNumber: api.dispatchNumber,
+		format: api.format,
 		tags: api.tags ?? []
 	};
 }
@@ -46,11 +48,13 @@ function toPost(api: ApiPost): Post {
 export async function fetchPosts(
 	fetchFn: typeof fetch,
 	categorySlug?: string,
-	limit?: number
+	limit?: number,
+	format?: 'mini' | 'shelf'
 ): Promise<Post[]> {
 	const params = new URLSearchParams();
 	if (categorySlug) params.set('category', categorySlug);
 	if (limit) params.set('limit', String(limit));
+	if (format) params.set('format', format);
 	const qs = params.toString();
 	const url = qs ? `${API_URL}/posts?${qs}` : `${API_URL}/posts`;
 	const response = await fetchFn(url);
@@ -111,12 +115,6 @@ export async function fetchAuthorByHandle(
 	return response.json();
 }
 
-// Sidebar turntable playlist, fetched at request time from /api/public/audio
-// rather than scanned from a local static/audio/ folder — see
-// $lib/data/playlist.ts and docs/deployment.md's audio-files section for why
-// (tracks live only on the droplet now, never committed to this repo). Fails
-// soft: a fetch error just means an empty playlist (player hides itself),
-// not a broken page — this is decoration, not core content.
 export async function fetchPlaylist(fetchFn: typeof fetch): Promise<Track[]> {
 	try {
 		const response = await fetchFn(`${API_URL}/audio`);
@@ -124,6 +122,24 @@ export async function fetchPlaylist(fetchFn: typeof fetch): Promise<Track[]> {
 		return await response.json();
 	} catch {
 		return [];
+	}
+}
+
+const DEFAULT_SETTINGS: SiteSettings = {
+	siteTitle: 'Digital Dust Library',
+	tagline: '',
+	defaultMetaDescription: '',
+	linkedInUrl: '',
+	xUrl: ''
+};
+
+export async function fetchSettings(fetchFn: typeof fetch): Promise<SiteSettings> {
+	try {
+		const response = await fetchFn(`${API_URL}/settings`);
+		if (!response.ok) return DEFAULT_SETTINGS;
+		return await response.json();
+	} catch {
+		return DEFAULT_SETTINGS;
 	}
 }
 

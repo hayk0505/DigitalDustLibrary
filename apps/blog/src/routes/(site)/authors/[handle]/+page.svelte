@@ -11,7 +11,7 @@
 </script>
 
 <SeoHead
-	title="{data.author.name} — Digital Dust Library"
+	title={data.author.name}
 	description="Posts by {data.author.name} on Digital Dust Library"
 	url={page.url.href}
 />

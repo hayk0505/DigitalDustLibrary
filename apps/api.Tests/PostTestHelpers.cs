@@ -8,17 +8,9 @@ namespace DigitalDustLibrary.Api.Tests;
 
 public static class PostTestHelpers
 {
-    // Direct DB insert so tests can create a post owned by an arbitrary
-    // author — the only way to create a post through the API creates it
-    // owned by the caller, which isn't enough for cross-author 403 tests.
-    // categoryId is optional: when omitted, a fresh throwaway category is
-    // created for this one post (matching the fresh-slug-per-call pattern
-    // already used below) — CategoryId is required on Post now, and no
-    // caller of this helper actually cares which category, only that one
-    // exists.
     public static async Task<Post> CreatePostAsync(
         ApiFactory factory, Guid authorId, string title, PostStatus status = PostStatus.Draft,
-        Guid? categoryId = null, string? excerpt = null, string? bodyHtml = null)
+        Guid? categoryId = null, string? excerpt = null, string? bodyHtml = null, PostFormat? format = null)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -27,7 +19,7 @@ public static class PostTestHelpers
         var post = new Post
         {
             Title = title, Slug = slug, AuthorId = authorId, Status = status, CategoryId = resolvedCategoryId,
-            Excerpt = excerpt ?? "", BodyHtml = bodyHtml ?? "",
+            Excerpt = excerpt ?? "", BodyHtml = bodyHtml ?? "", Format = format ?? PostFormat.Shelf,
         };
         db.Posts.Add(post);
         await db.SaveChangesAsync();

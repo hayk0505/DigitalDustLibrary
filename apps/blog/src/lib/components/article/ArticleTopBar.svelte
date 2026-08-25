@@ -3,6 +3,7 @@
 	import ReadingProgressBar from './ReadingProgressBar.svelte';
 	import ThemeToggleButton from '$lib/components/layout/ThemeToggleButton.svelte';
 	import MobileMenuButton from '$lib/components/layout/MobileMenuButton.svelte';
+	import SavedArticlesLink from '$lib/components/layout/SavedArticlesLink.svelte';
 	import SearchControl from '$lib/components/search/SearchControl.svelte';
 	import logo from '$lib/assets/logo.svg';
 	import { readerMode } from '$lib/state/reader-mode.svelte';
@@ -15,9 +16,9 @@
 				<a href="/" class="flex items-center gap-3 leading-tight">
 					<img src={logo} alt="" class="h-8 w-8" />
 				</a>
-				<nav class="hidden items-center gap-4 font-label text-xs tracking-widest uppercase md:flex">
+				<!-- <nav class="hidden items-center gap-4 font-label text-xs tracking-widest uppercase md:flex">
 					<a href="/become-an-author" class="underline hover:text-accent-red">Become an author</a>
-				</nav>
+				</nav> -->
 			</div>
 			<div class="flex items-center gap-4">
 				<button
@@ -28,8 +29,9 @@
 					<BookOpen class="h-3.5 w-3.5" aria-hidden="true" />
 					Reader Mode
 				</button>
-				<ThemeToggleButton class="hidden text-ink/70 hover:text-ink md:flex" />
 				<SearchControl />
+				<ThemeToggleButton class="hidden text-ink/70 hover:text-ink md:flex" />
+				<SavedArticlesLink class="hidden text-ink/70 hover:text-ink md:flex" />
 				<button
 					type="button"
 					onclick={() => readerMode.enter()}
@@ -40,7 +42,8 @@
 					<BookOpen class="h-5 w-5" />
 				</button>
 				<ThemeToggleButton class="flex text-ink/70 hover:text-ink md:hidden" iconClass="h-5 w-5" />
-				<MobileMenuButton class="text-ink/70 hover:text-ink md:hidden" />
+				<SavedArticlesLink class="flex text-ink/70 hover:text-ink md:hidden" iconClass="h-5 w-5" />
+				<!-- <MobileMenuButton class="text-ink/70 hover:text-ink md:hidden" /> -->
 			</div>
 		</div>
 	</div>

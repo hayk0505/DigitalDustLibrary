@@ -153,7 +153,7 @@
 				bind:this={desktopTriggerEl}
 				onclick={openSearch}
 				aria-label="Search"
-				class="search-btn flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+				class="search-btn flex h-9 w-4 shrink-0 items-center rounded-full"
 				transition:fade={{ duration: 120 }}
 			>
 				<Search class="h-4 w-4" aria-hidden="true" />
@@ -208,7 +208,7 @@
 		aria-label="Search"
 		aria-haspopup="dialog"
 		aria-expanded={open}
-		class="search-btn flex h-[38px] w-[38px] items-center justify-center rounded-full"
+		class="search-btn flex h-[30px] w-4 items-center rounded-full"
 	>
 		<Search class="h-4 w-4" aria-hidden="true" />
 	</button>

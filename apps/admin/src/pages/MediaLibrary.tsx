@@ -1,8 +1,11 @@
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { useMedia, useUploadMedia } from '@/lib/api/media'
+import { Trash2 } from 'lucide-react'
+import { useMedia, useUploadMedia, useDeleteMedia } from '@/lib/api/media'
+import { useAuth } from '@/hooks/useAuth'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import type { MediaAsset } from '@/lib/types'
 
 function readFileAsDataUrl(file: File): Promise<string> {
@@ -24,10 +27,20 @@ function readImageDimensions(dataUrl: string): Promise<{ width: number; height: 
 }
 
 export function MediaLibrary({ onSelect }: { onSelect?: (asset: MediaAsset) => void }) {
+  const { user } = useAuth()
+  const canDelete = user?.role === 'editor' || user?.role === 'owner'
   const [search, setSearch] = useState('')
   const { data: assets = [], isLoading } = useMedia(search)
   const upload = useUploadMedia()
+  const remove = useDeleteMedia()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [pendingDelete, setPendingDelete] = useState<MediaAsset | null>(null)
+
+  function confirmDelete() {
+    if (!pendingDelete) return
+    remove.mutate(pendingDelete.id)
+    setPendingDelete(null)
+  }
 
   function handleUploadClick() {
     fileInputRef.current?.click()
@@ -83,13 +96,42 @@ export function MediaLibrary({ onSelect }: { onSelect?: (asset: MediaAsset) => v
                 {content}
               </button>
             ) : (
-              <div key={asset.id} className="rounded-2xl border border-border bg-card p-3">
+              <div key={asset.id} className="relative rounded-2xl border border-border bg-card p-3">
+                {canDelete && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon-sm"
+                    className="absolute top-2 right-2"
+                    disabled={remove.isPending}
+                    onClick={() => setPendingDelete(asset)}
+                    aria-label={`Delete ${asset.filename}`}
+                    title="Delete"
+                  >
+                    <Trash2 />
+                  </Button>
+                )}
                 {content}
               </div>
             )
           })}
         </div>
       )}
+
+      <Dialog open={pendingDelete !== null} onOpenChange={(open) => !open && setPendingDelete(null)}>
+        <DialogContent>
+          <DialogTitle>Delete asset</DialogTitle>
+          <DialogDescription>
+            Delete "{pendingDelete?.filename}"? This cannot be undone.
+          </DialogDescription>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setPendingDelete(null)}>Cancel</Button>
+            <Button variant="destructive" disabled={remove.isPending} onClick={confirmDelete}>
+              {remove.isPending ? 'Deleting…' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

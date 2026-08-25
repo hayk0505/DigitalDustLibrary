@@ -1,11 +1,11 @@
-import { fetchPosts } from '$lib/api';
+import { fetchPosts, fetchSettings } from '$lib/api';
 import { escapeXml } from '$lib/utils/xml';
 import type { RequestHandler } from './$types';
 
 const MAX_ITEMS = 50;
 
 export const GET: RequestHandler = async ({ fetch, url }) => {
-	const posts = await fetchPosts(fetch);
+	const [posts, settings] = await Promise.all([fetchPosts(fetch), fetchSettings(fetch)]);
 	const recent = posts.slice(0, MAX_ITEMS);
 
 	const items = recent
@@ -25,9 +25,9 @@ export const GET: RequestHandler = async ({ fetch, url }) => {
 	const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
 <channel>
-	<title>Digital Dust Library — Field notes on what the internet leaves behind</title>
+	<title>${escapeXml(settings.siteTitle)} — ${escapeXml(settings.tagline)}</title>
 	<link>${url.origin}</link>
-	<description>Field notes on what the internet leaves behind</description>${items}
+	<description>${escapeXml(settings.tagline)}</description>${items}
 </channel>
 </rss>`;
 
