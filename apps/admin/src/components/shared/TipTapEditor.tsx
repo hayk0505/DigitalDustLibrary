@@ -1,9 +1,12 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import { cn } from '@/lib/utils'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { MediaLibrary } from '@/pages/MediaLibrary'
+import type { MediaAsset } from '@/lib/types'
 
 interface ToolbarButtonConfig {
   label: string
@@ -28,18 +31,11 @@ const TOOLBAR_BUTTONS: ToolbarButtonConfig[] = [
       if (url) e.chain().focus().setLink({ href: url }).run()
     },
   },
-  {
-    label: 'Image',
-    isActive: () => false,
-    run: (e) => {
-      const url = window.prompt('Image URL')
-      if (url) e.chain().focus().setImage({ src: url }).run()
-    },
-  },
   { label: 'Code', isActive: (e) => e.isActive('codeBlock'), run: (e) => e.chain().focus().toggleCodeBlock().run() },
 ]
 
 export function TipTapEditor({ value, onChange }: { value: string; onChange: (html: string) => void }) {
+  const [imagePickerOpen, setImagePickerOpen] = useState(false)
   const editor = useEditor({
     extensions: [StarterKit, Link.configure({ openOnClick: false }), Image],
     content: value,
@@ -66,6 +62,11 @@ export function TipTapEditor({ value, onChange }: { value: string; onChange: (ht
 
   if (!editor) return null
 
+  function insertImage(asset: MediaAsset) {
+    editor.chain().focus().setImage({ src: asset.url, alt: asset.filename }).run()
+    setImagePickerOpen(false)
+  }
+
   return (
     <div className="rounded-2xl border border-border bg-card">
       <div className="flex flex-wrap gap-1 border-b border-border p-2">
@@ -79,8 +80,21 @@ export function TipTapEditor({ value, onChange }: { value: string; onChange: (ht
             {button.label}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => setImagePickerOpen(true)}
+          className={cn('rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground', editor.isActive('image') && 'bg-accent text-foreground')}
+        >
+          Image
+        </button>
       </div>
       <EditorContent editor={editor} />
+      <Dialog open={imagePickerOpen} onOpenChange={setImagePickerOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogTitle>Insert image</DialogTitle>
+          <MediaLibrary onSelect={insertImage} />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
