@@ -14,7 +14,7 @@
 	type="button"
 	onclick={() => (open = true)}
 	aria-label="Open menu"
-	class={buttonClass}
+	class="cursor-pointer {buttonClass}"
 >
 	<Menu class={iconClass} />
 </button>

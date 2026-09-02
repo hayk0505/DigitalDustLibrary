@@ -44,7 +44,7 @@
 						disabled={catPage === 0}
 						onclick={() => goToPage(catPage - 1)}
 						aria-label="Previous categories"
-						class="border border-ink/20 px-2 py-1.5 hover:border-ink/40 disabled:opacity-30"
+						class="cursor-pointer border border-ink/20 px-2 py-1.5 hover:border-ink/40 disabled:cursor-not-allowed disabled:opacity-30"
 					>
 						<ChevronLeft class="h-4 w-4" aria-hidden="true" />
 					</button>
@@ -54,7 +54,7 @@
 						disabled={catPage >= totalCatPages - 1}
 						onclick={() => goToPage(catPage + 1)}
 						aria-label="Next categories"
-						class="border border-ink/20 px-2 py-1.5 hover:border-ink/40 disabled:opacity-30"
+						class="cursor-pointer border border-ink/20 px-2 py-1.5 hover:border-ink/40 disabled:cursor-not-allowed disabled:opacity-30"
 					>
 						<ChevronRight class="h-4 w-4" aria-hidden="true" />
 					</button>

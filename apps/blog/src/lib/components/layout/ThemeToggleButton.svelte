@@ -13,7 +13,7 @@
 	onclick={() => themeState.toggle()}
 	aria-label={themeState.current === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
 	title="Theme"
-	class={buttonClass}
+	class="cursor-pointer {buttonClass}"
 >
 	{#if themeState.current === 'dark'}
 		<Moon class={iconClass} aria-hidden="true" />

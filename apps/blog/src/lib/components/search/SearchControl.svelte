@@ -236,7 +236,7 @@
 						type="button"
 						onclick={() => (query = '')}
 						aria-label="Clear search"
-						class="text-ink/40 hover:text-ink"
+						class="cursor-pointer text-ink/40 hover:text-ink"
 					>
 						<X class="h-3.5 w-3.5" aria-hidden="true" />
 					</button>

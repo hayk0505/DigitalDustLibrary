@@ -11,6 +11,7 @@ import { TipTapEditor } from '@/components/shared/TipTapEditor'
 import { TagInput, type TagOption } from '@/components/shared/TagInput'
 import { PostContentPreview } from '@/components/shared/PostContentPreview'
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay'
+import { ContributorGuidelinesPanel } from '@/components/shared/ContributorGuidelinesPanel'
 import { CategoryTag } from '@/components/shared/CategoryTag'
 import { Avatar } from '@/components/shared/Avatar'
 import { useTags, useCreateTag } from '@/lib/api/tags'
@@ -56,6 +57,7 @@ export function PostEditor({ postId }: { postId?: string }) {
   const [isResolvingTags, setIsResolvingTags] = useState(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [previewSnapshot, setPreviewSnapshot] = useState<PostForm | null>(null)
+  const [guidelinesOpen, setGuidelinesOpen] = useState(false)
 
   const { register, handleSubmit, control, reset, getValues, setValue } = useForm<PostForm>({
     resolver: zodResolver(postSchema),
@@ -145,6 +147,14 @@ export function PostEditor({ postId }: { postId?: string }) {
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl text-foreground">{existing ? 'Edit post' : 'New post'}</h1>
         <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="border-accent-text text-accent-text hover:bg-accent hover:text-accent-text"
+            onClick={() => setGuidelinesOpen(true)}
+          >
+            Guidelines
+          </Button>
           <Button type="button" variant="secondary" onClick={cancel}>
             Cancel
           </Button>
@@ -207,6 +217,13 @@ export function PostEditor({ postId }: { postId?: string }) {
               />
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={guidelinesOpen} onOpenChange={setGuidelinesOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogTitle>Digital Dust Library — Contributor Guidelines</DialogTitle>
+          <ContributorGuidelinesPanel categories={assignableCategories} />
         </DialogContent>
       </Dialog>
 

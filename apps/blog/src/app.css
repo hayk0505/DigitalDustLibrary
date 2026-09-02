@@ -660,6 +660,7 @@ body {
 .search-btn {
 	background: transparent;
 	color: #716c62;
+	cursor: pointer;
 	transition: color 0.2s ease;
 }
 .search-btn:hover {

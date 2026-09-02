@@ -24,7 +24,7 @@
 				<button
 					type="button"
 					onclick={() => readerMode.enter()}
-					class="hidden items-center gap-1.5 font-label text-xs tracking-widest uppercase hover:text-accent-red md:flex"
+					class="hidden cursor-pointer items-center gap-1.5 font-label text-xs tracking-widest uppercase hover:text-accent-red md:flex"
 				>
 					<BookOpen class="h-3.5 w-3.5" aria-hidden="true" />
 					Reader Mode
@@ -37,7 +37,7 @@
 					onclick={() => readerMode.enter()}
 					aria-label="Reader Mode"
 					title="Reader Mode"
-					class="flex text-ink/70 hover:text-ink md:hidden"
+					class="flex cursor-pointer text-ink/70 hover:text-ink md:hidden"
 				>
 					<BookOpen class="h-5 w-5" />
 				</button>
