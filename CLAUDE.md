@@ -186,6 +186,39 @@ these as pinned forever:
   (hidden `<input type="file">`, `FileReader` + `Image.onload` for real
   dimensions) — previously "Upload new" just re-uploaded a hardcoded
   placeholder SVG rectangle every click, with no file selection UI at all.
+  **Image transcoding (2026-09-02)**: `POST /api/media` now runs uploads
+  through `SkiaSharp` before writing to disk. png/jpeg/webp are downscaled
+  (only if over 1200px on the longest edge — never upscaled) and re-encoded
+  as WebP (quality 80); svg/gif are stored byte-for-byte untouched (SVG has
+  nothing to rasterize, GIF is usually animated and a naive re-encode would
+  flatten it to one frame). `MediaAsset.Width`/`Height` are now computed
+  from the actual post-resize bitmap for the transcoded path, not trusted
+  from the client's pre-upload `CreateMediaRequest` values (which go stale
+  the moment a resize happens). Chosen over `SixLabors.ImageSharp` (tried
+  first, then swapped out) specifically to avoid ImageSharp 4.x's license —
+  SkiaSharp is plain MIT, no revenue threshold, no license key, ever.
+  **Gotcha found while building this (applies to either library)**:
+  ImageSharp's `ResizeMode.Max` and SkiaSharp's `SKBitmap.Resize` both fit
+  the image *within* the given box in either direction — they'll scale a
+  small image *up* to fill the box just as readily as they shrink a large
+  one down, so "never upscale" needs an explicit `if (width > cap || height
+  > cap)` guard before calling resize at all, or a 1×1 test image silently
+  comes back as 1200×1200 (caught by `MediaUploadTests`). **Deployment
+  gotcha specific to SkiaSharp**: the base `SkiaSharp` NuGet package does
+  *not* pull in Linux native binaries by default (only Windows/macOS) —
+  `apps/api.csproj` and `apps/api.Tests.csproj` both also reference
+  `SkiaSharp.NativeAssets.Linux.NoDependencies` explicitly, which is what
+  makes `libSkiaSharp.so` actually present in the Linux container this API
+  deploys to (see `Dockerfile.prod`, Debian-based `aspnet:10.0`, not
+  Alpine). The `.NoDependencies` variant specifically (not the plain
+  `SkiaSharp.NativeAssets.Linux` package) so it doesn't need `libfontconfig`/
+  `libX11` installed in the container — this API only ever decodes/resizes/
+  re-encodes bitmaps, never renders text, so the no-dependencies build is
+  sufficient and avoids an `apt-get install` in the Dockerfile. Omitting
+  this package would build and test fine locally on Windows (which resolves
+  Win32 native assets from the base package) and only fail at runtime in
+  production with a `DllNotFoundException` for `libSkiaSharp` — worth
+  remembering if SkiaSharp usage ever expands elsewhere in this API.
 
 **Blog frontend (public-facing, `apps/blog`)**
 - Svelte 5 (runes) + SvelteKit 2.x

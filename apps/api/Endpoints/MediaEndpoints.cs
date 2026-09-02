@@ -4,12 +4,19 @@ using DigitalDustLibrary.Api.Contracts;
 using DigitalDustLibrary.Api.Data;
 using DigitalDustLibrary.Api.Models;
 using Microsoft.EntityFrameworkCore;
+using SkiaSharp;
 
 namespace DigitalDustLibrary.Api.Endpoints;
 
 public static class MediaEndpoints
 {
     private const long MaxUploadBytes = 8 * 1024 * 1024;
+
+    // Uploads land in a narrow article column, never anywhere near their
+    // original camera/screenshot resolution — no point storing multi-
+    // thousand-px originals. Longest edge only, aspect ratio preserved;
+    // never upscales (see the explicit size check before resizing below).
+    private const int MaxDimension = 1200;
 
     private static readonly Dictionary<string, string> AllowedImageExtensions = new()
     {
@@ -19,6 +26,12 @@ public static class MediaEndpoints
         ["image/gif"] = "gif",
         ["image/svg+xml"] = "svg",
     };
+
+    // SVG is a vector format with nothing to rasterize, and GIF uploads are
+    // typically animated — re-encoding either as WebP would either be
+    // pointless (SVG) or silently flatten the animation to one frame (GIF).
+    // Both are stored byte-for-byte as uploaded instead.
+    private static readonly HashSet<string> SkipTranscodeExtensions = ["svg", "gif"];
 
     private static readonly Regex DataUrlPattern =
         new(@"^data:(?<mime>image/[\w.+-]+);base64,(?<data>.+)$", RegexOptions.Singleline | RegexOptions.Compiled);
@@ -66,6 +79,36 @@ public static class MediaEndpoints
                 return Results.Json(new { message = "Image exceeds the 8 MB upload limit" }, statusCode: 400);
             }
 
+            var width = request.Width;
+            var height = request.Height;
+
+            if (!SkipTranscodeExtensions.Contains(extension))
+            {
+                using var original = SKBitmap.Decode(bytes);
+
+                // Only resize when actually over the cap — Resize() targets
+                // the given box exactly, it won't skip a no-op resize for us.
+                SKBitmap? downscaled = null;
+                var final = original;
+                if (original.Width > MaxDimension || original.Height > MaxDimension)
+                {
+                    var scale = (float)MaxDimension / Math.Max(original.Width, original.Height);
+                    var targetSize = new SKSizeI(
+                        Math.Max(1, (int)Math.Round(original.Width * scale)),
+                        Math.Max(1, (int)Math.Round(original.Height * scale)));
+                    downscaled = original.Resize(targetSize, new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None));
+                    final = downscaled ?? original;
+                }
+
+                using var image = SKImage.FromBitmap(final);
+                using var encoded = image.Encode(SKEncodedImageFormat.Webp, 80);
+                bytes = encoded.ToArray();
+                extension = "webp";
+                width = final.Width;
+                height = final.Height;
+                downscaled?.Dispose();
+            }
+
             var uploadsDir = Path.Combine(env.ContentRootPath, "wwwroot", "uploads");
 
             var storedFilename = $"{Guid.CreateVersion7()}.{extension}";
@@ -78,8 +121,8 @@ public static class MediaEndpoints
             {
                 Filename = request.Filename,
                 Tag = request.Tag,
-                Width = request.Width,
-                Height = request.Height,
+                Width = width,
+                Height = height,
                 Url = $"{configuration["ApiPublicOrigin"]}/uploads/{storedFilename}",
                 UploadedById = userId,
             };

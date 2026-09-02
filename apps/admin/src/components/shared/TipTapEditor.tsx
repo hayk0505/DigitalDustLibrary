@@ -3,6 +3,8 @@ import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
+import Youtube from '@tiptap/extension-youtube'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { MediaLibrary } from '@/pages/MediaLibrary'
@@ -31,13 +33,23 @@ const TOOLBAR_BUTTONS: ToolbarButtonConfig[] = [
       if (url) e.chain().focus().setLink({ href: url }).run()
     },
   },
+  {
+    label: 'YouTube',
+    isActive: (e) => e.isActive('youtube'),
+    run: (e) => {
+      const url = window.prompt('YouTube URL')
+      if (!url) return
+      const inserted = e.chain().focus().setYoutubeVideo({ src: url }).run()
+      if (!inserted) toast.error('Could not recognize that as a YouTube URL')
+    },
+  },
   { label: 'Code', isActive: (e) => e.isActive('codeBlock'), run: (e) => e.chain().focus().toggleCodeBlock().run() },
 ]
 
 export function TipTapEditor({ value, onChange }: { value: string; onChange: (html: string) => void }) {
   const [imagePickerOpen, setImagePickerOpen] = useState(false)
   const editor = useEditor({
-    extensions: [StarterKit, Link.configure({ openOnClick: false }), Image],
+    extensions: [StarterKit, Link.configure({ openOnClick: false }), Image, Youtube.configure({ nocookie: true })],
     content: value,
     editorProps: {
       attributes: {
