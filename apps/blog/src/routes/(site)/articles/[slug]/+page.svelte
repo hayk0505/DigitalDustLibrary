@@ -118,11 +118,9 @@
 		<div class="mt-4">
 			<ArticleMeta post={data.post} />
 		</div>
-		{#if data.post.format !== 'mini'}
-			<div class="mt-8">
-				<FeaturedImage url={data.post.featuredImageUrl} />
-			</div>
-		{/if}
+		<div class="mt-8">
+			<FeaturedImage url={data.post.featuredImageUrl} />
+		</div>
 		<ArticleBody html={data.post.bodyHtml} />
 	</article>
 
