@@ -49,6 +49,7 @@ public class ProductionLikeApiFactory : WebApplicationFactory<Program>, IAsyncLi
                 // account (see DbSeeder.BootstrapOwnerAsync) — this is the
                 // only account-creation path that runs outside Development,
                 // so it's what this test logs in with via AuthHelper.
+                ["Bootstrap:OwnerName"] = "Test Owner",
                 ["Bootstrap:OwnerEmail"] = AuthHelper.OwnerEmail,
                 ["Bootstrap:OwnerPassword"] = "password",
             });

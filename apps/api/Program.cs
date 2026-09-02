@@ -262,7 +262,7 @@ if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DbSeeder.BootstrapOwnerAsync(db, app.Configuration["Bootstrap:OwnerEmail"], app.Configuration["Bootstrap:OwnerPassword"]);
+    await DbSeeder.BootstrapOwnerAsync(db, app.Configuration["Bootstrap:OwnerName"], app.Configuration["Bootstrap:OwnerEmail"], app.Configuration["Bootstrap:OwnerPassword"]);
     await DbSeeder.EnsureSiteSettingsAsync(db);
 }
 

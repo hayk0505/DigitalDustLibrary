@@ -69,7 +69,7 @@ export function TipTapEditor({ value, onChange }: { value: string; onChange: (ht
 
   return (
     <div className="rounded-2xl border border-border bg-card">
-      <div className="flex flex-wrap gap-1 border-b border-border p-2">
+      <div className="sticky top-0 z-10 flex flex-wrap gap-1 rounded-t-2xl border-b border-border bg-card p-2">
         {TOOLBAR_BUTTONS.map((button) => (
           <button
             key={button.label}
