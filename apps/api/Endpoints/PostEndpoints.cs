@@ -76,6 +76,7 @@ public static class PostEndpoints
                 Excerpt = request.Excerpt ?? "",
                 SeoTitle = request.SeoTitle ?? "",
                 MetaDescription = request.MetaDescription ?? "",
+                Source = request.Source,
                 FeaturedImageId = request.FeaturedImageId,
                 CategoryId = categoryId,
                 Format = request.Format ?? PostFormat.Shelf,
@@ -130,6 +131,7 @@ public static class PostEndpoints
             if (request.Excerpt is not null) post.Excerpt = request.Excerpt;
             if (request.SeoTitle is not null) post.SeoTitle = request.SeoTitle;
             if (request.MetaDescription is not null) post.MetaDescription = request.MetaDescription;
+            if (request.Source is not null) post.Source = request.Source;
             if (request.FeaturedImageId is not null) post.FeaturedImageId = request.FeaturedImageId;
             if (request.CategoryId is not null)
             {

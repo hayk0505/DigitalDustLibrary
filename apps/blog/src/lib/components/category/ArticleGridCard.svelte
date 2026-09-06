@@ -48,6 +48,6 @@
 			<Avatar name={post.authorName} colorClass={getAvatarColor(post.authorHandle)} size="sm" />
 			<span class="truncate font-label text-xs text-ink/70">{post.authorName}</span>
 		</div>
-		<span class="shrink-0 font-label text-xs text-ink/50">{post.readingMinutes} min</span>
+		<span class="shrink-0 font-label text-xs text-ink/65">{post.readingMinutes} min</span>
 	</div>
 </a>

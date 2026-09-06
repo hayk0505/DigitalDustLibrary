@@ -14,7 +14,7 @@
 			<CategoryDot color={accentColor} size="md" />
 			Column {String(category.position).padStart(2, '0')}
 		</span>
-		<span class="text-ink/50">{postCount} posts</span>
+		<span class="text-ink/65">{postCount} posts</span>
 	</div>
 	<h2 class="mt-1 font-label text-2xl uppercase">
 		<a href="/category/{category.slug}" class="hover:text-accent-red">{category.name}</a>

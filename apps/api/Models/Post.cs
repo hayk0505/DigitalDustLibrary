@@ -9,6 +9,7 @@ public class Post
     public string Excerpt { get; set; } = "";
     public string SeoTitle { get; set; } = "";
     public string MetaDescription { get; set; } = "";
+    public string? Source { get; set; }
     public Guid? FeaturedImageId { get; set; }
     public MediaAsset? FeaturedImage { get; set; }
     public PostStatus Status { get; set; } = PostStatus.Draft;

@@ -5,6 +5,7 @@
 		getCategoryTabColor,
 		getCategoryTextColor
 	} from '$lib/utils/category-visuals';
+	import { formatDispatchDate } from '$lib/utils/format-date';
 	import CategoryDot from '../shared/CategoryDot.svelte';
 
 	let { post }: { post: Post } = $props();
@@ -40,8 +41,8 @@
 			>
 		</div>
 		<p class="text-sm text-ink/70">{post.excerpt}</p>
-		<div class="mt-1 flex items-center justify-between gap-2 font-label text-xs text-ink/50">
-			<span>{post.authorName}</span>
+		<div class="mt-1 flex items-center justify-between gap-2 font-label text-xs text-ink/65">
+			<span>{post.authorName} · {formatDispatchDate(post.publishedAt)}</span>
 			<span>{post.readingMinutes} min</span>
 		</div>
 	</div>

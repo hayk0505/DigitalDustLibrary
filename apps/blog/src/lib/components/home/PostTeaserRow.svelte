@@ -55,7 +55,7 @@
 		{/if}
 		<div class="mt-3 flex items-center justify-between gap-2">
 			<AuthorByline author={{ name: post.authorName, handle: post.authorHandle }} />
-			<span class="shrink-0 font-label text-xs text-ink/50">{post.readingMinutes} min</span>
+			<span class="shrink-0 font-label text-xs text-ink/65">{post.readingMinutes} min</span>
 		</div>
 		{#if progress !== null}
 			<div class="mt-3">

@@ -84,7 +84,7 @@
 
 {#if columns.length > 0}
 	<div class="md:hidden">
-		<p class="font-label text-xs tracking-widest text-ink/50 uppercase">Slide to browse columns</p>
+		<p class="font-label text-xs tracking-widest text-ink/65 uppercase">Slide to browse columns</p>
 
 		<div
 			bind:this={scrollerEl}
@@ -104,7 +104,7 @@
 				>
 					<div class="flex items-start justify-between">
 						<Icon class="h-6 w-6" aria-hidden="true" />
-						<span class="font-label text-[11px] tracking-widest uppercase opacity-70">
+						<span class="font-label text-[11px] tracking-widest uppercase opacity-90">
 							{column.posts.length}
 							{column.posts.length === 1 ? 'post' : 'posts'}
 						</span>
@@ -127,7 +127,7 @@
 
 		{#if activeColumn}
 			<div class="mt-2">
-				<p class="font-label text-xs tracking-widest text-ink/50 uppercase">
+				<p class="font-label text-xs tracking-widest text-ink/65 uppercase">
 					Latest from this column
 				</p>
 				<div class="mt-3">

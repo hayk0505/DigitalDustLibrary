@@ -12,7 +12,7 @@
 		<div class="flex items-center gap-2 font-label text-xs tracking-widest uppercase">
 			<span class="inline-block h-2.5 w-2.5 rounded-full bg-ink/70" aria-hidden="true"></span>
 			<span class="text-lg tracking-normal normal-case">The Shelf</span>
-			<span class="text-ink/50 normal-case"
+			<span class="text-ink/65 normal-case"
 				>Long-form writing, essays and pieces worth returning to.</span
 			>
 		</div>

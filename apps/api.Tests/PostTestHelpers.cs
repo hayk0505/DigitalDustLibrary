@@ -10,7 +10,8 @@ public static class PostTestHelpers
 {
     public static async Task<Post> CreatePostAsync(
         ApiFactory factory, Guid authorId, string title, PostStatus status = PostStatus.Draft,
-        Guid? categoryId = null, string? excerpt = null, string? bodyHtml = null, PostFormat? format = null)
+        Guid? categoryId = null, string? excerpt = null, string? bodyHtml = null, PostFormat? format = null,
+        string? source = null)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -20,6 +21,7 @@ public static class PostTestHelpers
         {
             Title = title, Slug = slug, AuthorId = authorId, Status = status, CategoryId = resolvedCategoryId,
             Excerpt = excerpt ?? "", BodyHtml = bodyHtml ?? "", Format = format ?? PostFormat.Shelf,
+            Source = source,
         };
         db.Posts.Add(post);
         await db.SaveChangesAsync();

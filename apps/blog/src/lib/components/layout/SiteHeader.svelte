@@ -4,7 +4,11 @@
 
 <header class="border-ink/10 bg-paper">
 	<div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-		<a href="/" class="flex items-center gap-3 leading-tight mr-5">
+		<a
+			href="/"
+			class="flex items-center gap-3 leading-tight mr-5"
+			aria-label="Digital Dust Library — home"
+		>
 			<img src={logo} alt="" class="h-8 w-8" />
 		</a>
 		<nav class="flex items-center gap-6 font-label text-xs tracking-widest uppercase">

@@ -17,6 +17,7 @@ public record PostDto(
     string Excerpt,
     string SeoTitle,
     string MetaDescription,
+    string? Source,
     Guid? FeaturedImageId,
     Guid CategoryId,
     string CategoryName,
@@ -45,7 +46,8 @@ public record CreatePostRequest(
     Guid? CategoryId,
     PostStatus? Status,
     List<Guid>? TagIds = null,
-    PostFormat? Format = null);
+    PostFormat? Format = null,
+    string? Source = null);
 
 public record UpdatePostRequest(
     string? Title,
@@ -57,7 +59,8 @@ public record UpdatePostRequest(
     Guid? CategoryId,
     PostStatus? Status,
     List<Guid>? TagIds = null,
-    PostFormat? Format = null);
+    PostFormat? Format = null,
+    string? Source = null);
 
 public record RequestChangesRequest(string Comment);
 
@@ -111,6 +114,7 @@ public record ActivityEventDto(Guid Id, string ActorName, string Action, DateTim
 
 public record PublicPostDto(
     string Slug, string Title, string BodyHtml, string Excerpt, string SeoTitle, string MetaDescription,
+    string? Source,
     string? FeaturedImageUrl, string CategorySlug, string CategoryName, string CategoryColor, string? CategoryFolderColor,
     List<PublicTagRefDto> Tags,
     string AuthorHandle, string AuthorName, DateTimeOffset PublishedAt, int ReadingMinutes, int DispatchNumber,
@@ -125,7 +129,7 @@ public static class Mapping
     public static UserDto ToDto(this ApplicationUser u) => new(u.Id, u.Name, u.Email, u.Role);
 
     public static PostDto ToDto(this Post p) => new(
-        p.Id, p.Title, p.Slug, p.BodyHtml, p.Excerpt, p.SeoTitle, p.MetaDescription,
+        p.Id, p.Title, p.Slug, p.BodyHtml, p.Excerpt, p.SeoTitle, p.MetaDescription, p.Source,
         p.FeaturedImageId, p.CategoryId, p.Category?.Name ?? "", p.Category?.Color ?? "", p.Category?.FolderColor,
         p.PostTags.Select(pt => new TagRefDto(pt.Tag!.Id, pt.Tag.Name, pt.Tag.Slug)).ToList(),
         p.Status, p.AuthorId, p.Author?.Name ?? "", p.UpdatedAt, p.PublishedAt,
@@ -156,7 +160,7 @@ public static class Mapping
         new(e.Id, e.Actor?.Name ?? "Deleted user", e.Action, e.CreatedAt);
 
     public static PublicPostDto ToPublicDto(this Post p, int dispatchNumber) => new(
-        p.Slug, p.Title, p.BodyHtml, p.Excerpt, p.SeoTitle, p.MetaDescription,
+        p.Slug, p.Title, p.BodyHtml, p.Excerpt, p.SeoTitle, p.MetaDescription, p.Source,
         p.FeaturedImage?.Url, p.Category?.Slug ?? "", p.Category?.Name ?? "", p.Category?.Color ?? "", p.Category?.FolderColor,
         p.PostTags.Select(pt => new PublicTagRefDto(pt.Tag!.Name, pt.Tag.Slug)).ToList(),
         p.Author?.Handle ?? "", p.Author?.Name ?? "",

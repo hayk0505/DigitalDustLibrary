@@ -203,6 +203,14 @@ app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsPath),
     RequestPath = "/uploads",
+    // Filenames are server-generated GUIDs (see MediaEndpoints.cs) — a given
+    // URL's content never changes, only a fresh upload gets a fresh URL — so
+    // caching it for a year as immutable is safe and cuts real repeat-visit
+    // weight (these are the largest assets on most pages).
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+    },
 });
 
 // Serves the sidebar turntable's tracks from wwwroot/audio — bind-mounted to
@@ -240,6 +248,14 @@ app.UseStaticFiles(new StaticFileOptions
     FileProvider = new PhysicalFileProvider(audioPath),
     RequestPath = "/audio",
     ContentTypeProvider = audioContentTypes,
+    // Unlike /uploads, these filenames are human-chosen and can be scp'd over
+    // in place (see the comment above), so no `immutable` — a day-long cache
+    // still avoids re-fetching on every page load without risking a stale
+    // track sticking around too long after a swap.
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.CacheControl = "public, max-age=86400";
+    },
 });
 
 if (app.Environment.IsDevelopment())

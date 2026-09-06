@@ -113,6 +113,37 @@ public class PublicAudioEndpointTests(ApiFactory factory)
     }
 
     [Fact]
+    public async Task GetAudioFile_HasModerateCacheControl_NotImmutable()
+    {
+        var audioDir = AudioDir(factory);
+        Directory.CreateDirectory(audioDir);
+        var suffix = TagTestHelpers.UniqueSuffix();
+        var filename = $"Artist {suffix} - Track {suffix}.mp3";
+        var filePath = Path.Combine(audioDir, filename);
+        await File.WriteAllBytesAsync(filePath, new byte[] { 9, 9, 9 });
+
+        try
+        {
+            var client = factory.CreateClient();
+            var listResponse = await client.GetAsync("/api/public/audio");
+            var tracks = await listResponse.Content.ReadFromJsonAsync<List<AudioTrack>>(AuthHelper.JsonOptions);
+            var found = tracks!.Single(t => t.Title == $"Track {suffix}");
+
+            var fileResponse = await client.GetAsync(found.Src);
+
+            // Unlike /uploads, a track's filename can be swapped for new
+            // content in place (scp'd over the same name), so this gets a
+            // short cache lifetime and no `immutable` — a full year here
+            // would risk serving stale audio long after a real swap.
+            Assert.Equal("public, max-age=86400", fileResponse.Headers.CacheControl?.ToString());
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
+    }
+
+    [Fact]
     public async Task GetAudio_IgnoresFilesWithUnsupportedExtensions()
     {
         var audioDir = AudioDir(factory);

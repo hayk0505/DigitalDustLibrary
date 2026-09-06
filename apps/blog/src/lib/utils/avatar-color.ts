@@ -1,12 +1,12 @@
 const PALETTE = [
-	'bg-amber-500',
-	'bg-rose-500',
-	'bg-emerald-500',
-	'bg-violet-500',
-	'bg-sky-500',
-	'bg-fuchsia-500',
+	'bg-amber-700',
+	'bg-rose-700',
+	'bg-emerald-700',
+	'bg-violet-600',
+	'bg-sky-700',
+	'bg-fuchsia-700',
 	'bg-blue-600',
-	'bg-teal-500'
+	'bg-teal-700'
 ];
 
 export function getAvatarColor(seed: string): string {

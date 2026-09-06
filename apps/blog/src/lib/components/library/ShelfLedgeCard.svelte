@@ -2,6 +2,7 @@
 	import type { Post } from '$lib/data';
 	import { getAvatarColor } from '$lib/utils/avatar-color';
 	import { getCategoryTabColor, getCategoryTextColor } from '$lib/utils/category-visuals';
+	import { formatDispatchDate } from '$lib/utils/format-date';
 	import Avatar from '../shared/Avatar.svelte';
 
 	let { post }: { post: Post } = $props();
@@ -22,7 +23,7 @@
 			{post.categoryName}
 			<span class="opacity-70">{String(post.dispatchNumber).padStart(2, '0')}</span>
 		</span>
-		<span class="font-label text-xs text-ink/50">{post.readingMinutes} min</span>
+		<span class="font-label text-xs text-ink/65">{post.readingMinutes} min</span>
 	</div>
 
 	{#if post.featuredImageUrl}
@@ -43,5 +44,8 @@
 	<div class="mt-3 flex items-center gap-2 border-t border-ink/10 pt-3">
 		<Avatar name={post.authorName} colorClass={getAvatarColor(post.authorHandle)} size="sm" />
 		<span class="truncate font-label text-xs text-ink/70">{post.authorName}</span>
+		<span class="ml-auto shrink-0 font-label text-xs text-ink/65"
+			>{formatDispatchDate(post.publishedAt)}</span
+		>
 	</div>
 </a>

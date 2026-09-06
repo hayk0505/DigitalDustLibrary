@@ -7,7 +7,7 @@
 </script>
 
 <div class="flex items-center gap-3 font-label text-xs tracking-widest uppercase">
-	<span class="text-ink/50">Share</span>
+	<span class="text-ink/65">Share</span>
 	<a
 		href={linkedInHref}
 		target="_blank"

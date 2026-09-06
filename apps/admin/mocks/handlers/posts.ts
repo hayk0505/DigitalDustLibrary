@@ -42,6 +42,7 @@ export const postHandlers = [
       excerpt: body.excerpt ?? '',
       seoTitle: body.seoTitle ?? '',
       metaDescription: body.metaDescription ?? '',
+      source: body.source ?? null,
       featuredImageId: body.featuredImageId ?? null,
       categoryId: body.categoryId ?? 'cat-tech',
       categoryName: body.categoryId ? (categories.find((c) => c.id === body.categoryId)?.name ?? '') : 'Tech',

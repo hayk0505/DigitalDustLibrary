@@ -24,6 +24,7 @@ function makePost(overrides: Partial<Post>): Post {
     excerpt: '',
     seoTitle: '',
     metaDescription: '',
+    source: null,
     featuredImageId: null,
     categoryId: 'cat-tech',
     categoryName: 'Tech',

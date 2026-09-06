@@ -50,6 +50,22 @@ public class MediaUploadTests(ApiFactory factory)
     }
 
     [Fact]
+    public async Task Get_UploadedFile_HasLongLivedImmutableCacheControl()
+    {
+        var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);
+
+        var response = await editor.PostAsJsonAsync("/api/media",
+            new CreateMediaRequest("pixel.png", OnePixelPngDataUrl, MediaTag.Inline, 1, 1), AuthHelper.JsonOptions);
+        var created = await response.Content.ReadFromJsonAsync<MediaAssetDto>(AuthHelper.JsonOptions);
+
+        // Filenames here are server-generated GUIDs — a URL's content never
+        // changes, so browsers/CDNs can cache it forever.
+        using var anonymousClient = factory.CreateClient();
+        var fileResponse = await anonymousClient.GetAsync(created!.Url);
+        Assert.Equal("public, max-age=31536000, immutable", fileResponse.Headers.CacheControl?.ToString());
+    }
+
+    [Fact]
     public async Task Post_OversizedDimensions_IsDownscaledToMax1200OnLongestEdge()
     {
         var editor = await AuthHelper.LoginAsAsync(factory, AuthHelper.EditorEmail);

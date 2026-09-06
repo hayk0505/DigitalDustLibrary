@@ -46,7 +46,7 @@
 					onclick={() => savedArticles.remove(post.slug)}
 					aria-label="Remove {post.title} from saved articles"
 					title="Remove from saved"
-					class="absolute top-4 right-4 rounded-full border border-ink/20 bg-paper p-1 text-ink/50 hover:border-accent-red hover:text-accent-red"
+					class="absolute top-4 right-4 rounded-full border border-ink/20 bg-paper p-1 text-ink/65 hover:border-accent-red hover:text-accent-red"
 				>
 					<X class="h-3.5 w-3.5" aria-hidden="true" />
 				</button>

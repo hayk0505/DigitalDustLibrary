@@ -26,18 +26,18 @@
 	} = $props();
 </script>
 
-<span class="font-label text-xs tracking-widest text-ink/50 uppercase">Search Library</span>
+<span class="font-label text-xs tracking-widest text-ink/65 uppercase">Search Library</span>
 
 {#if results === null}
 	{#if recentSearches.entries.length > 0}
 		<div class="mt-4">
 			<div class="flex items-center justify-between">
-				<span class="font-label text-xs tracking-widest text-ink/50 uppercase">Recent Searches</span
+				<span class="font-label text-xs tracking-widest text-ink/65 uppercase">Recent Searches</span
 				>
 				<button
 					type="button"
 					onclick={() => recentSearches.clear()}
-					class="font-label text-xs tracking-widest text-ink/50 uppercase hover:text-ink"
+					class="font-label text-xs tracking-widest text-ink/65 uppercase hover:text-ink"
 				>
 					Clear
 				</button>
@@ -56,7 +56,7 @@
 							</span>
 							{#if entry.categoryName}
 								<span
-									class="flex shrink-0 items-center gap-1.5 font-label text-[11px] tracking-widest text-ink/50 uppercase"
+									class="flex shrink-0 items-center gap-1.5 font-label text-[11px] tracking-widest text-ink/65 uppercase"
 								>
 									{#if entry.categoryColor}<CategoryDot color={entry.categoryColor} />{/if}
 									{entry.categoryName}
@@ -71,7 +71,7 @@
 
 	{#if suggested.length > 0}
 		<div class="mt-4">
-			<span class="font-label text-xs tracking-widest text-ink/50 uppercase">Suggested</span>
+			<span class="font-label text-xs tracking-widest text-ink/65 uppercase">Suggested</span>
 			{#each suggested as post, i (post.slug)}
 				<SearchResultItem
 					{post}
@@ -85,7 +85,7 @@
 	{/if}
 {:else}
 	<div class="mt-4">
-		<span class="font-label text-xs tracking-widest text-ink/50 uppercase">
+		<span class="font-label text-xs tracking-widest text-ink/65 uppercase">
 			{loading ? 'Searching…' : `Search Results (${results.length})`}
 		</span>
 		{#each results as post, i (post.slug)}

@@ -48,7 +48,7 @@
 
 		<form onsubmit={handleSubmit} class="mt-8 space-y-4">
 			<div>
-				<label for="name" class="font-label text-xs tracking-widest text-ink/50 uppercase">
+				<label for="name" class="font-label text-xs tracking-widest text-ink/65 uppercase">
 					Name
 				</label>
 				<input
@@ -61,7 +61,7 @@
 			</div>
 
 			<div>
-				<label for="email" class="font-label text-xs tracking-widest text-ink/50 uppercase">
+				<label for="email" class="font-label text-xs tracking-widest text-ink/65 uppercase">
 					Email
 				</label>
 				<input
@@ -74,7 +74,7 @@
 			</div>
 
 			<div>
-				<label for="pitch" class="font-label text-xs tracking-widest text-ink/50 uppercase">
+				<label for="pitch" class="font-label text-xs tracking-widest text-ink/65 uppercase">
 					What do you want to write about?
 				</label>
 				<textarea

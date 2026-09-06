@@ -30,6 +30,7 @@ const postSchema = z.object({
   excerpt: z.string(),
   seoTitle: z.string(),
   metaDescription: z.string(),
+  source: z.string(),
 })
 
 type PostForm = z.infer<typeof postSchema>
@@ -68,6 +69,7 @@ export function PostEditor({ postId }: { postId?: string }) {
       excerpt: existing?.excerpt ?? '',
       seoTitle: existing?.seoTitle ?? '',
       metaDescription: existing?.metaDescription ?? '',
+      source: existing?.source ?? '',
     },
   })
 
@@ -80,6 +82,7 @@ export function PostEditor({ postId }: { postId?: string }) {
         excerpt: existing.excerpt,
         seoTitle: existing.seoTitle,
         metaDescription: existing.metaDescription,
+        source: existing.source ?? '',
       })
       setBody(existing.bodyHtml)
       setFeaturedImageId(existing.featuredImageId)
@@ -284,6 +287,11 @@ export function PostEditor({ postId }: { postId?: string }) {
             <MediaLibrary onSelect={(asset) => { setFeaturedImageId(asset.id); setPickerOpen(false) }} />
           </DialogContent>
         </Dialog>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="source">Source</Label>
+        <Input id="source" placeholder="e.g. NASA press release" {...register('source')} />
       </div>
 
       <div className="space-y-2">

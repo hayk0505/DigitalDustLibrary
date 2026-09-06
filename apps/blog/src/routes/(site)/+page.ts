@@ -31,7 +31,9 @@ export const load: PageLoad = async ({ fetch, url, parent }) => {
 	return {
 		columns,
 		allColumns,
-		minis: posts.filter((post) => post.format === 'mini'),
+		catPage: clampedPage,
+		totalCatPages: totalPages,
+		minis: posts.filter((post) => post.format === 'mini').slice(0, 5),
 		shelfPosts: posts.filter((post) => post.format === 'shelf'),
 		showMinis,
 		showShelf,

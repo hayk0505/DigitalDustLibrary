@@ -120,6 +120,9 @@
 		</div>
 		<div class="mt-8">
 			<FeaturedImage url={data.post.featuredImageUrl} />
+			{#if data.post.source}
+				<p class="mt-2 font-label text-xs text-ink/65">Source: {data.post.source}</p>
+			{/if}
 		</div>
 		<ArticleBody html={data.post.bodyHtml} />
 	</article>

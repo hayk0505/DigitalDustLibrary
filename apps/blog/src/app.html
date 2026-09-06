@@ -1,7 +1,13 @@
 <!doctype html>
 <html lang="en">
 	<head>
-		<!-- Google Tag Manager. First thing in <head>, per Google's own
+		<!-- Charset must be the very first thing in <head> — the HTML spec
+		     requires it within the first 1024 bytes and browsers/Lighthouse
+		     flag it if any script/style content precedes it, so it goes
+		     ahead of the GTM snippet below despite that snippet's own
+		     "first thing in head" placement guidance. -->
+		<meta charset="utf-8" />
+		<!-- Google Tag Manager. First thing in <head> after charset, per Google's own
 		     placement guidance — before every other meta tag below. Deploys
 		     the Cloudflare Web Analytics beacon as a GTM Custom HTML tag
 		     (trigger: All Pages) rather than hardcoding it here directly,
@@ -44,7 +50,6 @@
 					localStorage.getItem('dd-blog-reader-mode') === 'on' ? 'on' : 'off';
 			})();
 		</script>
-		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />

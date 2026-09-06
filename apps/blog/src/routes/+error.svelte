@@ -9,7 +9,7 @@
 		<SiteHeader />
 
 		<div
-			class="flex items-center justify-between border-b border-ink/10 px-6 py-2.5 font-label text-[11px] tracking-widest text-ink/50 uppercase sm:px-10"
+			class="flex items-center justify-between border-b border-ink/10 px-6 py-2.5 font-label text-[11px] tracking-widest text-ink/65 uppercase sm:px-10"
 		>
 			<span>Error 404 — page not found</span>
 			<span class="hidden sm:inline">This URL has rotted away</span>
@@ -48,7 +48,7 @@
 				</div>
 
 				<div
-					class="mt-5 flex items-center justify-center gap-6 font-label text-[11px] tracking-widest text-ink/50 uppercase"
+					class="mt-5 flex items-center justify-center gap-6 font-label text-[11px] tracking-widest text-ink/65 uppercase"
 				>
 					<span class="flex items-center gap-1.5">
 						<CategoryDot color="var(--color-accent-red)" /> Tech
@@ -67,7 +67,7 @@
 	<div
 		class="flex min-h-screen flex-col items-center justify-center gap-3 bg-paper px-6 text-center"
 	>
-		<p class="font-label text-xs tracking-widest text-ink/50 uppercase">Error {page.status}</p>
+		<p class="font-label text-xs tracking-widest text-ink/65 uppercase">Error {page.status}</p>
 		<h1 class="font-display text-3xl font-bold">
 			{page.error?.message ?? 'Something went missing'}
 		</h1>

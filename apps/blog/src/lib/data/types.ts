@@ -27,6 +27,7 @@ export type Post = {
 	bodyHtml: string;
 	seoTitle: string;
 	metaDescription: string;
+	source: string | null;
 	featuredImageUrl: string | null;
 	categorySlug: string;
 	categoryName: string;

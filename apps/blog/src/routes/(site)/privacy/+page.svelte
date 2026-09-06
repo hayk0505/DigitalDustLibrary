@@ -9,9 +9,9 @@
 	url={page.url.href}
 />
 
-<div class="prose prose-neutral max-w-none">
+<div class="article-body prose prose-neutral max-w-none">
 	<h1 class="font-display">Privacy Policy — Digital Dust Library</h1>
-	<p class="text-sm text-ink/50">Last updated: September 2, 2026</p>
+	<p class="text-sm text-ink/65">Last updated: September 2, 2026</p>
 
 	<h2>What this covers</h2>
 	<p>

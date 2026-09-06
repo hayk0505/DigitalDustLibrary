@@ -8,6 +8,7 @@ type ApiPost = {
 	excerpt: string;
 	seoTitle: string;
 	metaDescription: string;
+	source: string | null;
 	featuredImageUrl: string | null;
 	categorySlug: string;
 	categoryName: string;
@@ -30,6 +31,7 @@ function toPost(api: ApiPost): Post {
 		bodyHtml: api.bodyHtml,
 		seoTitle: api.seoTitle,
 		metaDescription: api.metaDescription,
+		source: api.source,
 		featuredImageUrl: api.featuredImageUrl,
 		categorySlug: api.categorySlug,
 		categoryName: api.categoryName,

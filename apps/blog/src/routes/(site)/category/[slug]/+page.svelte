@@ -35,7 +35,7 @@
 			></span>
 			<span class="text-ink/60">Column {String(data.category.position).padStart(2, '0')}</span>
 			<span class="text-ink/30">·</span>
-			<span class="text-ink/50">
+			<span class="text-ink/65">
 				{data.categoryPosts.length}
 				{data.categoryPosts.length === 1 ? 'post' : 'posts'}
 			</span>

@@ -55,13 +55,13 @@
 		</main>
 		<footer class="dd-chrome border-t border-ink/10 px-6 py-6">
 			<div
-				class="mx-auto flex max-w-6xl flex-col gap-2 text-xs text-ink/50 sm:flex-row sm:items-center sm:justify-between"
+				class="mx-auto flex max-w-6xl flex-col gap-2 text-[10px] text-ink/65 sm:flex-row sm:items-center sm:justify-between sm:text-xs"
 			>
-				<p>
+				<p class="whitespace-nowrap">
 					© {new Date().getFullYear()}
 					{page.data.settings.siteTitle}. All rights reserved.
 				</p>
-				<p class="flex gap-4">
+				<p class="flex shrink-0 gap-4 whitespace-nowrap">
 					<a href="/about" class="hover:text-ink">About</a>
 					<a href="/privacy" class="hover:text-ink">Privacy</a>
 					<a href="/terms" class="hover:text-ink">Terms</a>

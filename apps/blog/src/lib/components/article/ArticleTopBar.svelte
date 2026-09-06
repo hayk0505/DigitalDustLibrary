@@ -13,7 +13,11 @@
 	<div class="border-b border-ink/10">
 		<div class="mx-auto flex items-center justify-between py-2">
 			<div class="flex items-center gap-4">
-				<a href="/" class="flex items-center gap-3 leading-tight">
+				<a
+					href="/"
+					class="flex items-center gap-3 leading-tight"
+					aria-label="Digital Dust Library — home"
+				>
 					<img src={logo} alt="" class="h-8 w-8" />
 				</a>
 				<!-- <nav class="hidden items-center gap-4 font-label text-xs tracking-widest uppercase md:flex">

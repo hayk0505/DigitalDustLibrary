@@ -44,7 +44,7 @@
 				<AuthorByline author={{ name: post.authorName, handle: post.authorHandle }} />
 			</div>
 		{:else}
-			<p class="mt-1 truncate font-label text-xs text-ink/50">{post.authorName}</p>
+			<p class="mt-1 truncate font-label text-xs text-ink/65">{post.authorName}</p>
 		{/if}
 	</div>
 </a>

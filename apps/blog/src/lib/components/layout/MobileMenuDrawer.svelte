@@ -30,7 +30,7 @@
 		transition:fly={{ x: 320, duration: 250, opacity: 1 }}
 	>
 		<div class="flex items-center justify-between border-b border-ink/10 px-5 py-4">
-			<span class="font-label text-xs tracking-widest text-ink/50 uppercase">Menu</span>
+			<span class="font-label text-xs tracking-widest text-ink/65 uppercase">Menu</span>
 			<button
 				type="button"
 				onclick={close}

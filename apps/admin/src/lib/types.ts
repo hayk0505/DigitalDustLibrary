@@ -25,6 +25,7 @@ export interface Post {
   excerpt: string
   seoTitle: string
   metaDescription: string
+  source: string | null
   featuredImageId: string | null
   categoryId: string
   categoryName: string

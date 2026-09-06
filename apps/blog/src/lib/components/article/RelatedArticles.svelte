@@ -7,7 +7,7 @@
 
 {#if posts.length > 0}
 	<section class="mt-4 border-t border-ink/10 pt-8">
-		<h2 class="font-label text-xs tracking-widest text-ink/50 uppercase">Related Articles</h2>
+		<h2 class="font-label text-xs tracking-widest text-ink/65 uppercase">Related Articles</h2>
 		<div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 			{#each posts as post (post.slug)}
 				{@const accentColor = post.categoryFolderColor ?? getCategoryTabColor(post.categorySlug)}
@@ -19,7 +19,7 @@
 						{post.categoryName}
 					</span>
 					<h3 class="mt-2 font-display text-base font-bold">{post.title}</h3>
-					<p class="mt-3 font-label text-xs text-ink/50">{post.readingMinutes} min read</p>
+					<p class="mt-3 font-label text-xs text-ink/65">{post.readingMinutes} min read</p>
 				</a>
 			{/each}
 		</div>
