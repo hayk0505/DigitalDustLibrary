@@ -6,8 +6,7 @@ import Image from '@tiptap/extension-image'
 import Youtube from '@tiptap/extension-youtube'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { MediaLibrary } from '@/pages/MediaLibrary'
+import { MediaPickerDialog } from '@/components/shared/MediaPickerDialog'
 import type { MediaAsset } from '@/lib/types'
 
 interface ToolbarButtonConfig {
@@ -74,6 +73,24 @@ export function TipTapEditor({ value, onChange }: { value: string; onChange: (ht
     setImagePickerOpen(false)
   }
 
+  // Deleting an asset from the picker only reaches here when no published
+  // post uses it, but this post's own unsaved body may still have it inline.
+  // Strip those <img> nodes so the draft doesn't keep a broken image.
+  function removeDeletedImage(asset: MediaAsset) {
+    const ranges: { from: number; to: number }[] = []
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === 'image' && node.attrs.src === asset.url) {
+        ranges.push({ from: pos, to: pos + node.nodeSize })
+      }
+    })
+    if (ranges.length === 0) return
+    const tr = editor.state.tr
+    // Back to front, so deleting one range doesn't shift the positions of
+    // the ranges still to be deleted.
+    for (const { from, to } of ranges.reverse()) tr.delete(from, to)
+    editor.view.dispatch(tr)
+  }
+
   return (
     <div className="rounded-2xl border border-border bg-card">
       <div className="sticky top-0 z-10 flex flex-wrap gap-1 rounded-t-2xl border-b border-border bg-card p-2">
@@ -96,12 +113,13 @@ export function TipTapEditor({ value, onChange }: { value: string; onChange: (ht
         </button>
       </div>
       <EditorContent editor={editor} />
-      <Dialog open={imagePickerOpen} onOpenChange={setImagePickerOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogTitle>Insert image</DialogTitle>
-          <MediaLibrary onSelect={insertImage} />
-        </DialogContent>
-      </Dialog>
+      <MediaPickerDialog
+        open={imagePickerOpen}
+        onOpenChange={setImagePickerOpen}
+        title="Insert image"
+        onSelect={insertImage}
+        onDeleted={removeDeletedImage}
+      />
     </div>
   )
 }

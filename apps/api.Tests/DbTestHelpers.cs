@@ -47,6 +47,33 @@ public static class DbTestHelpers
         return post.Id;
     }
 
+    // Post that uses a media asset the way a real one would: as its featured
+    // image, inline in the body, or both, in whatever status the test needs.
+    public static async Task<Guid> AddPostUsingMediaAsync(
+        ApiFactory factory, Guid categoryId, PostStatus status, string title,
+        Guid? featuredImageId = null, string bodyHtml = "")
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var author = await db.Users.SingleAsync(u => u.Email == AuthHelper.AuthorEmail);
+        var slug = await SlugGenerator.GenerateUniqueAsync(title, s => db.Posts.AnyAsync(p => p.Slug == s));
+
+        var post = new Post
+        {
+            Title = title,
+            Slug = slug,
+            AuthorId = author.Id,
+            CategoryId = categoryId,
+            FeaturedImageId = featuredImageId,
+            BodyHtml = bodyHtml,
+            Status = status,
+            PublishedAt = status == PostStatus.Published ? DateTimeOffset.UtcNow : null,
+        };
+        db.Posts.Add(post);
+        await db.SaveChangesAsync();
+        return post.Id;
+    }
+
     public static async Task AddPostTagAsync(ApiFactory factory, Guid postId, Guid tagId)
     {
         using var scope = factory.Services.CreateScope();

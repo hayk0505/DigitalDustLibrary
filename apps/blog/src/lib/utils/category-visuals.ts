@@ -69,17 +69,64 @@ export function getCategoryTabColor(slug: string): string {
 	return TAB_COLORS[hashString(slug) % TAB_COLORS.length]!;
 }
 
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+
+// Highest WCAG relative luminance a folder tone can have and still carry the
+// light folder ink (#f4f1ea) at ~5:1 contrast. Shared by getCategoryTextColor
+// and getFolderTone so the two can never disagree about which side of the
+// line a color is on.
+const LIGHT_INK_MAX_LUMINANCE = 0.13;
+
+function parseHex(hex: string): [number, number, number] {
+	return [
+		parseInt(hex.slice(1, 3), 16),
+		parseInt(hex.slice(3, 5), 16),
+		parseInt(hex.slice(5, 7), 16)
+	];
+}
+
+function toHex([r, g, b]: [number, number, number]): string {
+	return '#' + [r, g, b].map((c) => Math.round(c).toString(16).padStart(2, '0')).join('');
+}
+
+function relativeLuminance(hex: string): number {
+	const [rl, gl, bl] = parseHex(hex).map((c) => {
+		const v = c / 255;
+		return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+	});
+	return 0.2126 * rl! + 0.7152 * gl! + 0.0722 * bl!;
+}
+
 // Relative-luminance contrast pick (WCAG formula) rather than a hardcoded
-// light/dark choice — folderColor is admin-settable to any hex now, not
-// just the muted hashed palette above, so a fixed text color would go
-// unreadable on some picks.
+// light/dark choice. Folder tabs go through getFolderTone first, so for them
+// this always lands on the light ink; the dark branch is kept for any caller
+// that passes a raw, unadjusted color.
 export function getCategoryTextColor(hex: string): string {
-	const r = parseInt(hex.slice(1, 3), 16) / 255;
-	const g = parseInt(hex.slice(3, 5), 16) / 255;
-	const b = parseInt(hex.slice(5, 7), 16) / 255;
-	const [rl, gl, bl] = [r, g, b].map((c) =>
-		c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
-	);
-	const luminance = 0.2126 * rl! + 0.7152 * gl! + 0.0722 * bl!;
-	return luminance > 0.13 ? '#2a281f' : '#f4f1ea';
+	return relativeLuminance(hex) > LIGHT_INK_MAX_LUMINANCE ? '#2a281f' : '#f4f1ea';
+}
+
+// Background tone for anything that puts text or an icon on a category color
+// (folder tabs, spines, badges, placeholder tiles). Folder labels are always
+// light ink by design, so an admin-set folderColor too light for that
+// (e.g. Culture's #deabbd) is darkened toward black instead of flipping the
+// label to dark text. Scaling all three sRGB channels by the same factor
+// keeps the hue; the binary search keeps the result as close to the picked
+// color as the contrast allows. Accent-only uses (dots, rules) keep the raw
+// folderColor and don't need this.
+export function getFolderTone(folderColor: string | null | undefined, slug: string): string {
+	const base = folderColor ?? getCategoryTabColor(slug);
+	if (!HEX_RE.test(base) || relativeLuminance(base) <= LIGHT_INK_MAX_LUMINANCE) return base;
+
+	const rgb = parseHex(base);
+	const scaled = (k: number) => toHex([rgb[0] * k, rgb[1] * k, rgb[2] * k]);
+	let lo = 0;
+	let hi = 1;
+	for (let i = 0; i < 16; i++) {
+		const mid = (lo + hi) / 2;
+		// Measured on the rounded hex, so the returned color is guaranteed
+		// to sit at or under the threshold, not just the unrounded math.
+		if (relativeLuminance(scaled(mid)) <= LIGHT_INK_MAX_LUMINANCE) lo = mid;
+		else hi = mid;
+	}
+	return scaled(lo);
 }

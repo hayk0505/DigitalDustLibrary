@@ -2,8 +2,8 @@
 	import type { Category } from '$lib/data';
 	import {
 		getCategoryIcon,
-		getCategoryTabColor,
-		getCategoryTextColor
+		getCategoryTextColor,
+		getFolderTone
 	} from '$lib/utils/category-visuals';
 
 	let { categories, activeSlug }: { categories: Category[]; activeSlug?: string } = $props();
@@ -12,7 +12,7 @@
 <nav class="hidden shrink-0 flex-col gap-2 md:flex md:w-56" aria-label="Library categories">
 	{#each categories as category (category.slug)}
 		{@const Icon = getCategoryIcon(category.slug)}
-		{@const tone = category.folderColor ?? getCategoryTabColor(category.slug)}
+		{@const tone = getFolderTone(category.folderColor, category.slug)}
 		{@const ink = getCategoryTextColor(tone)}
 		{@const isActive = category.slug === activeSlug}
 		<a

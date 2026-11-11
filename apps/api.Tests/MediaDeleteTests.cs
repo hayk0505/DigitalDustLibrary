@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using DigitalDustLibrary.Api.Contracts;
 using DigitalDustLibrary.Api.Models;
 
@@ -53,6 +54,75 @@ public class MediaDeleteTests(ApiFactory factory)
         var posts = await listResponse.Content.ReadFromJsonAsync<List<PostDto>>(AuthHelper.JsonOptions);
         var post = posts!.Single(p => p.Id == postId);
         Assert.Null(post.FeaturedImageId);
+    }
+
+    [Fact]
+    public async Task Delete_AssetFeaturedOnPublishedPost_Returns409AndKeepsAsset()
+    {
+        var owner = await AuthHelper.LoginAsAsync(factory, AuthHelper.OwnerEmail);
+        var asset = await UploadAsync(owner, "live-featured.png");
+        var category = await CreateThrowawayCategoryAsync(owner);
+        var title = $"Live featured {CategoryTestHelpers.UniqueSuffix()}";
+        await DbTestHelpers.AddPostUsingMediaAsync(
+            factory, category.Id, PostStatus.Published, title, featuredImageId: asset.Id);
+
+        var response = await owner.DeleteAsync($"/api/media/{asset.Id}");
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains(title, body.GetProperty("message").GetString());
+        await AssertAssetStillPresentAsync(owner, asset);
+    }
+
+    [Fact]
+    public async Task Delete_AssetInlineInPublishedPostBody_Returns409AndKeepsAsset()
+    {
+        var owner = await AuthHelper.LoginAsAsync(factory, AuthHelper.OwnerEmail);
+        var asset = await UploadAsync(owner, "live-inline.png");
+        var category = await CreateThrowawayCategoryAsync(owner);
+        var title = $"Live inline {CategoryTestHelpers.UniqueSuffix()}";
+        await DbTestHelpers.AddPostUsingMediaAsync(
+            factory, category.Id, PostStatus.Published, title,
+            bodyHtml: $"<p>Intro</p><img src=\"{asset.Url}\" alt=\"inline\">");
+
+        var response = await owner.DeleteAsync($"/api/media/{asset.Id}");
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains(title, body.GetProperty("message").GetString());
+        await AssertAssetStillPresentAsync(owner, asset);
+    }
+
+    [Fact]
+    public async Task Delete_AssetInlineInDraftBodyOnly_Returns204()
+    {
+        var owner = await AuthHelper.LoginAsAsync(factory, AuthHelper.OwnerEmail);
+        var asset = await UploadAsync(owner, "draft-inline.png");
+        var category = await CreateThrowawayCategoryAsync(owner);
+        await DbTestHelpers.AddPostUsingMediaAsync(
+            factory, category.Id, PostStatus.Draft, $"Draft inline {CategoryTestHelpers.UniqueSuffix()}",
+            bodyHtml: $"<img src=\"{asset.Url}\" alt=\"inline\">");
+
+        var response = await owner.DeleteAsync($"/api/media/{asset.Id}");
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    private static Task<CategoryDto> CreateThrowawayCategoryAsync(HttpClient client)
+    {
+        var suffix = CategoryTestHelpers.UniqueSuffix();
+        return CategoryTestHelpers.CreateCategoryAsync(client, $"Media Delete {suffix}", $"media-delete-{suffix}");
+    }
+
+    private async Task AssertAssetStillPresentAsync(HttpClient client, MediaAssetDto asset)
+    {
+        var listResponse = await client.GetAsync("/api/media");
+        var assets = await listResponse.Content.ReadFromJsonAsync<List<MediaAssetDto>>(AuthHelper.JsonOptions);
+        Assert.Contains(assets!, m => m.Id == asset.Id);
+
+        using var anonymousClient = factory.CreateClient();
+        var fileResponse = await anonymousClient.GetAsync(asset.Url);
+        Assert.Equal(HttpStatusCode.OK, fileResponse.StatusCode);
     }
 
     [Fact]

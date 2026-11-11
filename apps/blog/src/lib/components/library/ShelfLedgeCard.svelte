@@ -1,13 +1,13 @@
 <script lang="ts">
 	import type { Post } from '$lib/data';
 	import { getAvatarColor } from '$lib/utils/avatar-color';
-	import { getCategoryTabColor, getCategoryTextColor } from '$lib/utils/category-visuals';
+	import { getCategoryTextColor, getFolderTone } from '$lib/utils/category-visuals';
 	import { formatDispatchDate } from '$lib/utils/format-date';
 	import Avatar from '../shared/Avatar.svelte';
 
 	let { post }: { post: Post } = $props();
 
-	const tone = $derived(post.categoryFolderColor ?? getCategoryTabColor(post.categorySlug));
+	const tone = $derived(getFolderTone(post.categoryFolderColor, post.categorySlug));
 	const ink = $derived(getCategoryTextColor(tone));
 </script>
 

@@ -15,12 +15,12 @@ import { ContributorGuidelinesPanel } from '@/components/shared/ContributorGuide
 import { CategoryTag } from '@/components/shared/CategoryTag'
 import { Avatar } from '@/components/shared/Avatar'
 import { useTags, useCreateTag } from '@/lib/api/tags'
-import { MediaLibrary } from './MediaLibrary'
+import { MediaPickerDialog } from '@/components/shared/MediaPickerDialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const postSchema = z.object({
@@ -278,15 +278,16 @@ export function PostEditor({ postId }: { postId?: string }) {
       <div className="space-y-2">
         <Label>Featured image</Label>
         {featuredImage && <img src={featuredImage.url} alt={featuredImage.filename} className="aspect-video w-full rounded-lg object-cover" />}
-        <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-          <DialogTrigger asChild>
-            <Button type="button" variant="secondary">Replace from library</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl">
-            <DialogTitle>Choose a featured image</DialogTitle>
-            <MediaLibrary onSelect={(asset) => { setFeaturedImageId(asset.id); setPickerOpen(false) }} />
-          </DialogContent>
-        </Dialog>
+        <Button type="button" variant="secondary" onClick={() => setPickerOpen(true)}>Replace from library</Button>
+        <MediaPickerDialog
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          title="Choose a featured image"
+          onSelect={(asset) => { setFeaturedImageId(asset.id); setPickerOpen(false) }}
+          // If the current featured image gets deleted, drop its id so the
+          // next save doesn't send a dangling FK (Posts.FeaturedImageId).
+          onDeleted={(asset) => setFeaturedImageId((current) => (current === asset.id ? null : current))}
+        />
       </div>
 
       <div className="space-y-2">

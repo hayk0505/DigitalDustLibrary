@@ -4,7 +4,8 @@
 	import {
 		getCategoryIcon,
 		getCategoryTabColor,
-		getCategoryTextColor
+		getCategoryTextColor,
+		getFolderTone
 	} from '$lib/utils/category-visuals';
 	import FeaturedPostCard from './FeaturedPostCard.svelte';
 
@@ -92,7 +93,7 @@
 		>
 			{#each columns as column, i (column.category.slug)}
 				{@const Icon = getCategoryIcon(column.category.slug)}
-				{@const tone = column.category.folderColor ?? getCategoryTabColor(column.category.slug)}
+				{@const tone = getFolderTone(column.category.folderColor, column.category.slug)}
 				{@const ink = getCategoryTextColor(tone)}
 				{@const d = depth[i] ?? { scale: 1, opacity: 1, z: 0, tx: 0 }}
 				<a

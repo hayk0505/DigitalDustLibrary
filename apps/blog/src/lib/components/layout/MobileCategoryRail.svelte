@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import type { Category } from '$lib/data';
-	import { getCategoryIcon, getCategoryTabColor, getCategoryTextColor } from '$lib/utils/category-visuals';
+	import { getCategoryIcon, getCategoryTextColor, getFolderTone } from '$lib/utils/category-visuals';
 
 	let { categories }: { categories: Category[] } = $props();
 </script>
@@ -12,7 +12,7 @@
 >
 	{#each categories as category (category.slug)}
 		{@const Icon = getCategoryIcon(category.slug)}
-		{@const tone = category.folderColor ?? getCategoryTabColor(category.slug)}
+		{@const tone = getFolderTone(category.folderColor, category.slug)}
 		{@const ink = getCategoryTextColor(tone)}
 		{@const isActive = page.url.pathname === `/category/${category.slug}`}
 		<a

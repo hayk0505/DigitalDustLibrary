@@ -23,4 +23,13 @@ export const mediaHandlers = [
     mediaAssets.push(created)
     return HttpResponse.json(created, { status: 201 })
   }),
+
+  // Mock mode has no published-post reference check (the real API answers
+  // 409 for an image a published post uses); it just removes the asset.
+  http.delete('/api/media/:id', ({ params }) => {
+    const index = mediaAssets.findIndex((m) => m.id === params.id)
+    if (index === -1) return HttpResponse.json({ message: 'Not found' }, { status: 404 })
+    mediaAssets.splice(index, 1)
+    return new HttpResponse(null, { status: 204 })
+  }),
 ]

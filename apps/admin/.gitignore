@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 routeTree.gen.ts
+
+# TanStack Router plugin scratch files (leftovers from route-tree generation)
+.tanstack/

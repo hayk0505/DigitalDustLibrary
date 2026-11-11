@@ -2,15 +2,15 @@
 	import type { Post } from '$lib/data';
 	import {
 		getCategoryIcon,
-		getCategoryTabColor,
-		getCategoryTextColor
+		getCategoryTextColor,
+		getFolderTone
 	} from '$lib/utils/category-visuals';
 	import { formatDispatchDate } from '$lib/utils/format-date';
 	import CategoryDot from '../shared/CategoryDot.svelte';
 
 	let { post }: { post: Post } = $props();
 
-	const tone = $derived(post.categoryFolderColor ?? getCategoryTabColor(post.categorySlug));
+	const tone = $derived(getFolderTone(post.categoryFolderColor, post.categorySlug));
 	const ink = $derived(getCategoryTextColor(tone));
 	const Icon = $derived(getCategoryIcon(post.categorySlug));
 </script>

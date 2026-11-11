@@ -138,13 +138,52 @@ public static class MediaEndpoints
             if (asset is null) return Results.Json(new { message = "Not found" }, statusCode: 404);
 
             var storedFilename = asset.Url.Split('/').Last();
-            var filePath = Path.Combine(env.ContentRootPath, "wwwroot", "uploads", storedFilename);
-            if (File.Exists(filePath)) File.Delete(filePath);
+
+            // A live post can use an asset two ways: as its featured image
+            // (FK) or inline in the body (<img src> written by the TipTap
+            // editor). The body match is on "/uploads/{file}" rather than the
+            // full Url so it keeps working if ApiPublicOrigin ever changes.
+            // Only Published posts block the delete: for drafts and posts in
+            // review the FK is SetNull and the body can still be fixed before
+            // it goes live.
+            var inlinePath = $"/uploads/{storedFilename}";
+            var livePostTitles = await db.Posts
+                .Where(p => p.Status == PostStatus.Published
+                    && (p.FeaturedImageId == id || p.BodyHtml.Contains(inlinePath)))
+                .OrderBy(p => p.Title)
+                .Select(p => p.Title)
+                .ToListAsync();
+
+            if (livePostTitles.Count > 0)
+            {
+                return Results.Json(new
+                {
+                    message = BuildInUseMessage(livePostTitles),
+                    postTitles = livePostTitles,
+                }, statusCode: 409);
+            }
 
             db.MediaAssets.Remove(asset);
             await db.SaveChangesAsync();
+
+            // File goes after the row: if SaveChanges throws, the asset is
+            // still listed and still renders, instead of a row pointing at a
+            // file that no longer exists.
+            var filePath = Path.Combine(env.ContentRootPath, "wwwroot", "uploads", storedFilename);
+            if (File.Exists(filePath)) File.Delete(filePath);
+
             return Results.NoContent();
         })
         .RequireAuthorization("EditorOrOwner");
+    }
+
+    private static string BuildInUseMessage(IReadOnlyList<string> postTitles)
+    {
+        const int maxListed = 3;
+        var listed = string.Join(", ", postTitles.Take(maxListed).Select(t => $"\"{t}\""));
+        var rest = postTitles.Count > maxListed ? $" and {postTitles.Count - maxListed} more" : "";
+        return postTitles.Count == 1
+            ? $"This image is used by the published post {listed}. Remove it from that post before deleting."
+            : $"This image is used by published posts {listed}{rest}. Remove it from those posts before deleting.";
     }
 }
